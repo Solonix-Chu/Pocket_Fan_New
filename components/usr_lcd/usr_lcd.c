@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "usr_lcd.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_err.h"
@@ -48,7 +49,7 @@ static const char *TAG = "example";
 
 extern void example_lvgl_demo_ui(lv_disp_t *disp);
 
-void app_main(void)
+void usr_lcd_init(void)
 {
     ESP_LOGI(TAG, "Initialize I2C bus");
     i2c_master_bus_handle_t i2c_bus = NULL;

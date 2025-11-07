@@ -1,2 +1,4 @@
-idf_component_register(SRCS "i2c_oled_example_main.c" "lvgl_demo_ui.c"
-                       INCLUDE_DIRS ".")
+idf_component_register(SRCS "main.c"
+                       INCLUDE_DIRS "."
+                       PRIV_REQUIRES esp_driver_gpio esp_timer usr_lcd
+                       )
