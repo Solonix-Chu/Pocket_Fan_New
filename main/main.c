@@ -22,7 +22,7 @@
 #include "usr_lcd.h"
 // #include "usr_nimble.h"
 // #include "mcu_info.h"
-
+#include "app_button.h"
 static const char *TAG = "app_main";
 
 extern int ets_printf(const char *fmt, ...);
@@ -32,6 +32,7 @@ void app_main(void)
     printf("free_heap_size = %d\n", (int)esp_get_free_heap_size());
 
     // usr_nimble_init();
+    app_button_init();
 
     ESP_LOGI(TAG, "LCD test_display");
     usr_lcd_init();
