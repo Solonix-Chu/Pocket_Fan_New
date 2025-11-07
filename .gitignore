@@ -1,0 +1,10 @@
+/.idea/
+/.cproject
+/.mxproject
+/.project
+/build/*
+/managed_components/*
+/.vscode/
+/.devcontainer/
+/sdkconfig.old
+/dependencies.lock
