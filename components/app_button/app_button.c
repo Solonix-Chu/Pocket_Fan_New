@@ -21,9 +21,9 @@
 static const char* TAG = "app_button";
 
 #define CONFIG_BUTTON_UP_GPIO_NUM GPIO_NUM_3
-#define CONFIG_BUTTON_DOWN_GPIO_NUM GPIO_NUM_10
-#define CONFIG_BUTTON_LEFT_GPIO_NUM GPIO_NUM_4
-#define CONFIG_BUTTON_RIGHT_GPIO_NUM GPIO_NUM_7
+#define CONFIG_BUTTON_DOWN_GPIO_NUM GPIO_NUM_4
+#define CONFIG_BUTTON_LEFT_GPIO_NUM GPIO_NUM_7
+#define CONFIG_BUTTON_RIGHT_GPIO_NUM GPIO_NUM_10
 #define CONFIG_BUTTON_OK_GPIO_NUM GPIO_NUM_2
 #define CONFIG_BUTTON_POWER_GPIO_NUM GPIO_NUM_2
 #define CONFIG_BUTTON_ACTIVE_LEVEL 0
@@ -92,7 +92,7 @@ static void app_button_set_raw_state(app_button_t* btn, uint32_t msec, bool pres
 static void app_button_instance_update(app_button_t* btn, uint32_t current_time) {
     if (!btn) return;
     // 在每个循环中重置状态为“无变化”
-    btn->currentState = APP_BUTTON_STATE_NOCHANGE;
+    // btn->currentState = APP_BUTTON_STATE_NOCHANGE;
     btn->lastMsec = current_time;
 }
 

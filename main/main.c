@@ -23,31 +23,28 @@
 // #include "usr_nimble.h"
 // #include "mcu_info.h"
 #include "app_button.h"
-static const char *TAG = "app_main";
+#include "ui.h"
 
-extern int ets_printf(const char *fmt, ...);
+static const char *TAG = "app_main";
 
 void app_main(void)
 {
-    printf("free_heap_size = %d\n", (int)esp_get_free_heap_size());
+    ESP_LOGI(TAG, "Initial free heap size: %d", (int)esp_get_free_heap_size());
 
-    // usr_nimble_init();
+    // Initialize components
     app_button_init();
-
-    ESP_LOGI(TAG, "LCD test_display");
     usr_lcd_init();
+    
+    // Initialize UI logic
+    ui_init();
 
-    printf("free_heap_size = %d\n", (int)esp_get_free_heap_size());
+    ESP_LOGI(TAG, "Heap size after init: %d", (int)esp_get_free_heap_size());
 
-    // Perform all example operations in a loop to allow USB reconnections
-    while (1) {
+    // Create UI task
+    xTaskCreate(ui_task, "ui_task", 4096, NULL, 5, NULL);
 
-    // 打印所有任务的状态信息
-    // vTaskList(buffer);
-    // printf("Task List:\n%s\n", buffer);
+    ESP_LOGI(TAG, "UI task created.");
 
-    // free(buffer);  // 释放缓冲区
-
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
+    // The app_main can exit now, or do other things.
+    // The UI will run in its own task.
 }

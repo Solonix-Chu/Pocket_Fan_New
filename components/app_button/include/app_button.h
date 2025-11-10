@@ -27,7 +27,7 @@ typedef enum {
  */
 typedef struct {
     // 公开状态
-    app_button_state_t currentState;
+    volatile app_button_state_t currentState;
     uint32_t lastMsec;
 
     // "私有" 配置和句柄
