@@ -1,140 +1,58 @@
-/*
- * SPDX-FileCopyrightText: 2021-2024 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: CC0-1.0
- */
-
+#include <driver/gpio.h>
+#include <driver/spi_master.h>
+#include <esp_log.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "usr_lcd.h"
-#include "esp_lcd_panel_io.h"
-#include "esp_lcd_panel_ops.h"
-#include "esp_err.h"
-#include "esp_log.h"
-#include "driver/i2c_master.h"
-#include "esp_lvgl_port.h"
-#include "lvgl.h"
+#include <string.h>
+#include <u8g2.h>
 
-#if CONFIG_EXAMPLE_LCD_CONTROLLER_SH1107
-#include "esp_lcd_sh1107.h"
-#else
-#include "esp_lcd_panel_vendor.h"
-#endif
+#include "sdkconfig.h"
+#include "u8g2_esp32_hal.h"
 
-static const char *TAG = "example";
+// SDA - GPIO21
+#define PIN_SDA 5
 
-#define I2C_BUS_PORT  0
+// SCL - GPIO22
+#define PIN_SCL 6
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////// Please update the following configuration according to your LCD spec //////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define EXAMPLE_LCD_PIXEL_CLOCK_HZ    (400 * 1000)
-#define EXAMPLE_PIN_NUM_SDA           5
-#define EXAMPLE_PIN_NUM_SCL           6
-#define EXAMPLE_PIN_NUM_RST           -1
-#define EXAMPLE_I2C_HW_ADDR           0x3C
-
-// The pixel number in horizontal and vertical
-#if CONFIG_EXAMPLE_LCD_CONTROLLER_SSD1306
-#define EXAMPLE_LCD_H_RES              128
-#define EXAMPLE_LCD_V_RES              CONFIG_EXAMPLE_SSD1306_HEIGHT
-#elif CONFIG_EXAMPLE_LCD_CONTROLLER_SH1107
-#define EXAMPLE_LCD_H_RES              64
-#define EXAMPLE_LCD_V_RES              128
-#endif
-// Bit number used to represent command and parameter
-#define EXAMPLE_LCD_CMD_BITS           8
-#define EXAMPLE_LCD_PARAM_BITS         8
-
-extern void example_lvgl_demo_ui(lv_disp_t *disp);
+static const char* TAG = "ssd1306";
 
 void usr_lcd_init(void)
 {
-    ESP_LOGI(TAG, "Initialize I2C bus");
-    i2c_master_bus_handle_t i2c_bus = NULL;
-    i2c_master_bus_config_t bus_config = {
-        .clk_source = I2C_CLK_SRC_DEFAULT,
-        .glitch_ignore_cnt = 7,
-        .i2c_port = I2C_BUS_PORT,
-        .sda_io_num = EXAMPLE_PIN_NUM_SDA,
-        .scl_io_num = EXAMPLE_PIN_NUM_SCL,
-        .flags.enable_internal_pullup = true,
-    };
-    ESP_ERROR_CHECK(i2c_new_master_bus(&bus_config, &i2c_bus));
+  u8g2_esp32_hal_t u8g2_esp32_hal = U8G2_ESP32_HAL_DEFAULT;
+  u8g2_esp32_hal.bus.i2c.sda = PIN_SDA;
+  u8g2_esp32_hal.bus.i2c.scl = PIN_SCL;
+  u8g2_esp32_hal_init(u8g2_esp32_hal);
 
-    ESP_LOGI(TAG, "Install panel IO");
-    esp_lcd_panel_io_handle_t io_handle = NULL;
-    esp_lcd_panel_io_i2c_config_t io_config = {
-        .dev_addr = EXAMPLE_I2C_HW_ADDR,
-        .scl_speed_hz = EXAMPLE_LCD_PIXEL_CLOCK_HZ,
-        .control_phase_bytes = 1,               // According to SSD1306 datasheet
-        .lcd_cmd_bits = EXAMPLE_LCD_CMD_BITS,   // According to SSD1306 datasheet
-        .lcd_param_bits = EXAMPLE_LCD_CMD_BITS, // According to SSD1306 datasheet
-#if CONFIG_EXAMPLE_LCD_CONTROLLER_SSD1306
-        .dc_bit_offset = 6,                     // According to SSD1306 datasheet
-#elif CONFIG_EXAMPLE_LCD_CONTROLLER_SH1107
-        .dc_bit_offset = 0,                     // According to SH1107 datasheet
-        .flags =
-        {
-            .disable_control_phase = 1,
-        }
-#endif
-    };
-    ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c(i2c_bus, &io_config, &io_handle));
+  u8g2_t u8g2;  // a structure which will contain all the data for one display
+  u8g2_Setup_ssd1306_i2c_128x32_univision_f(
+      &u8g2, U8G2_R0,
+      // u8x8_byte_sw_i2c,
+      u8g2_esp32_i2c_byte_cb,
+      u8g2_esp32_gpio_and_delay_cb);  // init u8g2 structure
+  u8x8_SetI2CAddress(&u8g2.u8x8, 0x78);
 
-    ESP_LOGI(TAG, "Install SSD1306 panel driver");
-    esp_lcd_panel_handle_t panel_handle = NULL;
-    esp_lcd_panel_dev_config_t panel_config = {
-        .bits_per_pixel = 1,
-        .reset_gpio_num = EXAMPLE_PIN_NUM_RST,
-    };
-#if CONFIG_EXAMPLE_LCD_CONTROLLER_SSD1306
-    esp_lcd_panel_ssd1306_config_t ssd1306_config = {
-        .height = EXAMPLE_LCD_V_RES,
-    };
-    panel_config.vendor_config = &ssd1306_config;
-    ESP_ERROR_CHECK(esp_lcd_new_panel_ssd1306(io_handle, &panel_config, &panel_handle));
-#elif CONFIG_EXAMPLE_LCD_CONTROLLER_SH1107
-    ESP_ERROR_CHECK(esp_lcd_new_panel_sh1107(io_handle, &panel_config, &panel_handle));
-#endif
+  ESP_LOGI(TAG, "u8g2_InitDisplay");
+  u8g2_InitDisplay(&u8g2);  // send init sequence to the display, display is in
+                            // sleep mode after this,
 
-    ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
-    ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
-    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
+  ESP_LOGI(TAG, "u8g2_SetPowerSave");
+  u8g2_SetPowerSave(&u8g2, 0);  // wake up display
+  ESP_LOGI(TAG, "u8g2_ClearBuffer");
+  u8g2_ClearBuffer(&u8g2);
+  ESP_LOGI(TAG, "u8g2_DrawBox");
+  u8g2_DrawBox(&u8g2, 0, 26, 80, 6);
+  u8g2_DrawFrame(&u8g2, 0, 26, 100, 6);
 
-#if CONFIG_EXAMPLE_LCD_CONTROLLER_SH1107
-    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, true));
-#endif
+  ESP_LOGI(TAG, "u8g2_SetFont");
+  u8g2_SetFont(&u8g2, u8g2_font_ncenB14_tr);
+  ESP_LOGI(TAG, "u8g2_DrawStr");
+  u8g2_DrawStr(&u8g2, 2, 17, "Hi nkolban!");
+  ESP_LOGI(TAG, "u8g2_SendBuffer");
+  u8g2_SendBuffer(&u8g2);
 
-    ESP_LOGI(TAG, "Initialize LVGL");
-    const lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
-    lvgl_port_init(&lvgl_cfg);
+  ESP_LOGI(TAG, "All done!");
 
-    const lvgl_port_display_cfg_t disp_cfg = {
-        .io_handle = io_handle,
-        .panel_handle = panel_handle,
-        .buffer_size = EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES,
-        .double_buffer = true,
-        .hres = EXAMPLE_LCD_H_RES,
-        .vres = EXAMPLE_LCD_V_RES,
-        .monochrome = true,
-        .rotation = {
-            .swap_xy = false,
-            .mirror_x = true,
-            .mirror_y = true,
-        }
-    };
-    lv_disp_t *disp = lvgl_port_add_disp(&disp_cfg);
-
-    /* Rotation of the screen */
-    lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
-
-    ESP_LOGI(TAG, "Display LVGL Scroll Text");
-    // Lock the mutex due to the LVGL APIs are not thread-safe
-    if (lvgl_port_lock(0)) {
-        example_lvgl_demo_ui(disp);
-        // Release the mutex
-        lvgl_port_unlock();
-    }
+  vTaskDelete(NULL);
 }
