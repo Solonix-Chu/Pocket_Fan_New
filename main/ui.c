@@ -16,6 +16,7 @@
 #define SPEED 4
 #define ICON_SPEED 12
 #define ICON_SPACE 48
+#define WIDTH_CHANGE_SPEED_FACTOR 16
 
 static const char *TAG = "ui";
 
@@ -355,7 +356,7 @@ static bool move_width(uint8_t *a, uint8_t *a_trg, uint8_t current_select, bool 
 {
     if (*a < *a_trg)
     {
-        uint8_t step = 16 / SPEED;
+        uint8_t step = 16 / WIDTH_CHANGE_SPEED_FACTOR;
         uint8_t len;
         if (ui_index == M_SELECT)
         {
@@ -375,7 +376,7 @@ static bool move_width(uint8_t *a, uint8_t *a_trg, uint8_t current_select, bool 
     }
     else if (*a > *a_trg)
     {
-        uint8_t step = 16 / SPEED;
+        uint8_t step = 16 / WIDTH_CHANGE_SPEED_FACTOR;
         uint8_t len;
         if (ui_index == M_SELECT)
         {
