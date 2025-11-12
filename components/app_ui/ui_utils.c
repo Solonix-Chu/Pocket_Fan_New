@@ -223,3 +223,30 @@ void disappear()
     }
     disappear_step++;
 }
+
+bool move_pid(float *value, float target, pid_controller_t *pid)
+{
+    // Stop if close enough to the target and velocity is low
+    if (fabsf(target - *value) < 0.5f && fabsf(pid->previous_error) < 0.5f) {
+        *value = target;
+        pid->integral = 0;
+        pid->previous_error = 0;
+        return true;
+    }
+
+    float error = target - *value;
+    pid->integral += error;
+    
+    // Clamp integral to prevent windup
+    if (pid->integral > 50) pid->integral = 50;
+    if (pid->integral < -50) pid->integral = -50;
+
+    float derivative = error - pid->previous_error;
+    
+    float output = (pid->kp * error) + (pid->ki * pid->integral) + (pid->kd * derivative);
+    
+    *value += output;
+    pid->previous_error = error;
+    
+    return false;
+}

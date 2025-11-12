@@ -49,7 +49,7 @@ void select_ui_show()
 {
     move_bar(&line_y, &line_y_trg);
     move(&y, &y_trg);
-    move(&box_y, &box_y_trg);
+    move_pid(&box_y, box_y_trg, &pid_y_controller);
     move_width(&box_width, &box_width_trg, ui_select, (BtnUp->currentState == APP_BUTTON_STATE_CLICKED));
 
     // 绘制滚动条
@@ -89,7 +89,7 @@ void select_ui_show()
     u8g2_DrawVLine(&u8g2, 125, line_y, single_line_length - 1);
     u8g2_DrawVLine(&u8g2, 127, line_y, single_line_length - 1);
     u8g2_SetDrawColor(&u8g2, 2);
-    u8g2_DrawRBox(&u8g2, 0, box_y, box_width, 16, 1);
+    u8g2_DrawRBox(&u8g2, 0, (int16_t)box_y, box_width, 16, 1);
     u8g2_SetDrawColor(&u8g2, 1);
 }
 
@@ -314,12 +314,12 @@ void pid_edit_proc(void)
 
 void icon_ui_show(void)
 {
-    move_icon(&icon_x, &icon_x_trg);
+    move_pid(&icon_x, icon_x_trg, &pid_x_controller);
     move(&app_y, &app_y_trg);
 
     for (uint8_t i = 0; i < icon_num; ++i)
     {
-        u8g2_DrawXBMP(&u8g2, 46 + icon_x + i * ICON_SPACE, 6, 36, icon_width[i], icon_pic[i]);
+        u8g2_DrawXBMP(&u8g2, 46 + (int16_t)icon_x + i * ICON_SPACE, 6, 36, icon_width[i], icon_pic[i]);
         u8g2_SetClipWindow(&u8g2, 0, 48, 128, 64);
         u8g2_DrawStr(&u8g2, (128 - u8g2_GetStrWidth(&u8g2, icon[i].select)) / 2, 62 - app_y + i * 16, icon[i].select);
         u8g2_SetMaxClipWindow(&u8g2);

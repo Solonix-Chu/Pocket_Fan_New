@@ -68,6 +68,14 @@ typedef struct
 } SELECT_LIST;
 
 typedef struct {
+    float kp;
+    float ki;
+    float kd;
+    float integral;
+    float previous_error;
+} pid_controller_t;
+
+typedef struct {
     int16_t x;
     uint16_t counter;
     uint16_t pause;
@@ -77,13 +85,15 @@ typedef struct {
 // --- 共享的内部状态变量 (在 ui.c 中定义) ---
 extern uint8_t ui_index, ui_state;
 extern uint8_t disappear_step;
+extern pid_controller_t pid_y_controller;
+extern pid_controller_t pid_x_controller;
 
 // M_SELECT 状态
 extern uint8_t x;
 extern int16_t y, y_trg;
 extern uint8_t line_y, line_y_trg;
 extern uint8_t box_width, box_width_trg;
-extern int16_t box_y, box_y_trg;
+extern float box_y, box_y_trg;
 extern int8_t ui_select;
 extern uint8_t list_num;
 extern uint8_t single_line_length;
@@ -97,7 +107,7 @@ extern int8_t pid_select;
 extern uint8_t pid_num;
 
 // M_ICON 状态
-extern int16_t icon_x, icon_x_trg;
+extern float icon_x, icon_x_trg;
 extern int16_t app_y, app_y_trg;
 extern int8_t icon_select;
 extern uint8_t icon_num;
@@ -131,6 +141,7 @@ extern char name[];
 // --- 工具函数 (在 ui_utils.c 中定义) ---
 bool move(int16_t *a, int16_t *a_trg);
 bool move_icon(int16_t *a, int16_t *a_trg);
+bool move_pid(float *value, float target, pid_controller_t *pid);
 bool move_width(uint8_t *a, uint8_t *a_trg, uint8_t current_select, bool is_up);
 bool move_bar(uint8_t *a, uint8_t *a_trg);
 void ui_scroll_reset(scroll_state_t *state);

@@ -9,12 +9,16 @@ static const char *TAG = "app_ui";
 uint8_t ui_index, ui_state;
 uint8_t disappear_step = 1;
 
+// PID 控制器
+pid_controller_t pid_y_controller = { .kp = 1.0f, .ki = 0.0f, .kd = 0.1f };
+pid_controller_t pid_x_controller = { .kp = 1.0f, .ki = 0.0f, .kd = 0.1f };
+
 // M_SELECT 状态
 uint8_t x;
 int16_t y, y_trg;
 uint8_t line_y, line_y_trg;
 uint8_t box_width, box_width_trg;
-int16_t box_y, box_y_trg;
+float box_y, box_y_trg;
 int8_t ui_select;
 // uint8_t list_num;
 uint8_t single_line_length;
@@ -28,7 +32,7 @@ int8_t pid_select;
 // uint8_t pid_num;
 
 // M_ICON 状态
-int16_t icon_x, icon_x_trg;
+float icon_x, icon_x_trg;
 int16_t app_y, app_y_trg;
 int8_t icon_select;
 // uint8_t icon_num;
@@ -43,11 +47,6 @@ uint8_t edit_index = 0;
 bool edit_flag = false;
 uint8_t blink_flag;
 const uint8_t name_len = 12;
-
-// 滚动状态
-int16_t text_scroll_x = 0;
-uint8_t text_scroll_counter = 0;
-uint16_t text_scroll_pause = 0;
 
 // LCD 缓冲区
 uint8_t *buf_ptr;
