@@ -4,6 +4,27 @@
 
 static const char *TAG = "ui_page";
 
+static scroll_state_t list_scroll_states[10];
+
+static void init_select_menu_state()
+{
+    ui_select = 0;
+    y = y_trg = 0;
+    box_y = box_y_trg = 0;
+    line_y = line_y_trg = 1;
+
+    uint16_t str_width = u8g2_GetStrWidth(&u8g2, list[ui_select].select);
+    if (str_width > MAX_TEXT_WIDTH) {
+        box_width = box_width_trg = MAX_TEXT_WIDTH;
+    } else {
+        box_width = box_width_trg = str_width + x * 2;
+    }
+
+    for (int i = 0; i < list_num; i++) {
+        ui_scroll_reset(&list_scroll_states[i]);
+    }
+}
+
 // --- Logo 页面 ---
 void logo_ui_show()
 {
@@ -18,10 +39,10 @@ void logo_proc(void)
         BtnOk->currentState = APP_BUTTON_STATE_NOCHANGE;
         ui_state = S_DISAPPEAR;
         ui_index = M_SELECT;
+        init_select_menu_state();
     }
     logo_ui_show();
 }
-
 
 // --- Select 页面 (API版本) ---
 void select_ui_show()
@@ -39,27 +60,25 @@ void select_ui_show()
     for (uint8_t i = 0; i < list_num; ++i)
     {
         int16_t current_y = 16 * i + y + 12;
-        bool is_selected = (i == ui_select);
+        
+        uint16_t str_width = u8g2_GetStrWidth(&u8g2, list[i].select);
+        bool needs_scroll = str_width > MAX_TEXT_WIDTH;
 
-        if (is_selected)
-        {
-            // 1. 设置裁剪窗口
-            u8g2_SetClipWindow(&u8g2, 0, box_y, MAX_TEXT_WIDTH, box_y + 16);
+        if (needs_scroll) {
+            int16_t clip_y = 16 * i + y;
+            u8g2_SetClipWindow(&u8g2, 0, clip_y, MAX_TEXT_WIDTH, clip_y + 16);
         }
 
-        // 2. 调用API函数进行绘制
-        // (假设菜单从x=0开始)
         ui_draw_scrollable_text(&u8g2, 
-                                0,                     // 文本X坐标
-                                current_y,             // 文本Y坐标
-                                MAX_TEXT_WIDTH,        // 允许的最大宽度
-                                list[i].select,        // 文本内容
-                                is_selected            // 是否为选中项
+                                0,
+                                current_y,
+                                MAX_TEXT_WIDTH,
+                                list[i].select,
+                                &list_scroll_states[i],
+                                str_width
                                );
 
-        if (is_selected)
-        {
-            // 3. 移除裁剪窗口
+        if (needs_scroll) {
             u8g2_SetMaxClipWindow(&u8g2);
         }
         
@@ -76,34 +95,61 @@ void select_ui_show()
 
 void select_proc(void)
 {
-    // (您的按键逻辑，例如)
     if (BtnUp->currentState == APP_BUTTON_STATE_CLICKED)
     {
-        if (ui_select > 0)
+        ESP_LOGI(TAG, "UP pressed in SELECT screen");
+        BtnUp->currentState = APP_BUTTON_STATE_NOCHANGE;
+        if (ui_select >= 1)
         {
-            ui_select--;
+            ui_select -= 1;
             line_y_trg -= single_line_length;
-            y_trg += 16;
-            box_width_trg = u8g2_GetStrWidth(&u8g2, list[ui_select].select);
-            box_y_trg -= 16;
-            ui_scroll_reset(); // 切换时重置滚动！
+            if (ui_select < -(y / 16))
+            {
+                y_trg += 16;
+            }
+            else
+            {
+                box_y_trg -= 16;
+            }
+            uint16_t str_width = u8g2_GetStrWidth(&u8g2, list[ui_select].select);
+            if (str_width > MAX_TEXT_WIDTH) {
+                box_width_trg = MAX_TEXT_WIDTH;
+            } else {
+                box_width_trg = str_width + x * 2;
+            }
         }
+        // for (int i = 0; i < list_num; i++) {
+        //     ui_scroll_reset(&list_scroll_states[i]);
+        // }
     }
-    
-    if (BtnDown->currentState == APP_BUTTON_STATE_CLICKED)
+    else if (BtnDown->currentState == APP_BUTTON_STATE_CLICKED)
     {
-         if (ui_select < list_num - 1)
+        ESP_LOGI(TAG, "DOWN pressed in SELECT screen");
+        BtnDown->currentState = APP_BUTTON_STATE_NOCHANGE;
+        if ((ui_select + 2) <= list_num)
         {
-            ui_select++;
+            ui_select += 1;
             line_y_trg += single_line_length;
-            y_trg -= 16;
-            box_width_trg = u8g2_GetStrWidth(&u8g2, list[ui_select].select);
-            box_y_trg += 16;
-            ui_scroll_reset(); // 切换时重置滚动！
+            if ((ui_select + 1) > (4 - y / 16))
+            {
+                y_trg -= 16;
+            }
+            else
+            {
+                box_y_trg += 16;
+            }
+            uint16_t str_width = u8g2_GetStrWidth(&u8g2, list[ui_select].select);
+            if (str_width > MAX_TEXT_WIDTH) {
+                box_width_trg = MAX_TEXT_WIDTH;
+            } else {
+                box_width_trg = str_width + x * 2;
+            }
         }
+        // for (int i = 0; i < list_num; i++) {
+        //     ui_scroll_reset(&list_scroll_states[i]);
+        // }
     }
-
-    if (BtnOk->currentState == APP_BUTTON_STATE_CLICKED)
+    else if (BtnOk->currentState == APP_BUTTON_STATE_CLICKED)
     {
         ESP_LOGI(TAG, "OK pressed in SELECT screen, item %d", ui_select);
         BtnOk->currentState = APP_BUTTON_STATE_NOCHANGE;
@@ -139,7 +185,6 @@ void select_proc(void)
     }
     select_ui_show();
 }
-
 
 // --- PID 页面 ---
 void pid_ui_show()
@@ -200,6 +245,7 @@ void pid_proc()
             pid_line_y = pid_line_y_trg = 1;
             pid_box_y = pid_box_y_trg = 0;
             pid_box_width = pid_box_width_trg = u8g2_GetStrWidth(&u8g2, pid[pid_select].select) + x * 2;
+            init_select_menu_state();
         }
         else
         {
@@ -311,6 +357,7 @@ void icon_proc(void)
         icon_select = 0;
         icon_x = icon_x_trg = 0;
         app_y = app_y_trg = 0;
+        init_select_menu_state();
     }
 }
 
@@ -378,6 +425,7 @@ void chart_proc()
         ui_index = M_SELECT;
         frame_is_drawed = false;
         chart_x = 0;
+        init_select_menu_state();
     }
 }
 
@@ -483,6 +531,7 @@ void text_edit_proc()
             ui_state = S_DISAPPEAR;
             ui_index = M_SELECT;
             edit_index = 0;
+            init_select_menu_state();
         }
         else
         {
@@ -507,6 +556,7 @@ void about_proc()
         BtnOk->currentState = APP_BUTTON_STATE_NOCHANGE;
         ui_state = S_DISAPPEAR;
         ui_index = M_SELECT;
+        init_select_menu_state();
     }
     about_ui_show();
 }

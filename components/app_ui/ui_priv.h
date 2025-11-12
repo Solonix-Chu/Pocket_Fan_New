@@ -20,16 +20,22 @@
 #include "usr_lcd.h"
 #include "app_button.h"
 
-// 滚动配置
 #define SPEED 4
 #define WIDTH_CHANGE_SPEED_FACTOR 8
 #define ICON_SPEED 12
 #define ICON_SPACE 48
-#define TEXT_SCROLL_SPEED 1
+// --- 长文本滚动配置 ---
+// 滚动速度（每 TEXT_SCROLL_SPEED 帧滚动 TEXT_SCROLL_PIXELS_PER_FRAME 像素）
+#define TEXT_SCROLL_SPEED 1               // 数值越小滚动越快
+#define TEXT_SCROLL_PIXELS_PER_FRAME 1    // 数值越大滚动越快
+// 滚动开始前和循环一轮后的暂停帧数
 #define TEXT_SCROLL_PAUSE_FRAMES 30
+// 循环滚动时，文本末尾和开头之间的像素间隔
 #define TEXT_SCROLL_SEPARATOR_WIDTH 20
+// 文本超过此宽度（像素）将自动开启滚动
 #define MAX_TEXT_WIDTH 120
 #define BLINK_SPEED 16
+// --------------------
 
 // 主状态
 enum
@@ -60,6 +66,12 @@ typedef struct
 {
     char *select;
 } SELECT_LIST;
+
+typedef struct {
+    int16_t x;
+    uint16_t counter;
+    uint16_t pause;
+} scroll_state_t;
 
 
 // --- 共享的内部状态变量 (在 ui.c 中定义) ---
@@ -101,11 +113,6 @@ extern bool edit_flag;
 extern uint8_t blink_flag;
 extern const uint8_t name_len;
 
-// 滚动状态
-extern int16_t text_scroll_x;
-extern uint8_t text_scroll_counter;
-extern uint16_t text_scroll_pause;
-
 // LCD 缓冲区
 extern uint8_t *buf_ptr;
 extern uint16_t buf_len;
@@ -126,9 +133,9 @@ bool move(int16_t *a, int16_t *a_trg);
 bool move_icon(int16_t *a, int16_t *a_trg);
 bool move_width(uint8_t *a, uint8_t *a_trg, uint8_t current_select, bool is_up);
 bool move_bar(uint8_t *a, uint8_t *a_trg);
-void ui_scroll_reset(void);
-void ui_scroll_update(bool is_scrolling, uint16_t str_width);
-void ui_draw_scrollable_text(u8g2_t *u8g2, int16_t x, int16_t y, uint16_t max_width, const char *text, bool is_selected);
+void ui_scroll_reset(scroll_state_t *state);
+void ui_scroll_update(scroll_state_t *state, bool needs_scroll, uint16_t str_width);
+void ui_draw_scrollable_text(u8g2_t *u8g2, int16_t x, int16_t y, uint16_t max_width, const char *text, scroll_state_t *state, uint16_t str_width);
 void text_edit(bool dir, uint8_t index);
 void disappear(void);
 

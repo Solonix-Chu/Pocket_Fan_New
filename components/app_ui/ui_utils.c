@@ -44,32 +44,45 @@ bool move_icon(int16_t *a, int16_t *a_trg)
 
 bool move_width(uint8_t *a, uint8_t *a_trg, uint8_t current_select, bool is_up)
 {
-    // ... (原函数代码) ...
-    // (注意：这里依赖 ui_index, list, pid 等全局变量)
-    // (我们的新结构通过 ui_priv.h 保证了这一点)
-    uint8_t len = 1; // 默认
-    if (ui_index == M_SELECT)
-    {
-        len = abs(u8g2_GetStrWidth(&u8g2, list[current_select].select) - u8g2_GetStrWidth(&u8g2, list[is_up ? current_select + 1 : current_select - 1].select));
-    }
-    else if (ui_index == M_PID)
-    {
-        len = abs(u8g2_GetStrWidth(&u8g2, pid[current_select].select) - u8g2_GetStrWidth(&u8g2, pid[is_up ? current_select + 1 : current_select - 1].select));
-    }
-
     if (*a < *a_trg)
     {
         uint8_t step = 16 / WIDTH_CHANGE_SPEED_FACTOR;
+        uint8_t len;
+        if (ui_index == M_SELECT)
+        {
+            len = abs(u8g2_GetStrWidth(&u8g2, list[current_select].select) - u8g2_GetStrWidth(&u8g2, list[is_up ? current_select + 1 : current_select - 1].select));
+        }
+        else if (ui_index == M_PID)
+        {
+            len = abs(u8g2_GetStrWidth(&u8g2, pid[current_select].select) - u8g2_GetStrWidth(&u8g2, pid[is_up ? current_select + 1 : current_select - 1].select));
+        }
+        else {
+            len = 1;
+        }
         uint8_t width_speed = ((len % step) == 0 ? (len / step) : (len / step + 1));
         *a += width_speed;
-        if (*a > *a_trg) *a = *a_trg;
+        if (*a > *a_trg)
+            *a = *a_trg;
     }
     else if (*a > *a_trg)
     {
         uint8_t step = 16 / WIDTH_CHANGE_SPEED_FACTOR;
+        uint8_t len;
+        if (ui_index == M_SELECT)
+        {
+            len = abs(u8g2_GetStrWidth(&u8g2, list[current_select].select) - u8g2_GetStrWidth(&u8g2, list[is_up ? current_select + 1 : current_select - 1].select));
+        }
+        else if (ui_index == M_PID)
+        {
+            len = abs(u8g2_GetStrWidth(&u8g2, pid[current_select].select) - u8g2_GetStrWidth(&u8g2, pid[is_up ? current_select + 1 : current_select - 1].select));
+        }
+        else {
+            len = 1;
+        }
         uint8_t width_speed = ((len % step) == 0 ? (len / step) : (len / step + 1));
         *a -= width_speed;
-        if (*a < *a_trg) *a = *a_trg;
+        if (*a < *a_trg)
+            *a = *a_trg;
     }
     else
     {
@@ -85,14 +98,16 @@ bool move_bar(uint8_t *a, uint8_t *a_trg)
         uint8_t step = 16 / SPEED;
         uint8_t width_speed = ((single_line_length % step) == 0 ? (single_line_length / step) : (single_line_length / step + 1));
         *a += width_speed;
-        if (*a > *a_trg) *a = *a_trg;
+        if (*a > *a_trg)
+            *a = *a_trg;
     }
     else if (*a > *a_trg)
     {
         uint8_t step = 16 / SPEED;
         uint8_t width_speed = ((single_line_length % step) == 0 ? (single_line_length / step) : (single_line_length / step + 1));
         *a -= width_speed;
-        if (*a < *a_trg) *a = *a_trg;
+        if (*a < *a_trg)
+            *a = *a_trg;
     }
     else
     {
@@ -102,57 +117,48 @@ bool move_bar(uint8_t *a, uint8_t *a_trg)
 }
 
 
-void ui_scroll_reset(void)
+void ui_scroll_reset(scroll_state_t *state)
 {
-    text_scroll_x = 0;
-    text_scroll_counter = 0;
-    text_scroll_pause = TEXT_SCROLL_PAUSE_FRAMES;
+    state->x = 0;
+    state->counter = 0;
+    state->pause = TEXT_SCROLL_PAUSE_FRAMES;
 }
 
-void ui_scroll_update(bool is_scrolling, uint16_t str_width)
+void ui_scroll_update(scroll_state_t *state, bool needs_scroll, uint16_t str_width)
 {
-    if (is_scrolling)
+    if (needs_scroll)
     {
-        if (text_scroll_pause > 0) text_scroll_pause--;
+        if (state->pause > 0) state->pause--;
         else
         {
-            text_scroll_counter++;
-            if (text_scroll_counter >= TEXT_SCROLL_SPEED)
+            state->counter++;
+            if (state->counter >= TEXT_SCROLL_SPEED)
             {
-                text_scroll_counter = 0;
-                text_scroll_x++;
-                if (text_scroll_x >= (str_width + TEXT_SCROLL_SEPARATOR_WIDTH))
+                state->counter = 0;
+                state->x += TEXT_SCROLL_PIXELS_PER_FRAME;
+                if (state->x >= (str_width + TEXT_SCROLL_SEPARATOR_WIDTH))
                 {
-                    text_scroll_x = 0;
-                    text_scroll_pause = TEXT_SCROLL_PAUSE_FRAMES;
+                    state->x -= (str_width + TEXT_SCROLL_SEPARATOR_WIDTH);
                 }
             }
         }
     }
     else
     {
-        ui_scroll_reset();
+        ui_scroll_reset(state);
     }
 }
 
-void ui_draw_scrollable_text(u8g2_t *u8g2, int16_t x, int16_t y, uint16_t max_width, const char *text, bool is_selected)
+void ui_draw_scrollable_text(u8g2_t *u8g2, int16_t x, int16_t y, uint16_t max_width, const char *text, scroll_state_t *state, uint16_t str_width)
 {
-    // (注意：这里使用 u8g2，它必须是全局可访问的，就像您原代码中那样)
-    uint16_t str_width = u8g2_GetStrWidth(u8g2, text);
     bool needs_scroll = (str_width > max_width);
 
-    if (is_selected)
+    ui_scroll_update(state, needs_scroll, str_width);
+
+    if (needs_scroll)
     {
-        ui_scroll_update(needs_scroll, str_width);
-        if (needs_scroll)
-        {
-            u8g2_DrawStr(u8g2, x - text_scroll_x, y, text);
-            u8g2_DrawStr(u8g2, x - text_scroll_x + str_width + TEXT_SCROLL_SEPARATOR_WIDTH, y, text);
-        }
-        else
-        {
-            u8g2_DrawStr(u8g2, x, y, text);
-        }
+        u8g2_DrawStr(u8g2, x - state->x, y, text);
+        u8g2_DrawStr(u8g2, x - state->x + str_width + TEXT_SCROLL_SEPARATOR_WIDTH, y, text);
     }
     else
     {
