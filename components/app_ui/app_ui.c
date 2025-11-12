@@ -35,6 +35,7 @@ animated_value_t g_popup_anim;
 
 // M_ICON 状态
 float icon_x, icon_x_trg;
+float icon_slider_x, icon_slider_x_trg;
 int16_t app_y, app_y_trg;
 int8_t icon_select;
 // uint8_t icon_num;
@@ -85,6 +86,7 @@ void ui_init(void)
     line_y = line_y_trg = 0;
     box_width = box_width_trg = u8g2_GetStrWidth(&u8g2, list[0].select);
     box_y = box_y_trg = 0;
+    icon_slider_x = icon_slider_x_trg = (128 - 90) / 2; // 90 is line width
 
     animator_init(&g_popup_anim, 16.0f); // Initialize popup animator
     g_current_transition = ANIM_SNOW_DISSOLVE; // Set default transition

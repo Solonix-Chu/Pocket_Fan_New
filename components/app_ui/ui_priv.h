@@ -128,6 +128,7 @@ extern animated_value_t g_popup_anim;
 
 // M_ICON 状态
 extern float icon_x, icon_x_trg;
+extern float icon_slider_x, icon_slider_x_trg;
 extern int16_t app_y, app_y_trg;
 extern int8_t icon_select;
 extern uint8_t icon_num;
