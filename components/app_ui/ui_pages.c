@@ -322,11 +322,33 @@ void icon_ui_show(void)
     move_pid(&icon_x, icon_x_trg, &pid_x_controller);
     move(&app_y, &app_y_trg);
 
+    // Draw the fixed inverted triangle indicator at the top-center
+    u8g2_DrawTriangle(&u8g2, 61, 2, 67, 2, 64, 5);
+
+    // Draw the progress bar line with new vertical position
+    const int line_width = 90;
+    const int line_x = (128 - line_width) / 2;
+    const int line_y = 48; // Moved down from 45
+    u8g2_DrawHLine(&u8g2, line_x, line_y, line_width);
+
+    // Calculate and draw the slider on the progress bar
+    if (icon_num > 1) {
+        const int slider_size = 4;
+        float percentage = (float)icon_select / (icon_num - 1);
+        int slider_range = line_width - slider_size;
+        int slider_x = line_x + (int)(slider_range * percentage);
+        int slider_y = line_y - (slider_size / 2);
+        u8g2_DrawBox(&u8g2, slider_x, slider_y, slider_size, slider_size);
+    }
+
+    // Draw the scrolling icons and text with new vertical positions
     for (uint8_t i = 0; i < icon_num; ++i)
     {
-        u8g2_DrawXBMP(&u8g2, 46 + (int16_t)icon_x + i * ICON_SPACE, 6, 36, icon_width[i], icon_pic[i]);
-        u8g2_SetClipWindow(&u8g2, 0, 48, 128, 64);
-        u8g2_DrawStr(&u8g2, (128 - u8g2_GetStrWidth(&u8g2, icon[i].select)) / 2, 62 - app_y + i * 16, icon[i].select);
+        // Icon moved down to y=8
+        u8g2_DrawXBMP(&u8g2, 46 + (int16_t)icon_x + i * ICON_SPACE, 8, 36, icon_width[i], icon_pic[i]);
+        // Name clipping window and text position moved down
+        u8g2_SetClipWindow(&u8g2, 0, 52, 128, 64);
+        u8g2_DrawStr(&u8g2, (128 - u8g2_GetStrWidth(&u8g2, icon[i].select)) / 2, 64 - app_y + i * 16, icon[i].select);
         u8g2_SetMaxClipWindow(&u8g2);
     }
 }
