@@ -8,6 +8,7 @@ static const char *TAG = "app_ui";
 // --- 共享的内部状态变量定义 ---
 uint8_t ui_index, ui_state;
 uint8_t disappear_step = 1;
+transition_anim_t g_current_transition;
 
 // PID 控制器
 pid_controller_t pid_y_controller = { .kp = 1.0f, .ki = 0.0f, .kd = 0.1f };
@@ -29,6 +30,7 @@ uint8_t pid_line_y, pid_line_y_trg;
 uint8_t pid_box_width, pid_box_width_trg;
 int16_t pid_box_y, pid_box_y_trg;
 int8_t pid_select;
+animated_value_t g_popup_anim;
 // uint8_t pid_num;
 
 // M_ICON 状态
@@ -84,6 +86,9 @@ void ui_init(void)
     box_width = box_width_trg = u8g2_GetStrWidth(&u8g2, list[0].select);
     box_y = box_y_trg = 0;
 
+    animator_init(&g_popup_anim, 16.0f); // Initialize popup animator
+    g_current_transition = ANIM_SNOW_DISSOLVE; // Set default transition
+
     ESP_LOGI(TAG, "UI Component Initialized.");
 }
 
@@ -129,7 +134,7 @@ void ui_proc(void)
         }
         break;
     case S_DISAPPEAR:
-        disappear();
+        run_transition();
         break;
     default:
         break;

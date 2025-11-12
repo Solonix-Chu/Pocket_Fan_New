@@ -62,6 +62,18 @@ enum
     S_PIC_TO_MENU,
 };
 
+// Animation types for page transitions
+typedef enum {
+    ANIM_DITHER_FADE,
+    ANIM_SLIDE_FROM_RIGHT,
+    ANIM_SLIDE_FROM_LEFT,
+    ANIM_SLIDE_FROM_TOP,
+    ANIM_SLIDE_FROM_BOTTOM,
+    ANIM_SNOW_DISSOLVE,
+} transition_anim_t;
+
+extern transition_anim_t g_current_transition;
+
 typedef struct
 {
     char *select;
@@ -106,6 +118,14 @@ extern int16_t pid_box_y, pid_box_y_trg;
 extern int8_t pid_select;
 extern uint8_t pid_num;
 
+// Generic animator for pop-up windows
+typedef struct {
+    float current;
+    float target;
+} animated_value_t;
+
+extern animated_value_t g_popup_anim;
+
 // M_ICON 状态
 extern float icon_x, icon_x_trg;
 extern int16_t app_y, app_y_trg;
@@ -142,13 +162,16 @@ extern char name[];
 bool move(int16_t *a, int16_t *a_trg);
 bool move_icon(int16_t *a, int16_t *a_trg);
 bool move_pid(float *value, float target, pid_controller_t *pid);
+void animator_init(animated_value_t *anim, float value);
+void animator_start(animated_value_t *anim, float target, float start);
+bool animator_run(animated_value_t *anim, pid_controller_t *pid);
 bool move_width(uint8_t *a, uint8_t *a_trg, uint8_t current_select, bool is_up);
 bool move_bar(uint8_t *a, uint8_t *a_trg);
 void ui_scroll_reset(scroll_state_t *state);
 void ui_scroll_update(scroll_state_t *state, bool needs_scroll, uint16_t str_width);
 void ui_draw_scrollable_text(u8g2_t *u8g2, int16_t x, int16_t y, uint16_t max_width, const char *text, scroll_state_t *state, uint16_t str_width);
 void text_edit(bool dir, uint8_t index);
-void disappear(void);
+void run_transition(void);
 
 // --- 页面函数 (在 ui_pages.c 中定义) ---
 void logo_proc(void);
@@ -167,6 +190,7 @@ void text_edit_proc(void);
 void text_edit_ui_show(void);
 void about_proc(void);
 void about_ui_show(void);
+void draw_ui_by_index(uint8_t index);
 // ... (其他页面)
 
 #endif // UI_PRIV_H

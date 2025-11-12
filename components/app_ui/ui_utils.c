@@ -192,36 +192,129 @@ void text_edit(bool dir, uint8_t index)
     }
 }
 
-void disappear()
+void run_transition()
 {
-    switch (disappear_step)
-    {
-    case 1:
-        for (uint16_t i = 0; i < buf_len; ++i) {
-            if (i % 2 == 0) buf_ptr[i] = buf_ptr[i] & 0x55;
+    // Define animation step counts
+    const int slide_steps = 16;
+    const int dither_steps = 5 * 3; // 5 levels, 3 frames each
+    const int snow_steps = 10; // Decreased from 20 for faster animation
+
+    int animation_end_step = 0;
+
+    // On the first frame of any animation, perform setup
+    if (disappear_step == 1) {
+        switch (g_current_transition) {
+            case ANIM_DITHER_FADE:
+            case ANIM_SNOW_DISSOLVE:
+                // These work on the old buffer, so do nothing to it
+                break;
+            case ANIM_SLIDE_FROM_RIGHT:
+            case ANIM_SLIDE_FROM_LEFT:
+            case ANIM_SLIDE_FROM_TOP:
+            case ANIM_SLIDE_FROM_BOTTOM:
+                // These draw the new screen, so clear the buffer first
+                u8g2_ClearBuffer(&u8g2);
+                break;
         }
-        break;
-    case 2:
-        for (uint16_t i = 0; i < buf_len; ++i) {
-            if (i % 2 != 0) buf_ptr[i] = buf_ptr[i] & 0xAA;
-        }
-        break;
-    case 3:
-        for (uint16_t i = 0; i < buf_len; ++i) {
-            if (i % 2 == 0) buf_ptr[i] = buf_ptr[i] & 0x00;
-        }
-        break;
-    case 4:
-        for (uint16_t i = 0; i < buf_len; ++i) {
-            if (i % 2 != 0) buf_ptr[i] = buf_ptr[i] & 0x00;
-        }
-        break;
-    default:
-        ui_state = S_NONE;
-        disappear_step = 0;
-        break;
     }
+
+    // Run the animation for the current step
+    switch (g_current_transition)
+    {
+        case ANIM_DITHER_FADE: {
+            animation_end_step = dither_steps;
+            if (disappear_step > animation_end_step) break;
+
+            // Helper function for dithering fade
+            void fade_out_masking(uint8_t fadeLevel) {
+                if (fadeLevel < 1 || fadeLevel > 5) return;
+                const uint8_t patterns[5][2][2] = {
+                    {{0, 0}, {0, 0}}, {{1, 0}, {0, 0}}, {{1, 0}, {0, 1}},
+                    {{1, 0}, {1, 1}}, {{1, 1}, {1, 1}}
+                };
+                for (int16_t y = 0; y < 64; y++) {
+                    int page = y / 8;
+                    uint8_t pixel_mask = 1 << (y % 8);
+                    for (int16_t x = 0; x < 128; x++) {
+                        if (patterns[fadeLevel - 1][y % 2][x % 2]) {
+                            buf_ptr[page * 128 + x] &= ~pixel_mask;
+                        }
+                    }
+                }
+            }
+            uint8_t currentFadeLevel = (disappear_step - 1) / 3 + 1;
+            fade_out_masking(currentFadeLevel);
+            break;
+        }
+
+        case ANIM_SNOW_DISSOLVE: {
+            animation_end_step = snow_steps;
+            if (disappear_step > animation_end_step) break;
+
+            const int pixels_per_step = 850; // Increased from 450
+            if (disappear_step < snow_steps) {
+                for (int i = 0; i < pixels_per_step; i++) {
+                    int rand_x = rand() % 128;
+                    int rand_y = rand() % 64;
+                    int page = rand_y / 8;
+                    uint8_t pixel_mask = 1 << (rand_y % 8);
+                    buf_ptr[page * 128 + rand_x] &= ~pixel_mask;
+                }
+            } else { // On the last step, ensure it's fully clear
+                u8g2_ClearBuffer(&u8g2);
+            }
+            break;
+        }
+
+        case ANIM_SLIDE_FROM_RIGHT: {
+            animation_end_step = slide_steps;
+            if (disappear_step > animation_end_step) break;
+            uint16_t width = (128 * disappear_step) / slide_steps;
+            uint16_t x = 128 - width;
+            u8g2_SetClipWindow(&u8g2, x, 0, width, 64);
+            draw_ui_by_index(ui_index);
+            u8g2_SetMaxClipWindow(&u8g2);
+            break;
+        }
+
+        case ANIM_SLIDE_FROM_LEFT: {
+            animation_end_step = slide_steps;
+            if (disappear_step > animation_end_step) break;
+            uint16_t width = (128 * disappear_step) / slide_steps;
+            u8g2_SetClipWindow(&u8g2, 0, 0, width, 64);
+            draw_ui_by_index(ui_index);
+            u8g2_SetMaxClipWindow(&u8g2);
+            break;
+        }
+
+        case ANIM_SLIDE_FROM_BOTTOM: {
+            animation_end_step = slide_steps;
+            if (disappear_step > animation_end_step) break;
+            uint16_t height = (64 * disappear_step) / slide_steps;
+            uint16_t y = 64 - height;
+            u8g2_SetClipWindow(&u8g2, 0, y, 128, height);
+            draw_ui_by_index(ui_index);
+            u8g2_SetMaxClipWindow(&u8g2);
+            break;
+        }
+
+        case ANIM_SLIDE_FROM_TOP: {
+            animation_end_step = slide_steps;
+            if (disappear_step > animation_end_step) break;
+            uint16_t height = (64 * disappear_step) / slide_steps;
+            u8g2_SetClipWindow(&u8g2, 0, 0, 128, height);
+            draw_ui_by_index(ui_index);
+            u8g2_SetMaxClipWindow(&u8g2);
+            break;
+        }
+    }
+
+    // Step and state management
     disappear_step++;
+    if (disappear_step > animation_end_step) {
+        ui_state = S_NONE;
+        disappear_step = 1; // Reset for the next transition
+    }
 }
 
 bool move_pid(float *value, float target, pid_controller_t *pid)
@@ -249,4 +342,18 @@ bool move_pid(float *value, float target, pid_controller_t *pid)
     pid->previous_error = error;
     
     return false;
+}
+
+void animator_init(animated_value_t *anim, float value) {
+    anim->current = value;
+    anim->target = value;
+}
+
+void animator_start(animated_value_t *anim, float target, float start) {
+    anim->current = start;
+    anim->target = target;
+}
+
+bool animator_run(animated_value_t *anim, pid_controller_t *pid) {
+    return move_pid(&anim->current, anim->target, pid);
 }

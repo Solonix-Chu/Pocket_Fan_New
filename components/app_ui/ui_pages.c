@@ -249,6 +249,7 @@ void pid_proc()
         }
         else
         {
+            animator_start(&g_popup_anim, 16.0f, -50.0f);
             ui_index = M_PID_EDIT;
         }
     }
@@ -257,35 +258,39 @@ void pid_proc()
 void pid_edit_ui_show()
 {
     char buf[20];
-    u8g2_DrawBox(&u8g2, 16, 16, 96, 31);
+    int16_t y_pos = (int16_t)g_popup_anim.current;
+
+    u8g2_DrawBox(&u8g2, 16, y_pos, 96, 31);
     u8g2_SetDrawColor(&u8g2, 2);
-    u8g2_DrawBox(&u8g2, 17, 17, 94, 29);
+    u8g2_DrawBox(&u8g2, 17, y_pos + 1, 94, 29);
     u8g2_SetDrawColor(&u8g2, 1);
 
-    u8g2_DrawFrame(&u8g2, 18, 36, 60, 8);
-    u8g2_DrawBox(&u8g2, 20, 38, (uint8_t)(Kpid[pid_select] / PID_MAX * 56), 4);
+    u8g2_DrawFrame(&u8g2, 18, y_pos + 20, 60, 8);
+    u8g2_DrawBox(&u8g2, 20, y_pos + 22, (uint8_t)(Kpid[pid_select] / PID_MAX * 56), 4);
 
     switch (pid_select)
     {
     case 0:
-        u8g2_DrawStr(&u8g2, 22, 30, "Editing Kp");
+        u8g2_DrawStr(&u8g2, 22, y_pos + 14, "Editing Kp");
         break;
     case 1:
-        u8g2_DrawStr(&u8g2, 22, 30, "Editing Ki");
+        u8g2_DrawStr(&u8g2, 22, y_pos + 14, "Editing Ki");
         break;
     case 2:
-        u8g2_DrawStr(&u8g2, 22, 30, "Editing Kd");
+        u8g2_DrawStr(&u8g2, 22, y_pos + 14, "Editing Kd");
         break;
     default:
         break;
     }
 
     sprintf(buf, "%.2f", Kpid[pid_select]);
-    u8g2_DrawStr(&u8g2, 81, 44, buf);
+    u8g2_DrawStr(&u8g2, 81, y_pos + 28, buf);
 }
 
 void pid_edit_proc(void)
 {
+    animator_run(&g_popup_anim, &pid_y_controller);
+
     if (BtnUp->currentState == APP_BUTTON_STATE_CLICKED)
     {
         BtnUp->currentState = APP_BUTTON_STATE_NOCHANGE;
@@ -559,4 +564,18 @@ void about_proc()
         init_select_menu_state();
     }
     about_ui_show();
+}
+
+void draw_ui_by_index(uint8_t index) {
+    switch(index) {
+        case M_LOGO: logo_ui_show(); break;
+        case M_SELECT: select_ui_show(); break;
+        case M_PID: pid_ui_show(); break;
+        case M_PID_EDIT: pid_edit_ui_show(); break;
+        case M_ICON: icon_ui_show(); break;
+        case M_CHART: chart_ui_show(); break;
+        case M_TEXT_EDIT: text_edit_ui_show(); break;
+        case M_ABOUT: about_ui_show(); break;
+        default: break;
+    }
 }
