@@ -201,6 +201,7 @@ SELECT_LIST list[] =
         {"-Chart Test"},
         {"-Text Edit"},
         {"-Play Video"},
+        {"-Invert Theme"},
         {"{ About }"},
 };
 uint8_t list_num = sizeof(list) / sizeof(SELECT_LIST);

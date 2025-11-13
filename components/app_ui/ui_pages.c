@@ -1,6 +1,9 @@
 // components/ui/ui_pages.c
 
 #include "ui_priv.h"
+#include <stdbool.h>
+
+bool g_invert_color_enabled = false;
 
 static const char *TAG = "ui_page";
 
@@ -28,6 +31,12 @@ static void init_select_menu_state()
 // --- Logo 页面 ---
 void logo_ui_show()
 {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
     u8g2_DrawXBMP(&u8g2, 0, 0, 128, 64, LOGO);
 }
 
@@ -47,6 +56,13 @@ void logo_proc(void)
 // --- Select 页面 (API版本) ---
 void select_ui_show()
 {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
+
     move_bar(&line_y, &line_y_trg);
     move(&y, &y_trg);
     move_pid(&box_y, box_y_trg, &pid_y_controller);
@@ -60,7 +76,19 @@ void select_ui_show()
     for (uint8_t i = 0; i < list_num; ++i)
     {
         int16_t current_y = 16 * i + y + 12;
-        
+
+        // For the "Invert Theme" item, draw a checkbox on the right
+        if (i == 6) {
+            int checkbox_size = 8;
+            int checkbox_x = 115; // Position on the far right
+            int checkbox_y = 16 * i + y + 4;
+
+            u8g2_DrawFrame(&u8g2, checkbox_x, checkbox_y, checkbox_size, checkbox_size);
+            if (g_invert_color_enabled) {
+                u8g2_DrawBox(&u8g2, checkbox_x + 2, checkbox_y + 2, checkbox_size - 4, checkbox_size - 4);
+            }
+        }
+
         uint16_t str_width = u8g2_GetStrWidth(&u8g2, list[i].select);
         bool needs_scroll = str_width > MAX_TEXT_WIDTH;
 
@@ -69,7 +97,7 @@ void select_ui_show()
             u8g2_SetClipWindow(&u8g2, 0, clip_y, MAX_TEXT_WIDTH, clip_y + 16);
         }
 
-        ui_draw_scrollable_text(&u8g2, 
+        ui_draw_scrollable_text(&u8g2,
                                 0,
                                 current_y,
                                 MAX_TEXT_WIDTH,
@@ -81,7 +109,7 @@ void select_ui_show()
         if (needs_scroll) {
             u8g2_SetMaxClipWindow(&u8g2);
         }
-        
+
         u8g2_DrawPixel(&u8g2, 125, single_line_length * (i + 1));
         u8g2_DrawPixel(&u8g2, 127, single_line_length * (i + 1));
     }
@@ -158,6 +186,7 @@ void select_proc(void)
         case 0: // return
             ui_state = S_DISAPPEAR;
             ui_index = M_LOGO;
+            init_select_menu_state();
             break;
         case 1: // pid
             ui_state = S_DISAPPEAR;
@@ -175,7 +204,15 @@ void select_proc(void)
             ui_state = S_DISAPPEAR;
             ui_index = M_TEXT_EDIT;
             break;
-        case 6: // about
+        case 6: // Invert Theme
+            g_invert_color_enabled = !g_invert_color_enabled;
+            if (g_invert_color_enabled) {
+                u8g2_SendF(&u8g2, "c", 0xA7); // 0xA7: Inverse display
+            } else {
+                u8g2_SendF(&u8g2, "c", 0xA6); // 0xA6: Normal display
+            }
+            break;
+        case 7: // about
             ui_state = S_DISAPPEAR;
             ui_index = M_ABOUT;
             break;
@@ -189,6 +226,13 @@ void select_proc(void)
 // --- PID 页面 ---
 void pid_ui_show()
 {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
+
     move_bar(&pid_line_y, &pid_line_y_trg);
     move(&pid_box_y, &pid_box_y_trg);
     move_width(&pid_box_width, &pid_box_width_trg, pid_select, (BtnUp->currentState == APP_BUTTON_STATE_CLICKED));
@@ -257,6 +301,13 @@ void pid_proc()
 
 void pid_edit_ui_show()
 {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
+
     char buf[20];
     int16_t y_pos = (int16_t)g_popup_anim.current;
 
@@ -319,6 +370,13 @@ void pid_edit_proc(void)
 
 void icon_ui_show(void)
 {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
+
     // Run animations
     move_pid(&icon_x, icon_x_trg, &pid_x_controller);
     move_pid(&icon_slider_x, icon_slider_x_trg, &pid_x_controller);
@@ -405,6 +463,13 @@ void icon_proc(void)
 // --- Chart 页面 ---
 void chart_draw_frame()
 {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
+
     u8g2_DrawStr(&u8g2, 4, 12, "Real time angle :");
     u8g2_DrawRBox(&u8g2, 4, 18, 120, 46, 8);
     u8g2_SetDrawColor(&u8g2, 2);
@@ -423,6 +488,13 @@ void chart_draw_frame()
 
 void chart_ui_show()
 {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
+
     char buf[20];
     if (!frame_is_drawed)
     {
@@ -473,6 +545,13 @@ void chart_proc()
 // --- Text Edit 页面 ---
 void text_edit_ui_show()
 {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
+
     u8g2_DrawRFrame(&u8g2, 4, 6, 120, 52, 8);
     u8g2_DrawStr(&u8g2, (128 - u8g2_GetStrWidth(&u8g2, "--Text Editor--")) / 2, 20, "--Text Editor--");
     u8g2_DrawStr(&u8g2, 10, 38, name);
@@ -584,6 +663,13 @@ void text_edit_proc()
 // --- About 页面 ---
 void about_ui_show()
 {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
+
     u8g2_DrawStr(&u8g2, 2, 12, "MCU : ESP32");
     u8g2_DrawStr(&u8g2, 2, 28, "FLASH : 4MB");
     u8g2_DrawStr(&u8g2, 2, 44, "SRAM : 520KB");
@@ -603,6 +689,13 @@ void about_proc()
 }
 
 void draw_ui_by_index(uint8_t index) {
+    // Apply invert effect if enabled
+    if (g_invert_color_enabled) {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    } else {
+        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    }
+
     switch(index) {
         case M_LOGO: logo_ui_show(); break;
         case M_SELECT: select_ui_show(); break;
