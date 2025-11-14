@@ -29,7 +29,7 @@ static const char *TAG = "example";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////// Please update the following configuration according to your LCD spec //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define EXAMPLE_LCD_PIXEL_CLOCK_HZ    (400 * 1000)
+#define EXAMPLE_LCD_PIXEL_CLOCK_HZ    (800 * 1000)
 #define EXAMPLE_PIN_NUM_SDA           5
 #define EXAMPLE_PIN_NUM_SCL           6
 #define EXAMPLE_PIN_NUM_RST           -1
@@ -47,7 +47,22 @@ static const char *TAG = "example";
 #define EXAMPLE_LCD_CMD_BITS           8
 #define EXAMPLE_LCD_PARAM_BITS         8
 
-extern void example_lvgl_demo_ui(lv_disp_t *disp);
+extern void example_lvgl_demo_ui(lv_display_t *disp);
+
+static void gui_task(void *pvParameter)
+{
+    lv_display_t *disp = (lv_display_t *)pvParameter;
+    ESP_LOGI(TAG, "Display LVGL Scroll Text");
+    // Lock the mutex due to the LVGL APIs are not thread-safe
+    if (lvgl_port_lock(0)) {
+        /* Rotation of the screen */
+        lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_0);
+        example_lvgl_demo_ui(disp);
+        // Release the mutex
+        lvgl_port_unlock();
+    }
+    vTaskDelete(NULL);
+}
 
 void usr_lcd_init(void)
 {
@@ -125,16 +140,7 @@ void usr_lcd_init(void)
             .mirror_y = true,
         }
     };
-    lv_disp_t *disp = lvgl_port_add_disp(&disp_cfg);
+    lv_display_t *disp = lvgl_port_add_disp(&disp_cfg);
 
-    /* Rotation of the screen */
-    lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
-
-    ESP_LOGI(TAG, "Display LVGL Scroll Text");
-    // Lock the mutex due to the LVGL APIs are not thread-safe
-    if (lvgl_port_lock(0)) {
-        example_lvgl_demo_ui(disp);
-        // Release the mutex
-        lvgl_port_unlock();
-    }
+    xTaskCreate(gui_task, "gui_task", 4096, disp, 5, NULL);
 }

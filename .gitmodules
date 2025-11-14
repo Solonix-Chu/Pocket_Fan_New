@@ -1,0 +1,3 @@
+[submodule "components/--force"]
+	path = components/--force
+	url = https://github.com/Forairaaaaa/smooth_ui_toolkit.git
