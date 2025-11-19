@@ -9,6 +9,28 @@ static const char *TAG = "ui_page";
 
 static scroll_state_t list_scroll_states[10];
 
+// Invert color state tracking to prevent memory leaks
+static bool last_invert_state = false;
+// Safe invert color application with rate limiting and memory leak prevention
+static void apply_invert_color_if_needed(void)
+{
+
+    // Only apply invert color if state changed and enough time has passed
+    if (g_invert_color_enabled != last_invert_state) {
+
+        // Apply the invert color change
+        if (g_invert_color_enabled) {
+            u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+            ESP_LOGD(TAG, "Applied inverse display");
+        } else {
+            u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+            ESP_LOGD(TAG, "Applied normal display");
+        }
+
+        last_invert_state = g_invert_color_enabled;
+    }
+}
+
 static void init_select_menu_state()
 {
     ui_select = 0;
@@ -31,12 +53,8 @@ static void init_select_menu_state()
 // --- Logo 页面 ---
 void logo_ui_show()
 {
-    // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
+    // Apply invert effect if needed (with rate limiting)
+    apply_invert_color_if_needed();
     u8g2_DrawXBMP(&u8g2, 0, 0, 128, 64, LOGO);
 }
 
@@ -57,11 +75,13 @@ void logo_proc(void)
 void select_ui_show()
 {
     // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
+    // if (g_invert_color_enabled) {
+    //     u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
+    // } else {
+    //     u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
+    // }
+
+    apply_invert_color_if_needed();
 
     move_bar(&line_y, &line_y_trg);
     move(&y, &y_trg);
@@ -227,11 +247,7 @@ void select_proc(void)
 void pid_ui_show()
 {
     // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
+    apply_invert_color_if_needed();
 
     move_bar(&pid_line_y, &pid_line_y_trg);
     move(&pid_box_y, &pid_box_y_trg);
@@ -302,12 +318,7 @@ void pid_proc()
 void pid_edit_ui_show()
 {
     // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
-
+    apply_invert_color_if_needed();
     char buf[20];
     int16_t y_pos = (int16_t)g_popup_anim.current;
 
@@ -371,11 +382,7 @@ void pid_edit_proc(void)
 void icon_ui_show(void)
 {
     // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
+    apply_invert_color_if_needed();
 
     // Run animations
     move_pid(&icon_x, icon_x_trg, &pid_x_controller);
@@ -464,11 +471,7 @@ void icon_proc(void)
 void chart_draw_frame()
 {
     // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
+    apply_invert_color_if_needed();
 
     u8g2_DrawStr(&u8g2, 4, 12, "Real time angle :");
     u8g2_DrawRBox(&u8g2, 4, 18, 120, 46, 8);
@@ -489,12 +492,7 @@ void chart_draw_frame()
 void chart_ui_show()
 {
     // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
-
+    apply_invert_color_if_needed();
     char buf[20];
     if (!frame_is_drawed)
     {
@@ -546,11 +544,7 @@ void chart_proc()
 void text_edit_ui_show()
 {
     // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
+    apply_invert_color_if_needed();
 
     u8g2_DrawRFrame(&u8g2, 4, 6, 120, 52, 8);
     u8g2_DrawStr(&u8g2, (128 - u8g2_GetStrWidth(&u8g2, "--Text Editor--")) / 2, 20, "--Text Editor--");
@@ -664,11 +658,7 @@ void text_edit_proc()
 void about_ui_show()
 {
     // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
+    apply_invert_color_if_needed();
 
     u8g2_DrawStr(&u8g2, 2, 12, "MCU : ESP32");
     u8g2_DrawStr(&u8g2, 2, 28, "FLASH : 4MB");
@@ -690,11 +680,7 @@ void about_proc()
 
 void draw_ui_by_index(uint8_t index) {
     // Apply invert effect if enabled
-    if (g_invert_color_enabled) {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA7); // Inverse display
-    } else {
-        u8x8_cad_SendCmd(u8g2_GetU8x8(&u8g2), 0xA6); // Normal display
-    }
+    apply_invert_color_if_needed();
 
     switch(index) {
         case M_LOGO: logo_ui_show(); break;

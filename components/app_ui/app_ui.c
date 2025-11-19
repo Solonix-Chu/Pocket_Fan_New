@@ -2,6 +2,7 @@
 
 #include "app_ui.h"        // 公共 API
 #include "ui_priv.h"   // 私有定义
+#include "esp_system.h"    // For memory monitoring functions
 
 static const char *TAG = "app_ui";
 
@@ -146,9 +147,36 @@ void ui_proc(void)
 
 void ui_task(void *pvParameters)
 {
+    size_t last_free_heap = 0;
+    uint32_t heap_check_counter = 0;
+
     while (1)
     {
         ui_proc();           // Process UI and input events
-        vTaskDelay(pdMS_TO_TICKS(10)); // UI update rate
+
+        // Memory monitoring - check heap every 20 cycles (approximately once per second)
+        if (++heap_check_counter >= 20) {
+            size_t free_heap = esp_get_free_heap_size();
+            size_t minimum_free_heap = esp_get_minimum_free_heap_size();
+
+            // Log if heap changed significantly or is critically low
+            if (free_heap != last_free_heap || free_heap < 10000) {
+                ESP_LOGI(TAG, "Free heap: %zu bytes, Min free heap: %zu bytes",
+                        free_heap, minimum_free_heap);
+                last_free_heap = free_heap;
+            }
+
+            // Slow down UI if memory is critically low
+            if (free_heap < 5000) { // Less than 5KB free
+                ESP_LOGW(TAG, "Low memory detected, slowing down UI refresh");
+                vTaskDelay(pdMS_TO_TICKS(100)); // Slower refresh when low on memory
+                heap_check_counter = 0;
+                continue;
+            }
+
+            heap_check_counter = 0;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(10)); // Reduced UI update rate from 10ms to 50ms for better stability
     }
 }

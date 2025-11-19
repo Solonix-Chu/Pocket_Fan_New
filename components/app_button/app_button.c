@@ -273,8 +273,8 @@ void app_button_init(void) {
     hall_wheel_config_t wheel_config = {
         .gpio_num = (gpio_num_t)GPIO_BUTTON_UP, // 临时值, 下面会覆盖
         .active_level = BUTTON_ACTIVE_LEVEL,
-        .wave_duration_ms = 40,
-        .detection_window_ms = 150,
+        .wave_duration_ms = 2,
+        .detection_window_ms = 100,
         .min_pulses = 2
     };
     
