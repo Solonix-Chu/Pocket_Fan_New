@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
 #include "esp_log.h"
 #include "esp_err.h"
 #include "esp_timer.h"
@@ -18,147 +21,312 @@ static const char *TAG = "hall_wheel";
 
 // 配置参数
 #define HALL_WHEEL_MAX_CB        3  // 每个事件最多回调函数数量
-#define DEFAULT_WAVE_DURATION    30  // 默认方波持续时间（毫秒）
-#define DEFAULT_DETECTION_WINDOW 150 // 默认检测窗口时间（毫秒）
+#define DEFAULT_DEBOUNCE_MS      2   // 默认防抖时间 (ms)
+#define DEFAULT_TIMEOUT_MS       100 // 默认滚动会话超时 (ms)
 #define DEFAULT_MIN_PULSES       2   // 默认最小脉冲数量
-#define POLL_INTERVAL_MS         5   // 定时器扫描间隔（毫秒）
+#define SPEED_AVG_COUNT          4   // 用于计算平均速度的脉冲数
+
+// 中断处理和任务相关
+#define ISR_QUEUE_LEN            16
+#define TASK_PRIORITY            (configMAX_PRIORITIES - 5)
+#define TASK_STACK_SIZE          (2048)
 
 /**
- * @brief 霍尔滚轮脉冲计数器状态
+ * @brief 滚动状态
+ */
+typedef enum {
+    WHEEL_STATE_IDLE,
+    WHEEL_STATE_SCROLLING,
+} wheel_state_t;
+
+/**
+ * @brief 脉冲事件 (ISR -> Task)
  */
 typedef struct {
-    uint8_t pulse_count;              // 当前周期内的脉冲计数
-    int64_t last_change_time;         // 最后一次电平变化的时间戳
-    bool last_level;                  // 上一次的电平状态
-    int64_t detection_start_time;     // 检测开始时间戳
-    bool detection_in_progress;       // 是否正在进行检测
-} hall_wheel_pulse_state_t;
+    gpio_num_t gpio_num;
+    int64_t timestamp;
+} hall_pulse_event_t;
+
+/**
+ * @brief 霍尔滚轮内部状态
+ */
+typedef struct {
+    wheel_state_t state;
+    uint32_t pulse_count;
+    int64_t last_pulse_time;
+    uint32_t speed_pps;
+    int64_t pulse_intervals[SPEED_AVG_COUNT];
+    uint8_t interval_index;
+} hall_wheel_internal_state_t;
 
 /**
  * @brief 回调函数节点
  */
 typedef struct callback_node {
-    hall_wheel_cb_t cb;               // 回调函数
-    void *user_data;                  // 用户数据
-    struct callback_node *next;       // 下一个节点
+    hall_wheel_cb_t cb;
+    void *user_data;
+    struct callback_node *next;
 } callback_node_t;
 
 /**
  * @brief 霍尔滚轮设备结构体
  */
 typedef struct hall_wheel_dev {
-    hall_wheel_config_t config;       // 配置
-    hall_wheel_pulse_state_t state;   // 状态
-    callback_node_t *callbacks[HALL_WHEEL_EVENT_MAX]; // 回调函数链表
-    size_t cb_size[HALL_WHEEL_EVENT_MAX]; // 各事件的回调函数数量
-    bool is_running;                  // 是否正在运行
-    struct hall_wheel_dev *next;      // 下一个设备
+    hall_wheel_config_t config;
+    hall_wheel_internal_state_t state;
+    callback_node_t *callbacks[HALL_WHEEL_EVENT_MAX];
+    esp_timer_handle_t timeout_timer;
+    struct hall_wheel_dev *next;
 } hall_wheel_dev_t;
 
 // 全局变量
-static hall_wheel_dev_t *g_hall_wheel_list = NULL;  // 设备链表头
-static esp_timer_handle_t g_timer_handle = NULL;    // 全局定时器句柄
-static bool g_is_timer_running = false;             // 定时器是否运行中
+static hall_wheel_dev_t *g_hall_wheel_list = NULL;
+static QueueHandle_t g_pulse_evt_queue = NULL;
+static TaskHandle_t g_task_handle = NULL;
+static portMUX_TYPE g_list_mux = portMUX_INITIALIZER_UNLOCKED;
 
 // 前向声明
-static void hall_wheel_timer_cb(void *arg);
-static void process_hall_wheel(hall_wheel_dev_t *wheel);
-static void check_detection_window(hall_wheel_dev_t *wheel);
+static void hall_wheel_task(void *arg);
+static void IRAM_ATTR gpio_isr_handler(void *arg);
+static void scroll_timeout_cb(void *arg);
+
+// 触发回调
+static void trigger_callbacks(hall_wheel_dev_t *wheel, hall_wheel_event_t event)
+{
+    callback_node_t *node = wheel->callbacks[event];
+    while (node) {
+        node->cb(wheel, event, node->user_data);
+        node = node->next;
+    }
+}
+
+// 核心处理逻辑
+static void process_pulse(hall_wheel_dev_t *wheel, int64_t timestamp)
+{
+    int64_t interval_us = timestamp - wheel->state.last_pulse_time;
+
+    // 1. 防抖
+    if (interval_us < wheel->config.wave_duration_ms * 1000) {
+        return;
+    }
+
+    // 重置超时定时器
+    esp_timer_stop(wheel->timeout_timer);
+    esp_timer_start_once(wheel->timeout_timer, wheel->config.detection_window_ms * 1000);
+
+    wheel->state.last_pulse_time = timestamp;
+    wheel->state.pulse_count++;
+
+    // 2. 状态机
+    if (wheel->state.state == WHEEL_STATE_IDLE) {
+        if (wheel->state.pulse_count >= wheel->config.min_pulses) {
+            wheel->state.state = WHEEL_STATE_SCROLLING;
+            trigger_callbacks(wheel, HALL_WHEEL_EVENT_SCROLL_START);
+            trigger_callbacks(wheel, HALL_WHEEL_EVENT_CLICK);
+        }
+    } else { // WHEEL_STATE_SCROLLING
+        trigger_callbacks(wheel, HALL_WHEEL_EVENT_CLICK);
+    }
+
+    // 3. 速度计算
+    if (wheel->state.state == WHEEL_STATE_SCROLLING) {
+        wheel->state.pulse_intervals[wheel->state.interval_index] = interval_us;
+        wheel->state.interval_index = (wheel->state.interval_index + 1) % SPEED_AVG_COUNT;
+
+        int64_t total_interval = 0;
+        uint8_t count = 0;
+        for (int i = 0; i < SPEED_AVG_COUNT; i++) {
+            if (wheel->state.pulse_intervals[i] > 0) {
+                total_interval += wheel->state.pulse_intervals[i];
+                count++;
+            }
+        }
+        if (count > 0) {
+            int64_t avg_interval = total_interval / count;
+            if (avg_interval > 0) {
+                wheel->state.speed_pps = 1000000 / avg_interval;
+            }
+        }
+    }
+}
+
+// 滚动超时回调
+static void scroll_timeout_cb(void *arg)
+{
+    hall_wheel_dev_t *wheel = (hall_wheel_dev_t *)arg;
+    if (wheel->state.state == WHEEL_STATE_SCROLLING) {
+        trigger_callbacks(wheel, HALL_WHEEL_EVENT_SCROLL_END);
+    }
+    // 重置状态
+    wheel->state.state = WHEEL_STATE_IDLE;
+    wheel->state.pulse_count = 0;
+    wheel->state.speed_pps = 0;
+    memset(wheel->state.pulse_intervals, 0, sizeof(wheel->state.pulse_intervals));
+    wheel->state.interval_index = 0;
+}
+
+// 全局处理任务
+static void hall_wheel_task(void *arg)
+{
+    hall_pulse_event_t pulse_event;
+    while (1) {
+        if (xQueueReceive(g_pulse_evt_queue, &pulse_event, portMAX_DELAY)) {
+            hall_wheel_dev_t *wheel = NULL;
+
+            // Find the device handle in a critical section
+            portENTER_CRITICAL(&g_list_mux);
+            hall_wheel_dev_t *current = g_hall_wheel_list;
+            while (current) {
+                if (current->config.gpio_num == pulse_event.gpio_num) {
+                    wheel = current;
+                    break;
+                }
+                current = current->next;
+            }
+            portEXIT_CRITICAL(&g_list_mux);
+
+            // Process the pulse outside the critical section
+            if (wheel) {
+                process_pulse(wheel, pulse_event.timestamp);
+            }
+        }
+    }
+}
+
+// ISR handler
+static void IRAM_ATTR gpio_isr_handler(void *arg)
+{
+    gpio_num_t gpio_num = (gpio_num_t)arg;
+    hall_pulse_event_t event = {
+        .gpio_num = gpio_num,
+        .timestamp = esp_timer_get_time(),
+    };
+    xQueueSendFromISR(g_pulse_evt_queue, &event, NULL);
+}
+
+// 全局资源初始化
+static esp_err_t hall_wheel_init_global(void)
+{
+    if (g_pulse_evt_queue == NULL) {
+        g_pulse_evt_queue = xQueueCreate(ISR_QUEUE_LEN, sizeof(hall_pulse_event_t));
+        HALL_WHEEL_CHECK(g_pulse_evt_queue, "create queue failed", ESP_ERR_NO_MEM);
+    }
+
+    if (g_task_handle == NULL) {
+        BaseType_t res = xTaskCreate(hall_wheel_task, "hall_wheel_task", TASK_STACK_SIZE, NULL, TASK_PRIORITY, &g_task_handle);
+        HALL_WHEEL_CHECK(res == pdPASS, "create task failed", ESP_ERR_NO_MEM);
+    }
+    
+    esp_err_t ret = gpio_install_isr_service(0); // ESP_INTR_FLAG_LEVEL1
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        // ESP_ERR_INVALID_STATE means it's already installed, which is fine.
+        ESP_LOGE(TAG, "install isr service failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    return ESP_OK;
+}
+
+// 全局资源销毁
+static void hall_wheel_deinit_global(void)
+{
+    if (g_task_handle) {
+        vTaskDelete(g_task_handle);
+        g_task_handle = NULL;
+    }
+    if (g_pulse_evt_queue) {
+        vQueueDelete(g_pulse_evt_queue);
+        g_pulse_evt_queue = NULL;
+    }
+    gpio_uninstall_isr_service();
+}
 
 esp_err_t hall_wheel_create(const hall_wheel_config_t *config, hall_wheel_handle_t *handle_out)
 {
     HALL_WHEEL_CHECK(config != NULL, "config is null", ESP_ERR_INVALID_ARG);
     HALL_WHEEL_CHECK(handle_out != NULL, "handle_out is null", ESP_ERR_INVALID_ARG);
     HALL_WHEEL_CHECK(GPIO_IS_VALID_GPIO(config->gpio_num), "Invalid GPIO number", ESP_ERR_INVALID_ARG);
-    
-    // 检查该GPIO是否已被使用
+
+    portENTER_CRITICAL(&g_list_mux);
+    // 检查GPIO是否已被使用
     hall_wheel_dev_t *temp = g_hall_wheel_list;
     while (temp) {
         if (temp->config.gpio_num == config->gpio_num) {
-            ESP_LOGE(TAG, "GPIO %d already used by another hall wheel", config->gpio_num);
+            portEXIT_CRITICAL(&g_list_mux);
+            ESP_LOGE(TAG, "GPIO %d already used", config->gpio_num);
             return ESP_ERR_INVALID_STATE;
         }
         temp = temp->next;
     }
-    
-    ESP_LOGI(TAG, "Creating Hall wheel device on GPIO %d", config->gpio_num);
-    
-    // 分配内存
+    portEXIT_CRITICAL(&g_list_mux);
+
+    // 初始化全局资源
+    esp_err_t ret = hall_wheel_init_global();
+    if (ret != ESP_OK) return ret;
+
+    // 分配设备内存
     hall_wheel_dev_t *wheel = calloc(1, sizeof(hall_wheel_dev_t));
     HALL_WHEEL_CHECK(wheel != NULL, "calloc wheel failed", ESP_ERR_NO_MEM);
-    
-    // 设置配置参数
-    memcpy(&wheel->config, config, sizeof(hall_wheel_config_t));
-    
-    // 使用默认值，如果没有设置
-    if (wheel->config.wave_duration_ms == 0) {
-        wheel->config.wave_duration_ms = DEFAULT_WAVE_DURATION;
+
+    // 设置配置，应用默认值
+    wheel->config = *config;
+    if (wheel->config.wave_duration_ms == 0) wheel->config.wave_duration_ms = DEFAULT_DEBOUNCE_MS;
+    if (wheel->config.detection_window_ms == 0) wheel->config.detection_window_ms = DEFAULT_TIMEOUT_MS;
+    if (wheel->config.min_pulses == 0) wheel->config.min_pulses = DEFAULT_MIN_PULSES;
+
+    // 创建超时定时器
+    esp_timer_create_args_t timer_args = {
+        .callback = scroll_timeout_cb,
+        .arg = wheel,
+        .name = "hall_wheel_timeout"
+    };
+    ret = esp_timer_create(&timer_args, &wheel->timeout_timer);
+    if (ret != ESP_OK) {
+        free(wheel);
+        return ret;
     }
-    if (wheel->config.detection_window_ms == 0) {
-        wheel->config.detection_window_ms = DEFAULT_DETECTION_WINDOW;
-    }
-    if (wheel->config.min_pulses == 0) {
-        wheel->config.min_pulses = DEFAULT_MIN_PULSES;
-    }
-    
+
     // 配置GPIO
     gpio_config_t io_conf = {
         .pin_bit_mask = (1ULL << wheel->config.gpio_num),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = (wheel->config.active_level == 0) ? GPIO_PULLUP_ENABLE : GPIO_PULLUP_DISABLE,
         .pull_down_en = (wheel->config.active_level == 1) ? GPIO_PULLDOWN_ENABLE : GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE,  // 不使用GPIO中断，通过定时器轮询
+        .intr_type = GPIO_INTR_ANYEDGE,
     };
-    esp_err_t ret = gpio_config(&io_conf);
+    ret = gpio_config(&io_conf);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to configure GPIO %d, err=%d", wheel->config.gpio_num, ret);
+        esp_timer_delete(wheel->timeout_timer);
         free(wheel);
         return ret;
     }
     
-    // 初始化状态
-    wheel->is_running = true;
-    wheel->state.last_level = (gpio_get_level(wheel->config.gpio_num) == wheel->config.active_level);
-    
-    // 将设备添加到链表
+    // 添加ISR处理
+    ret = gpio_isr_handler_add(wheel->config.gpio_num, gpio_isr_handler, (void *)wheel->config.gpio_num);
+    if (ret != ESP_OK) {
+        esp_timer_delete(wheel->timeout_timer);
+        free(wheel);
+        return ret;
+    }
+
+    // 添加到设备链表
+    portENTER_CRITICAL(&g_list_mux);
     wheel->next = g_hall_wheel_list;
     g_hall_wheel_list = wheel;
-    
-    // 如果是第一个设备，创建全局定时器
-    if (!g_timer_handle) {
-        esp_timer_create_args_t timer_args = {
-            .callback = hall_wheel_timer_cb,
-            .arg = NULL,
-            .dispatch_method = ESP_TIMER_TASK,
-            .name = "hall_wheel_timer"
-        };
-        ret = esp_timer_create(&timer_args, &g_timer_handle);
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to create timer, err=%d", ret);
-            // 从链表移除
-            g_hall_wheel_list = wheel->next;
-            free(wheel);
-            return ret;
-        }
-    }
-    
-    // 如果定时器未运行，启动定时器
-    if (!g_is_timer_running) {
-        esp_timer_start_periodic(g_timer_handle, POLL_INTERVAL_MS * 1000);
-        g_is_timer_running = true;
-    }
-    
+    portEXIT_CRITICAL(&g_list_mux);
+
     *handle_out = wheel;
+    ESP_LOGI(TAG, "Hall wheel created on GPIO %d", wheel->config.gpio_num);
     return ESP_OK;
 }
 
-esp_err_t hall_wheel_register_cb(hall_wheel_handle_t handle, hall_wheel_event_t event, 
+esp_err_t hall_wheel_register_cb(hall_wheel_handle_t handle, hall_wheel_event_t event,
                                hall_wheel_cb_t cb, void *user_data)
 {
     HALL_WHEEL_CHECK(handle != NULL, "handle is null", ESP_ERR_INVALID_ARG);
     HALL_WHEEL_CHECK(event < HALL_WHEEL_EVENT_MAX, "event out of range", ESP_ERR_INVALID_ARG);
     HALL_WHEEL_CHECK(cb != NULL, "callback is null", ESP_ERR_INVALID_ARG);
-    
+
     hall_wheel_dev_t *wheel = (hall_wheel_dev_t *)handle;
     
     // 创建新的回调节点
@@ -167,145 +335,80 @@ esp_err_t hall_wheel_register_cb(hall_wheel_handle_t handle, hall_wheel_event_t 
     
     new_node->cb = cb;
     new_node->user_data = user_data;
-    new_node->next = NULL;
-    
+
     // 添加到回调链表
-    if (wheel->callbacks[event] == NULL) {
-        wheel->callbacks[event] = new_node;
+    portENTER_CRITICAL(&g_list_mux);
+    callback_node_t **head = &wheel->callbacks[event];
+    if (*head == NULL) {
+        *head = new_node;
     } else {
-        // 找到链表的最后一个节点
-        callback_node_t *curr = wheel->callbacks[event];
-        int count = 1;
-        
-        while (curr->next != NULL) {
+        callback_node_t *curr = *head;
+        while (curr->next) {
             curr = curr->next;
-            count++;
         }
-        
-        // 检查是否超过最大回调数
-        if (count >= HALL_WHEEL_MAX_CB) {
-            free(new_node);
-            return ESP_ERR_NO_MEM;
-        }
-        
         curr->next = new_node;
     }
-    
-    wheel->cb_size[event]++;
+    portEXIT_CRITICAL(&g_list_mux);
+
     return ESP_OK;
 }
 
 esp_err_t hall_wheel_delete(hall_wheel_handle_t handle)
 {
     HALL_WHEEL_CHECK(handle != NULL, "handle is null", ESP_ERR_INVALID_ARG);
-    
-    hall_wheel_dev_t *wheel = (hall_wheel_dev_t *)handle;
-    
+    hall_wheel_dev_t *wheel_to_del = (hall_wheel_dev_t *)handle;
+
     // 从链表中移除设备
-    hall_wheel_dev_t **curr;
-    for (curr = &g_hall_wheel_list; *curr;) {
-        hall_wheel_dev_t *entry = *curr;
-        if (entry == wheel) {
-            *curr = entry->next;
-            break;
-        } else {
-            curr = &entry->next;
+    portENTER_CRITICAL(&g_list_mux);
+    if (g_hall_wheel_list == wheel_to_del) {
+        g_hall_wheel_list = wheel_to_del->next;
+    } else {
+        hall_wheel_dev_t *curr = g_hall_wheel_list;
+        while (curr && curr->next != wheel_to_del) {
+            curr = curr->next;
+        }
+        if (curr) {
+            curr->next = wheel_to_del->next;
         }
     }
-    
+    portEXIT_CRITICAL(&g_list_mux);
+
+    // 移除ISR
+    gpio_isr_handler_remove(wheel_to_del->config.gpio_num);
+
+    // 删除定时器
+    esp_timer_stop(wheel_to_del->timeout_timer);
+    esp_timer_delete(wheel_to_del->timeout_timer);
+
     // 释放所有回调函数
     for (int i = 0; i < HALL_WHEEL_EVENT_MAX; i++) {
-        callback_node_t *node = wheel->callbacks[i];
-        while (node != NULL) {
+        callback_node_t *node = wheel_to_del->callbacks[i];
+        while (node) {
             callback_node_t *next = node->next;
             free(node);
             node = next;
         }
     }
-    
+
     // 释放设备内存
-    free(wheel);
-    
-    // 如果没有设备了，停止并删除定时器
-    if (g_hall_wheel_list == NULL && g_is_timer_running) {
-        esp_timer_stop(g_timer_handle);
-        esp_timer_delete(g_timer_handle);
-        g_timer_handle = NULL;
-        g_is_timer_running = false;
+    free(wheel_to_del);
+
+    // 如果没有设备了，销毁全局资源
+    portENTER_CRITICAL(&g_list_mux);
+    if (g_hall_wheel_list == NULL) {
+        hall_wheel_deinit_global();
     }
-    
+    portEXIT_CRITICAL(&g_list_mux);
+
     return ESP_OK;
 }
 
-// 全局定时器回调函数，扫描所有设备
-static void hall_wheel_timer_cb(void *arg)
+esp_err_t hall_wheel_get_speed(hall_wheel_handle_t handle, uint32_t *speed_pps)
 {
-    hall_wheel_dev_t *wheel = g_hall_wheel_list;
-    while (wheel) {
-        if (wheel->is_running) {
-            process_hall_wheel(wheel);
-        }
-        wheel = wheel->next;
-    }
-}
+    HALL_WHEEL_CHECK(handle != NULL, "handle is null", ESP_ERR_INVALID_ARG);
+    HALL_WHEEL_CHECK(speed_pps != NULL, "speed_pps is null", ESP_ERR_INVALID_ARG);
 
-// 处理单个霍尔滚轮设备
-static void process_hall_wheel(hall_wheel_dev_t *wheel)
-{
-    // 获取当前电平和时间
-    bool current_level = (gpio_get_level(wheel->config.gpio_num) == wheel->config.active_level);
-    int64_t now = esp_timer_get_time() / 1000; // 转换为毫秒
-    
-    // 如果有正在进行的检测窗口，检查是否超时
-    if (wheel->state.detection_in_progress) {
-        int64_t elapsed = now - wheel->state.detection_start_time;
-        if (elapsed >= wheel->config.detection_window_ms) {
-            check_detection_window(wheel);
-        }
-    }
-    
-    // 检测电平变化
-    if (wheel->state.last_level != current_level) {
-        // 如果尚未开始检测，则开始新检测周期
-        if (!wheel->state.detection_in_progress) {
-            wheel->state.detection_in_progress = true;
-            wheel->state.pulse_count = 0;
-            wheel->state.detection_start_time = now;
-        }
-        
-        // 计算两次电平变化的时间间隔
-        int64_t interval = now - wheel->state.last_change_time;
-        
-        // 只有当时间间隔在合理范围内，才增加脉冲计数
-        if (wheel->state.last_change_time == 0 || 
-            interval >= wheel->config.wave_duration_ms / 2) { // 允许一定误差
-            
-            wheel->state.pulse_count++;
-            ESP_LOGD(TAG, "Level change detected, pulse count: %d", wheel->state.pulse_count);
-        }
-        
-        wheel->state.last_level = current_level;
-        wheel->state.last_change_time = now;
-    }
-}
-
-// 检查检测窗口是否满足触发条件
-static void check_detection_window(hall_wheel_dev_t *wheel)
-{
-    // 检查脉冲数量是否满足触发条件
-    if (wheel->state.pulse_count >= wheel->config.min_pulses) {
-        ESP_LOGD(TAG, "Click event triggered with %d pulses", wheel->state.pulse_count);
-        
-        // 触发点击事件回调
-        callback_node_t *node = wheel->callbacks[HALL_WHEEL_EVENT_CLICK];
-        while (node != NULL) {
-            node->cb(wheel, HALL_WHEEL_EVENT_CLICK, node->user_data);
-            node = node->next;
-        }
-    }
-    
-    // 重置状态
-    wheel->state.detection_in_progress = false;
-    wheel->state.pulse_count = 0;
-    wheel->state.last_change_time = 0;
+    hall_wheel_dev_t *wheel = (hall_wheel_dev_t *)handle;
+    *speed_pps = wheel->state.speed_pps;
+    return ESP_OK;
 }
