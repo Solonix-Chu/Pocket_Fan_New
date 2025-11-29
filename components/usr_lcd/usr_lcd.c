@@ -47,19 +47,29 @@ static const char *TAG = "example";
 #define EXAMPLE_LCD_CMD_BITS           8
 #define EXAMPLE_LCD_PARAM_BITS         8
 
-extern void example_lvgl_demo_ui(lv_display_t *disp);
+extern void system_app_init(lv_display_t *disp);
+extern void system_app_update(void);
+
+// extern void example_lvgl_demo_ui(lv_display_t *disp);
 
 static void gui_task(void *pvParameter)
 {
     lv_display_t *disp = (lv_display_t *)pvParameter;
-    ESP_LOGI(TAG, "Display LVGL Scroll Text");
-    // Lock the mutex due to the LVGL APIs are not thread-safe
+    ESP_LOGI(TAG, "Start System App");
+    
     if (lvgl_port_lock(0)) {
-        /* Rotation of the screen */
         lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_0);
-        example_lvgl_demo_ui(disp);
-        // Release the mutex
+        system_app_init(disp);
+        // example_lvgl_demo_ui(disp);
         lvgl_port_unlock();
+    }
+
+    while (1) {
+        if (lvgl_port_lock(0)) {
+            system_app_update();
+            lvgl_port_unlock();
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
     vTaskDelete(NULL);
 }

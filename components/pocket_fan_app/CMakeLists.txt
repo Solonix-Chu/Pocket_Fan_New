@@ -1,0 +1,15 @@
+idf_component_register(SRCS "src/system_app.cpp"
+                       "src/apps/launcher/launcher.cpp"
+                       "src/apps/settings/settings.cpp"
+                       "src/apps/fan_control/fan_control.cpp"
+                       "src/apps/app_startup_anim/app_startup_anim.cpp"
+                       "src/asset/_start_124X22_RGB565A8_124x22.c"
+                       "src/asset/_1_RGB565A8_34x25.c"
+                       "src/asset/_2_RGB565A8_34x26.c"
+                       "src/asset/_3_RGB565A8_34x26.c"
+                       "src/asset/_4_RGB565A8_34x26.c"
+                       "src/asset/_5_RGB565A8_34x26.c"
+                       "src/asset/_6_RGB565A8_34x26.c"
+                       INCLUDE_DIRS "include" "src"
+                       REQUIRES mooncake smooth_ui_toolkit lvgl app_button esp_timer mooncake smooth_ui_toolkit
+                       )
