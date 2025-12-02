@@ -20,6 +20,7 @@
 #include "esp_log.h"
 #include "errno.h"
 #include "usr_lcd.h"
+#include "nvs_flash.h"
 // #include "usr_nimble.h"
 // #include "mcu_info.h"
 #include "app_button.h"
@@ -29,6 +30,14 @@ extern int ets_printf(const char *fmt, ...);
 
 void app_main(void)
 {
+    // Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
     printf("free_heap_size = %d\n", (int)esp_get_free_heap_size());
 
     // usr_nimble_init();

@@ -11,6 +11,10 @@ void LauncherApp::_create_ui()
 {
     if (_screen) return;
     _screen = lv_obj_create(NULL); // Create a screen
+    if (!_screen) {
+        printf("LauncherApp: Failed to create screen\n");
+        return;
+    }
     lv_obj_set_style_bg_color(_screen, lv_color_white(), LV_PART_MAIN);
     // lv_obj_set_style_bg_opa(_screen, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_text_color(_screen, lv_color_black(), 0);
@@ -197,6 +201,11 @@ void LauncherApp::onClick()
 {
     int selected = getSelectedOptionIndex();
     if (selected >= 0 && selected < _app_ids.size()) {
-        openApp(_app_ids[selected]);
+        // Check if the selected app is the Launcher (ID 0) which is already running
+        if (_app_ids[selected] == 0) {
+            printf("Launcher already active, ignoring open request.\n");
+        } else {
+            openApp(_app_ids[selected]);
+        }
     }
 }

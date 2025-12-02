@@ -11,5 +11,5 @@ idf_component_register(SRCS "src/system_app.cpp"
                        "src/asset/_5_RGB565A8_34x26.c"
                        "src/asset/_6_RGB565A8_34x26.c"
                        INCLUDE_DIRS "include" "src"
-                       REQUIRES mooncake smooth_ui_toolkit lvgl app_button esp_timer mooncake smooth_ui_toolkit
+                       REQUIRES mooncake smooth_ui_toolkit lvgl app_button esp_timer ble_ota
                        )

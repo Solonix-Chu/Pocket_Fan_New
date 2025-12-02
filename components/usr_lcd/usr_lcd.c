@@ -30,8 +30,8 @@ static const char *TAG = "example";
 //////////////////// Please update the following configuration according to your LCD spec //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define EXAMPLE_LCD_PIXEL_CLOCK_HZ    (800 * 1000)
-#define EXAMPLE_PIN_NUM_SDA           5
-#define EXAMPLE_PIN_NUM_SCL           6
+#define EXAMPLE_PIN_NUM_SDA           35
+#define EXAMPLE_PIN_NUM_SCL           36
 #define EXAMPLE_PIN_NUM_RST           -1
 #define EXAMPLE_I2C_HW_ADDR           0x3C
 
