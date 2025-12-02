@@ -44,51 +44,45 @@ bool move_icon(int16_t *a, int16_t *a_trg)
 
 bool move_width(uint8_t *a, uint8_t *a_trg, uint8_t current_select, bool is_up)
 {
+    if (*a == *a_trg) return true;
+
+    uint8_t step = 16 / WIDTH_CHANGE_SPEED_FACTOR;
+    uint8_t len = 10; // Default animation speed base if indices are invalid
+
+    int prev_idx = is_up ? current_select + 1 : current_select - 1;
+    int max_items = 0;
+
+    // Determine valid range based on current menu context
+    if (ui_index == M_SELECT) max_items = list_num;
+    else if (ui_index == M_PID) max_items = pid_num;
+
+    // Only calculate text width difference if indices are strictly valid
+    if (current_select < max_items && prev_idx >= 0 && prev_idx < max_items) {
+        if (ui_index == M_SELECT) {
+            len = abs(u8g2_GetStrWidth(&u8g2, list[current_select].select) - u8g2_GetStrWidth(&u8g2, list[prev_idx].select));
+        } else if (ui_index == M_PID) {
+            len = abs(u8g2_GetStrWidth(&u8g2, pid[current_select].select) - u8g2_GetStrWidth(&u8g2, pid[prev_idx].select));
+        }
+    }
+
+    // Calculate speed, ensuring it's at least 1 to prevent infinite loops
+    uint8_t width_speed = ((len % step) == 0 ? (len / step) : (len / step + 1));
+    if (width_speed == 0) width_speed = 1;
+
     if (*a < *a_trg)
     {
-        uint8_t step = 16 / WIDTH_CHANGE_SPEED_FACTOR;
-        uint8_t len;
-        if (ui_index == M_SELECT)
-        {
-            len = abs(u8g2_GetStrWidth(&u8g2, list[current_select].select) - u8g2_GetStrWidth(&u8g2, list[is_up ? current_select + 1 : current_select - 1].select));
-        }
-        else if (ui_index == M_PID)
-        {
-            len = abs(u8g2_GetStrWidth(&u8g2, pid[current_select].select) - u8g2_GetStrWidth(&u8g2, pid[is_up ? current_select + 1 : current_select - 1].select));
-        }
-        else {
-            len = 1;
-        }
-        uint8_t width_speed = ((len % step) == 0 ? (len / step) : (len / step + 1));
         *a += width_speed;
         if (*a > *a_trg)
             *a = *a_trg;
     }
     else if (*a > *a_trg)
     {
-        uint8_t step = 16 / WIDTH_CHANGE_SPEED_FACTOR;
-        uint8_t len;
-        if (ui_index == M_SELECT)
-        {
-            len = abs(u8g2_GetStrWidth(&u8g2, list[current_select].select) - u8g2_GetStrWidth(&u8g2, list[is_up ? current_select + 1 : current_select - 1].select));
-        }
-        else if (ui_index == M_PID)
-        {
-            len = abs(u8g2_GetStrWidth(&u8g2, pid[current_select].select) - u8g2_GetStrWidth(&u8g2, pid[is_up ? current_select + 1 : current_select - 1].select));
-        }
-        else {
-            len = 1;
-        }
-        uint8_t width_speed = ((len % step) == 0 ? (len / step) : (len / step + 1));
         *a -= width_speed;
         if (*a < *a_trg)
             *a = *a_trg;
     }
-    else
-    {
-        return true;
-    }
-    return false;
+
+    return (*a == *a_trg);
 }
 
 bool move_bar(uint8_t *a, uint8_t *a_trg)

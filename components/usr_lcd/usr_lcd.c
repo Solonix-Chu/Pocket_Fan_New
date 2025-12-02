@@ -11,10 +11,10 @@
 #include "usr_lcd.h"
 
 // SDA - GPIO5
-#define PIN_SDA 5
+#define PIN_SDA 33
 
 // SCL - GPIO6
-#define PIN_SCL 6
+#define PIN_SCL 34
 
 static const char* TAG = "usr_lcd";
 

@@ -29,7 +29,7 @@ static const char *TAG = "hall_wheel";
 // 中断处理和任务相关
 #define ISR_QUEUE_LEN            16
 #define TASK_PRIORITY            (configMAX_PRIORITIES - 5)
-#define TASK_STACK_SIZE          (2048)
+#define TASK_STACK_SIZE          (4096)
 
 /**
  * @brief 滚动状态
