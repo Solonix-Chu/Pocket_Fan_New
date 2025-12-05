@@ -1,0 +1,237 @@
+/*
+ * SPDX-FileCopyrightText: 2024 M5Stack Technology CO LTD
+ *
+ * SPDX-License-Identifier: MIT
+ */
+#pragma once
+#include <functional>
+#include <vector>
+#include <string>
+#include <cmath>
+#include "lvgl.h"
+#include "utils/lgfx_fx/lgfx_fx.h"
+#include <LovyanGFX.hpp>
+#include "types.h"
+#include "app_button.h"
+
+/**
+ * @brief Provide a singleton to abstract hardware methods
+ */
+class HAL
+{
+private:
+    static HAL* _hal;
+
+public:
+    static HAL* Get();
+    static bool Check();
+    static bool Inject(HAL* hal);
+    static void Destroy();
+
+public:
+    HAL() : _display(nullptr), _canvas(nullptr) {}
+    virtual ~HAL() {}
+
+    static std::string Type() { return Get()->type(); }
+    virtual std::string type() { return "Base"; }
+
+    static std::string Version() { return Get()->version(); }
+    virtual std::string version() { return APP_VERSION; }
+
+    static std::string CompileDate() { return Get()->compileDate(); }
+    virtual std::string compileDate() { return __DATE__; }
+
+    virtual void init() {}
+
+    // Callback type for log page render
+    using OnLogPageRenderCallback_t = std::function<void(const std::string&)>;
+
+protected:
+    LGFX_Device* _display;
+    LGFX_SpriteFx* _canvas;
+    time_t _time_buffer;
+    POWER_MONITOR::PMData_t _pm_data;
+    CONFIG::SystemConfig_t _config;
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   Display                                  */
+    /* -------------------------------------------------------------------------- */
+public:
+
+    static void LGVL_UPDATE() { Get()->lvgl_update(); }
+    virtual void lvgl_update() {}
+
+    /**
+     * @brief Display device
+     *
+     * @return LGFX_Device*
+     */
+    static LGFX_Device* GetDisplay() { return Get()->_display; }
+
+    /**
+     * @brief Full screen canvas (sprite)
+     *
+     * @return LGFX_SpriteFx*
+     */
+    static LGFX_SpriteFx* GetCanvas() { return Get()->_canvas; }
+
+    /**
+     * @brief Push framebuffer
+     *
+     */
+    static void CanvasUpdate() { Get()->canvasUpdate(); }
+    virtual void canvasUpdate() { GetCanvas()->pushSprite(0, 0); }
+
+    /**
+     * @brief Render fps panel
+     *
+     */
+    static void RenderFpsPanel() { Get()->renderFpsPanel(); }
+    virtual void renderFpsPanel();
+
+    /**
+     * @brief Pop error message and wait reboot
+     *
+     * @param msg
+     */
+    static void PopFatalError(std::string msg) { Get()->popFatalError(msg); }
+    virtual void popFatalError(std::string msg);
+
+    /**
+     * @brief Pop warning message and wait continue
+     *
+     * @param msg
+     */
+    static void PopWarning(std::string msg) { Get()->popWarning(msg); }
+    virtual void popWarning(std::string msg);
+
+    /**
+     * @brief Pop success message and wait continue
+     *
+     * @param msg
+     */
+    static void PopSuccess(std::string msg, bool showSuccessLabel = true) { Get()->popSuccess(msg, showSuccessLabel); }
+    virtual void popSuccess(std::string msg, bool showSuccessLabel = true);
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   System                                   */
+    /* -------------------------------------------------------------------------- */
+public:
+    static void Delay(unsigned long milliseconds) { Get()->delay(milliseconds); }
+    virtual void delay(unsigned long milliseconds);
+
+    static unsigned long Millis() { return Get()->millis(); }
+    virtual unsigned long millis();
+
+    static void PowerOff() { Get()->powerOff(); }
+    virtual void powerOff() {}
+
+    static void Reboot() { Get()->reboot(); }
+    virtual void reboot() {}
+
+    static void SetSystemTime(tm dateTime) { return Get()->setSystemTime(dateTime); }
+    virtual void setSystemTime(tm dateTime) {}
+
+    static tm* GetLocalTime() { return Get()->getLocalTime(); }
+    virtual tm* getLocalTime();
+
+    static void FeedTheDog() { Get()->feedTheDog(); }
+    virtual void feedTheDog() {}
+
+    static void FactoryReset(OnLogPageRenderCallback_t onLogPageRender) { Get()->factoryReset(onLogPageRender); }
+    virtual void factoryReset(OnLogPageRenderCallback_t onLogPageRender) {}
+
+    /* -------------------------------------------------------------------------- */
+    /*                                Startup image                               */
+    /* -------------------------------------------------------------------------- */
+public:
+    static bool RenderCustomStartupImage() { return Get()->renderCustomStartupImage(); }
+    virtual bool renderCustomStartupImage() { return false; }
+
+    static std::vector<std::string> GetStartupImageList() { return Get()->getStartupImageList(); }
+    virtual std::vector<std::string> getStartupImageList() { return std::vector<std::string>(); }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                System config                               */
+    /* -------------------------------------------------------------------------- */
+public:
+    static void LoadSystemConfig() { Get()->loadSystemConfig(); }
+    virtual void loadSystemConfig() {}
+
+    static void SaveSystemConfig() { Get()->saveSystemConfig(); }
+    virtual void saveSystemConfig() {}
+
+    static CONFIG::SystemConfig_t& GetSystemConfig() { return Get()->_config; }
+    static void SetSystemConfig(CONFIG::SystemConfig_t cfg) { Get()->_config = cfg; }
+
+    static void ApplySystemConfig() { Get()->applySystemConfig(); }
+    virtual void applySystemConfig() {}
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   Button                                  */
+    /* -------------------------------------------------------------------------- */
+public:
+    static app_button_state_t GetButton(BUTTON::Button_t button) { return Get()->getButton(button); }
+    virtual app_button_state_t getButton(BUTTON::Button_t button) { return APP_BUTTON_STATE_NOCHANGE; }
+
+    static void AllButtonRefresh() {Get()->allButton_refresh();}
+    virtual void allButton_refresh() {}
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   Encoder                                  */
+    /* -------------------------------------------------------------------------- */
+public:
+    static int GetEncoderCount() { return Get()->getEncoderCount(); }
+    virtual int getEncoderCount() { return 0; }
+
+    static void ResetEncoderCount(int value = 0) { Get()->resetEncoderCount(value); }
+    virtual void resetEncoderCount(int value) {}
+
+    /* -------------------------------------------------------------------------- */
+    /*                                  Touchpad                                  */
+    /* -------------------------------------------------------------------------- */
+public:
+    static void UpdateTouch() { Get()->updateTouch(); }
+    virtual void updateTouch() {}
+
+    static bool IsTouching() { return Get()->isTouching(); }
+    virtual bool isTouching() { return false; }
+
+    static lv_point_t GetTouchPoint() { return Get()->getTouchPoint(); }
+    virtual lv_point_t getTouchPoint() { return {-1, -1}; }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                Power monitor                               */
+    /* -------------------------------------------------------------------------- */
+public:
+    static void UpdatePowerMonitor() { Get()->updatePowerMonitor(); }
+    virtual void updatePowerMonitor() {}
+
+    static const POWER_MONITOR::PMData_t& GetPowerMonitorData() { return Get()->getPowerMonitorData(); }
+    virtual const POWER_MONITOR::PMData_t& getPowerMonitorData() { return _pm_data; }
+
+    static void ResetPowerMonitorData() { Get()->resetPowerMonitorData(); }
+    virtual void resetPowerMonitorData() {}
+
+    static bool IsPowerMonitorInLowCurrentMode() { return Get()->isPowerMonitorInLowCurrentMode(); }
+    virtual bool isPowerMonitorInLowCurrentMode() { return true; }
+
+    static void PowerMonitorCalibration(const float& currentOffset) { Get()->powerMonitorCalibration(currentOffset); }
+    virtual void powerMonitorCalibration(const float& currentOffset) {}
+
+    static POWER_MONITOR::UnitAdaptatedData_t GetUnitAdaptatedVoltage(const float& voltage);
+    static POWER_MONITOR::UnitAdaptatedData_t GetUnitAdaptatedCurrent(const float& current);
+    static POWER_MONITOR::UnitAdaptatedData_t GetUnitAdaptatedPower(const float& power);
+    static POWER_MONITOR::UnitAdaptatedData_t GetUnitAdaptatedCapacity(const float& capacity);
+    static POWER_MONITOR::UnitAdaptatedData_t GetUnitAdaptatedEnergy(const float& energy);
+
+    /* -------------------------------------------------------------------------- */
+    /*                                    LVGL                                    */
+    /* -------------------------------------------------------------------------- */
+public:
+    static void LvglLock() { Get()->lvgl_lock(); }
+    virtual void lvgl_lock() {}
+
+    static void LvglUnlock() { Get()->lvgl_unlock(); }
+    virtual void lvgl_unlock() {}
+};

@@ -30,6 +30,9 @@ typedef struct {
     app_button_state_t currentState;
     uint32_t lastMsec;
 
+    // 内部锁存状态 (用于跨帧保持)
+    app_button_state_t latchedState;
+
     // "私有" 配置和句柄
     int _gpio_num;
     button_handle_t _btn_handle; // iot_button 句柄

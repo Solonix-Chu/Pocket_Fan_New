@@ -29,12 +29,12 @@ void StartupAnimApp::onOpen() {
 
 void StartupAnimApp::onRunning() {
     // Show for 2 seconds (2000 ms)
-    if ((esp_timer_get_time() / 1000) - _start_time > 2000) {
+    if ((esp_timer_get_time() / 1000) - _start_time > 1000) {
         // Close self
         mooncake::GetMooncake().closeApp(getID());
         
         // Open Launcher (Assuming ID 0 is Launcher)
-        mooncake::GetMooncake().openApp(0);
+        // mooncake::GetMooncake().openApp(0);
     }
 }
 

@@ -217,12 +217,11 @@ static esp_err_t hall_wheel_init_global(void)
         HALL_WHEEL_CHECK(res == pdPASS, "create task failed", ESP_ERR_NO_MEM);
     }
     
-    esp_err_t ret = gpio_install_isr_service(0); // ESP_INTR_FLAG_LEVEL1
-    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
-        // ESP_ERR_INVALID_STATE means it's already installed, which is fine.
-        ESP_LOGE(TAG, "install isr service failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
+    // esp_err_t ret = gpio_install_isr_service(0); // ESP_INTR_FLAG_LEVEL1
+    // if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+    //     ESP_LOGE(TAG, "install isr service failed: %s", esp_err_to_name(ret));
+    //     return ret;
+    // }
 
     return ESP_OK;
 }
@@ -243,6 +242,8 @@ static void hall_wheel_deinit_global(void)
 
 esp_err_t hall_wheel_create(const hall_wheel_config_t *config, hall_wheel_handle_t *handle_out)
 {
+    static int inited_flag; 
+    esp_err_t ret;
     HALL_WHEEL_CHECK(config != NULL, "config is null", ESP_ERR_INVALID_ARG);
     HALL_WHEEL_CHECK(handle_out != NULL, "handle_out is null", ESP_ERR_INVALID_ARG);
     HALL_WHEEL_CHECK(GPIO_IS_VALID_GPIO(config->gpio_num), "Invalid GPIO number", ESP_ERR_INVALID_ARG);
@@ -260,9 +261,14 @@ esp_err_t hall_wheel_create(const hall_wheel_config_t *config, hall_wheel_handle
     }
     portEXIT_CRITICAL(&g_list_mux);
 
-    // 初始化全局资源
-    esp_err_t ret = hall_wheel_init_global();
-    if (ret != ESP_OK) return ret;
+    if(!inited_flag)
+    {
+        // 初始化全局资源
+        ret = hall_wheel_init_global();
+        if (ret != ESP_OK) return ret;
+        inited_flag = 1;
+    }
+    
 
     // 分配设备内存
     hall_wheel_dev_t *wheel = calloc(1, sizeof(hall_wheel_dev_t));

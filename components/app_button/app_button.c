@@ -52,10 +52,12 @@ app_button_t* BtnPower = NULL;
 
 /**
  * @brief 设置按键状态 (公开函数的实现)
+ * 将状态写入 latch，等待 update 同步到 currentState
  */
 void app_button_set_state(app_button_t* btn, uint32_t msec, app_button_state_t state) {
     if (!btn) return;
-    btn->currentState = state;
+    // btn->currentState = state; // 移除直接修改 currentState
+    btn->latchedState = state;    // 写入 latchedState
     btn->lastMsec = msec;
 }
 
@@ -63,37 +65,26 @@ void app_button_set_state(app_button_t* btn, uint32_t msec, app_button_state_t s
  * @brief 设置原始状态 (替代 setRawState - 保留原始注释)
  */
 static void app_button_set_raw_state(app_button_t* btn, uint32_t msec, bool press) {
-    // if (btn->_raw_press == press) {
-    //     return;
-    // }
-    
-    // btn->_raw_press = press;
-    // btn->_lastRawChange = msec;
-    
-    // // 记录旧状态
-    // btn->_oldPress = btn->_press;
-    
-    // // 设置新状态
-    // if (press) {
-    //     btn->_press = 1;  // 设为按下状态
-    //     btn->_lastChange = msec;
-    // } else {
-    //     // 记录按住时间
-    //     btn->_lastHoldPeriod = msec - btn->_lastChange;
-        
-    //     // 否则是普通点击
-    //     btn->_press = 0;
-    // }
+    // ... (keep existing commented out code or empty)
 }
 
 /**
  * @brief 更新单个按键实例的内部状态 (替代 ButtonEspIdf_Class::update)
+ * 将 latchedState 同步到 currentState，并重置 latchedState
  */
 static void app_button_instance_update(app_button_t* btn, uint32_t current_time) {
     if (!btn) return;
-    // 在每个循环中重置状态为“无变化”
-    // btn->currentState = APP_BUTTON_STATE_NOCHANGE;
-    btn->lastMsec = current_time;
+    
+    // 同步锁存的状态到公开状态
+    btn->currentState = btn->latchedState;
+    
+    // 重置锁存状态，准备接收下一帧的事件
+    // 注意：如果多个事件在一帧内发生，这里简单的覆盖机制只会保留最后一个
+    // 对于简单的点击/长按逻辑通常足够
+    btn->latchedState = APP_BUTTON_STATE_NOCHANGE;
+    
+    // 只有当有状态变化时才更新时间? 或者每帧更新? 
+    // 原始逻辑是 update 重置。这里我们保留 lastMsec 的逻辑由 set_state 设定。
 }
 
 
@@ -194,6 +185,8 @@ static void app_button_init_base(app_button_t* btn, int gpio_num, uint8_t active
     btn->_gpio_num = gpio_num;
     btn->_pressed_cb = NULL;
     btn->_btn_handle = NULL;
+    btn->currentState = APP_BUTTON_STATE_NOCHANGE;
+    btn->latchedState = APP_BUTTON_STATE_NOCHANGE;
 }
 
 /**
@@ -209,6 +202,8 @@ static void app_button_init_iot(app_button_t* btn, int gpio_num, uint8_t active_
     btn->_gpio_num = gpio_num;
     btn->_pressed_cb = NULL;
     btn->_btn_handle = NULL;
+    btn->currentState = APP_BUTTON_STATE_NOCHANGE;
+    btn->latchedState = APP_BUTTON_STATE_NOCHANGE;
     
     // 按钮配置
     button_config_t btn_cfg = {

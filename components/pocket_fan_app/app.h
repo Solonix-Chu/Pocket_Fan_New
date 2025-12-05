@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-void system_app_init(lv_display_t* disp);
-void system_app_update(void);
+void app_init(lv_display_t* disp);
+void app_update(void);
 
 #ifdef __cplusplus
 }
