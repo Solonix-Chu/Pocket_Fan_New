@@ -226,6 +226,33 @@ public:
     static POWER_MONITOR::UnitAdaptatedData_t GetUnitAdaptatedEnergy(const float& energy);
 
     /* -------------------------------------------------------------------------- */
+    /*                                     Fan                                    */
+    /* -------------------------------------------------------------------------- */
+public:
+    static void SetFanSpeed(float speed) { Get()->setFanSpeed(speed); }
+    virtual void setFanSpeed(float speed) {}
+
+    static void SetFanState(bool enable) { Get()->setFanState(enable); }
+    virtual void setFanState(bool enable) {}
+
+    /* -------------------------------------------------------------------------- */
+    /*                                     NTC                                    */
+    /* -------------------------------------------------------------------------- */
+public:
+    static float GetNTC(int channel) { return Get()->getNTC(channel); }
+    virtual float getNTC(int channel) { return 0.0f; }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                     LED                                    */
+    /* -------------------------------------------------------------------------- */
+public:
+    static void SetLed(uint8_t r, uint8_t g, uint8_t b, uint8_t w) { Get()->setLed(r, g, b, w); }
+    virtual void setLed(uint8_t r, uint8_t g, uint8_t b, uint8_t w) {}
+
+    static void SetLedBreath(bool enable) { Get()->setLedBreath(enable); }
+    virtual void setLedBreath(bool enable) {}
+
+    /* -------------------------------------------------------------------------- */
     /*                                    LVGL                                    */
     /* -------------------------------------------------------------------------- */
 public:

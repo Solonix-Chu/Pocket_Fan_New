@@ -90,6 +90,16 @@ static void _lv_port_disp_init()
 
     if (!buf1)
     {
+        ESP_LOGW(TAG, "Full buffer malloc failed, trying 1/10 buffer");
+        buf_size_pixels /= 2;
+        buf_size_bytes = buf_size_pixels * sizeof(lv_color_t);
+        // Ensure at least some minimum size
+        if (buf_size_bytes < 128) buf_size_bytes = 128; 
+        buf1 = malloc(buf_size_bytes);
+    }
+
+    if (!buf1)
+    {
         ESP_LOGE(TAG, "Buffer malloc failed");
         return;
     }

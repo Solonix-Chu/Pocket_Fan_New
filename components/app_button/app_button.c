@@ -17,6 +17,7 @@
 #include "hall_wheel.h"
 #include "iot_button.h" // 显式包含 iot_button
 #include "button_gpio.h"
+#include <driver/gpio.h>
 
 static const char* TAG = "app_button";
 
@@ -25,7 +26,7 @@ static const char* TAG = "app_button";
 #define CONFIG_BUTTON_LEFT_GPIO_NUM GPIO_NUM_3
 #define CONFIG_BUTTON_RIGHT_GPIO_NUM GPIO_NUM_4
 #define CONFIG_BUTTON_OK_GPIO_NUM GPIO_NUM_7
-#define CONFIG_BUTTON_POWER_GPIO_NUM GPIO_NUM_NC
+#define CONFIG_BUTTON_POWER_GPIO_NUM GPIO_NUM_46  // 按下按键为低电平
 #define CONFIG_BUTTON_ACTIVE_LEVEL 0
 
 
@@ -112,8 +113,15 @@ static void app_button_instance_update(app_button_t* btn, uint32_t current_time)
 static void btn_click_cb(void *arg, void *usr_data) {
     app_button_t* btn = (app_button_t*)usr_data; // 获取实例指针
     uint32_t current_time = esp_timer_get_time() / 1000;
-    app_button_set_state(btn, current_time, APP_BUTTON_STATE_CLICKED);
-    ESP_LOGI(TAG, "按钮被点击");
+    
+    // 特殊处理: Power键的单击映射为 OK 键的点击
+    if (btn == &g_btn_power) {
+        ESP_LOGI(TAG, "Power键单击 -> 触发 OK 点击");
+        app_button_set_state(&g_btn_ok, current_time, APP_BUTTON_STATE_CLICKED);
+    } else {
+        app_button_set_state(btn, current_time, APP_BUTTON_STATE_CLICKED);
+        ESP_LOGI(TAG, "按钮被点击");
+    }
 }
 
 // 按钮长按回调
@@ -125,10 +133,11 @@ static void btn_long_press_cb(void *arg, void *usr_data) {
     if (btn->_gpio_num == CONFIG_BUTTON_OK_GPIO_NUM) {
         ESP_LOGI(TAG, "OK按钮被长按");
         app_button_set_state(btn, current_time, APP_BUTTON_STATE_HOLD);
+    } else if (btn == &g_btn_power) { // 使用指针比较更安全
+        ESP_LOGI(TAG, "Power按钮被长按");
+        app_button_set_state(btn, current_time, APP_BUTTON_STATE_HOLD);
     } else {
-        // 其他按钮的长按处理 (原始代码中已注释)
-        // app_button_set_state(btn, current_time, APP_BUTTON_STATE_HOLD);
-        // ESP_LOGI(TAG, "按钮被长按");
+        // 其他按钮的长按处理
     }
 }
 
@@ -193,7 +202,7 @@ static void app_button_init_base(app_button_t* btn, int gpio_num, uint8_t active
  * @brief 使用 iot_button 进行初始化
  * 用于 OK 和 Power 键
  */
-static void app_button_init_iot(app_button_t* btn, int gpio_num, uint8_t active_level) {
+static void app_button_init_iot(app_button_t* btn, int gpio_num, uint8_t active_level, uint16_t long_press_ms) {
     if (gpio_num < 0) {
         ESP_LOGW(TAG, "按键 GPIO %d 已禁用, 跳过初始化", gpio_num);
         return;
@@ -207,7 +216,7 @@ static void app_button_init_iot(app_button_t* btn, int gpio_num, uint8_t active_
     
     // 按钮配置
     button_config_t btn_cfg = {
-        .long_press_time = 1000,
+        .long_press_time = long_press_ms,
         .short_press_time = 180
     };
     
@@ -215,16 +224,17 @@ static void app_button_init_iot(app_button_t* btn, int gpio_num, uint8_t active_
     button_gpio_config_t gpio_cfg = {
         .gpio_num = gpio_num,
         .active_level = active_level,
-        .enable_power_save = true,
-        .disable_pull = false
+        .enable_power_save = false, // Disable power save for stability
+        .disable_pull = false       // Enable internal pull-up/down
     };
     
     // 创建 iot_button 实例
     esp_err_t ret = iot_button_new_gpio_device(&btn_cfg, &gpio_cfg, &btn->_btn_handle);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "创建按钮失败: %d, GPIO: %d", ret, gpio_num);
+        ESP_LOGE(TAG, "创建按钮失败: %s (0x%x), GPIO: %d", esp_err_to_name(ret), ret, gpio_num);
         return;
     }
+    ESP_LOGI(TAG, "创建按钮成功: GPIO %d", gpio_num);
     
     // 注册回调函数, 将 'btn' (指向此按键结构体的指针) 作为 user_data 传递
     // iot_button_register_cb(btn->_btn_handle, BUTTON_PRESS_DOWN, NULL, btn_press_down_cb, btn);
@@ -243,6 +253,8 @@ static void app_button_init_iot(app_button_t* btn, int gpio_num, uint8_t active_
 void app_button_init(void) {
     ESP_LOGI(TAG, "初始化按键...");
     
+    gpio_install_isr_service(0);
+    
     // 从 Kconfig 获取 GPIO 配置
     const int GPIO_BUTTON_UP = CONFIG_BUTTON_UP_GPIO_NUM;
     const int GPIO_BUTTON_DOWN = CONFIG_BUTTON_DOWN_GPIO_NUM;
@@ -253,9 +265,13 @@ void app_button_init(void) {
     const uint8_t BUTTON_ACTIVE_LEVEL = CONFIG_BUTTON_ACTIVE_LEVEL;
     
     // --- 初始化 OK 和 Power 键 ---
-    // 这两个键使用 esp-iot-button 驱动
-    app_button_init_iot(&g_btn_ok, GPIO_BUTTON_OK, BUTTON_ACTIVE_LEVEL);
-    // app_button_init_iot(&g_btn_power, GPIO_BUTTON_POWER, BUTTON_ACTIVE_LEVEL);
+    // GPIO 46 (Power) 同时承担 Power (长按) 和 OK (单击) 的功能
+    // 所以只初始化 Power 键的硬件驱动，OK 键作为虚拟键初始化
+    app_button_init_iot(&g_btn_power, GPIO_BUTTON_POWER, BUTTON_ACTIVE_LEVEL, 3000);
+    
+    // 初始化 OK 键结构体，但不绑定 GPIO 硬件 (由 Power 键回调触发)
+    // 注意: 这里传入 GPIO_BUTTON_OK 主要是为了记录配置的引脚号，实际上不通过 app_button_init_iot 开启硬件
+    app_button_init_base(&g_btn_ok, GPIO_BUTTON_OK, BUTTON_ACTIVE_LEVEL); 
     
     // --- 初始化方向键 ---
     // 这四个键使用自定义的 hall_wheel 驱动，因此只做基础结构体初始化

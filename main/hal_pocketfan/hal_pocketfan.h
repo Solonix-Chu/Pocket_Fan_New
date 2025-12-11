@@ -15,12 +15,22 @@ private:
     void _lvgl_init();
     void _button_init();
     void _watch_dog_init();
+    void _power_init();
+    void _power_monitor_init();
+    void _ntc_init();
+    void _motor_init();
+    void _led_init();
 
 public:
     inline std::string type() override { return "VAMeter"; }
 
     inline void init() override
     {
+        _power_init();
+        _power_monitor_init();
+        _ntc_init();
+        _motor_init();
+        _led_init();
         _watch_dog_init();
         _disp_init();
         _lvgl_init();
@@ -31,8 +41,12 @@ public:
     /*                             Public api override                            */
     /* -------------------------------------------------------------------------- */
     void reboot() override;
+    void powerOff() override;
 
     void feedTheDog() override;
+
+    void setFanSpeed(float speed) override;
+    void setFanState(bool enable) override;
 
     app_button_state_t getButton(BUTTON::Button_t button) override;
 
@@ -48,10 +62,15 @@ public:
     // int getEncoderCount() override;
     // void resetEncoderCount(int value) override;
 
-    // void updatePowerMonitor() override;
-    // void resetPowerMonitorData() override;
-    // bool isPowerMonitorInLowCurrentMode() override;
-    // void powerMonitorCalibration(const float& currentOffset) override;
+    void updatePowerMonitor() override;
+    void resetPowerMonitorData() override;
+    bool isPowerMonitorInLowCurrentMode() override;
+    void powerMonitorCalibration(const float& currentOffset) override;
+
+    float getNTC(int channel) override;
+
+    void setLed(uint8_t r, uint8_t g, uint8_t b, uint8_t w) override;
+    void setLedBreath(bool enable) override;
 
     // void setBaseRelay(bool state) override;
     // bool getBaseRelayState() override;

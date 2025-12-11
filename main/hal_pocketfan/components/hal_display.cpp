@@ -20,10 +20,10 @@ public:
         {
             auto cfg = _bus_instance.config();
             cfg.i2c_port    = 0;
-            cfg.freq_write  = 400000;
-            cfg.freq_read   = 400000;
-            cfg.pin_sda     = 35;
-            cfg.pin_scl     = 36;
+            cfg.freq_write  = 800000;
+            cfg.freq_read   = 800000;
+            cfg.pin_sda     = 33;
+            cfg.pin_scl     = 34;
             cfg.i2c_addr    = 0x3C;
             _bus_instance.config(cfg);
             _panel_instance.setBus(&_bus_instance);
@@ -56,6 +56,6 @@ void HAL_PocketFan::_disp_init()
     _display = &display; // Assign to parent class pointer
     
     // Create a full-screen sprite/canvas
-    _canvas = new LGFX_SpriteFx(_display);
-    _canvas->createSprite(_display->width(), _display->height());
+        _canvas = new LGFX_SpriteFx(_display);
+        _canvas->createSprite(_display->width(), _display->height());
 }
