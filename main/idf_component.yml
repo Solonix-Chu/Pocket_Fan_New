@@ -2,3 +2,5 @@ dependencies:
   lvgl/lvgl: ^9.0.0
   espressif/button: ^4.1.4
   espressif/ble_ota: ^0.1.15
+  espressif/esp_delta_ota: ^1.1.0
+  espressif/esp_encrypted_img: ^2.0.1

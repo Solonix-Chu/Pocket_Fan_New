@@ -72,6 +72,8 @@ public:
     void setLed(uint8_t r, uint8_t g, uint8_t b, uint8_t w) override;
     void setLedBreath(bool enable) override;
 
+    void startBleOta() override;
+
     // void setBaseRelay(bool state) override;
     // bool getBaseRelayState() override;
 

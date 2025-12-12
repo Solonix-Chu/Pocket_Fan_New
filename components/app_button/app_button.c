@@ -145,8 +145,14 @@ static void btn_long_press_cb(void *arg, void *usr_data) {
 static void btn_double_click_cb(void *arg, void *usr_data) {
     app_button_t* btn = (app_button_t*)usr_data; // 获取实例指针
     uint32_t current_time = esp_timer_get_time() / 1000;
-    app_button_set_state(btn, current_time, APP_BUTTON_STATE_DECIDE_CLICK_COUNT);
-    ESP_LOGI(TAG, "按钮被双击");
+    
+    if (btn == &g_btn_power) {
+        ESP_LOGI(TAG, "Power键双击 -> 触发 OK 双击");
+        app_button_set_state(&g_btn_ok, current_time, APP_BUTTON_STATE_DOUBLE_CLICK);
+    } else {
+        app_button_set_state(btn, current_time, APP_BUTTON_STATE_DOUBLE_CLICK);
+        ESP_LOGI(TAG, "按钮被双击");
+    }
 }
 
 // --- 霍尔滚轮回调函数 ---
@@ -241,7 +247,7 @@ static void app_button_init_iot(app_button_t* btn, int gpio_num, uint8_t active_
     // iot_button_register_cb(btn->_btn_handle, BUTTON_PRESS_END, NULL, btn_press_end_cb, btn);
     iot_button_register_cb(btn->_btn_handle, BUTTON_SINGLE_CLICK, NULL, btn_click_cb, btn);
     iot_button_register_cb(btn->_btn_handle, BUTTON_LONG_PRESS_START, NULL, btn_long_press_cb, btn);
-    // iot_button_register_cb(btn->_btn_handle, BUTTON_DOUBLE_CLICK, NULL, btn_double_click_cb, btn);
+    iot_button_register_cb(btn->_btn_handle, BUTTON_DOUBLE_CLICK, NULL, btn_double_click_cb, btn);
 }
 
 

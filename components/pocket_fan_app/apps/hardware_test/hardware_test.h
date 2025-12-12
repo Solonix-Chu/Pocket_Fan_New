@@ -91,6 +91,12 @@ private:
                         }
                         break;
                     case APP_BUTTON_STATE_HOLD: current_status += "HLD"; break;
+                    case APP_BUTTON_STATE_DOUBLE_CLICK:
+                        if (btn.id == BUTTON::BTN_MID) {
+                            current_status += "DBL_CLK";
+                            HAL::StartBleOta();
+                        }
+                        break;
                     case APP_BUTTON_STATE_DECIDE_CLICK_COUNT: current_status += "WT"; break;
                     default: current_status += std::to_string((int)state); break;
                 }

@@ -8,6 +8,7 @@ idf_component_register(SRCS "main.cpp"
                        "hal_pocketfan/components/hal_ntc.cpp"
                        "hal_pocketfan/components/hal_motor.cpp"
                        "hal_pocketfan/components/hal_led.cpp"
+                       "hal_pocketfan/components/hal_ota.cpp"
                        INCLUDE_DIRS "." "hal_pocketfan"
-                       PRIV_REQUIRES esp_driver_gpio esp_timer LovyanGFX app_button pocket_fan_app mooncake esp_adc
+                       PRIV_REQUIRES esp_driver_gpio esp_timer LovyanGFX app_button pocket_fan_app mooncake esp_adc nvs_flash esp_common espressif__ble_ota esp_partition app_update
                        )
