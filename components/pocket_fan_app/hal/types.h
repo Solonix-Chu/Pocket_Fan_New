@@ -21,6 +21,7 @@ namespace BUTTON
         BTN_LEFT,
         BTN_RIGHT,
         BTN_MID,
+        BTN_POWER,
         BUTTON_NUM,
     };
 } // namespace BUTTON

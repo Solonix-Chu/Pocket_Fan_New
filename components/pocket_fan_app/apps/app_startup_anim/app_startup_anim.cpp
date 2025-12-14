@@ -1,8 +1,6 @@
 #include "app_startup_anim.h"
 #include <esp_timer.h>
-
-// Declare the image asset
-extern const lv_image_dsc_t _start_124X22_RGB565A8_124x22;
+#include "../../assets/assets.h"
 
 StartupAnimApp::StartupAnimApp() {
     // We can set ID manually if needed, but Mooncake assigns it on install.
@@ -20,7 +18,18 @@ void StartupAnimApp::onOpen() {
         lv_obj_set_style_bg_opa(_screen, LV_OPA_COVER, 0);
         
         lv_obj_t* img = lv_image_create(_screen);
-        lv_image_set_src(img, &_start_124X22_RGB565A8_124x22);
+        
+        static lv_image_dsc_t img_dsc;
+        img_dsc.header.magic = LV_IMAGE_HEADER_MAGIC;
+        img_dsc.header.cf = LV_COLOR_FORMAT_RGB565A8;
+        img_dsc.header.flags = 0;
+        img_dsc.header.w = 124;
+        img_dsc.header.h = 22;
+        img_dsc.header.stride = 248;
+        img_dsc.data_size = 8184;
+        img_dsc.data = AssetPool::GetImage().Startup.logo;
+
+        lv_image_set_src(img, &img_dsc);
         lv_obj_center(img);
     }
     lv_scr_load(_screen);
