@@ -1,6 +1,6 @@
-[submodule "components/--force"]
-	path = components/--force
-	url = https://github.com/Forairaaaaa/smooth_ui_toolkit.git
 [submodule "components/mooncake"]
 	path = components/mooncake
 	url = https://github.com/Forairaaaaa/mooncake.git
+[submodule "components/smooth_ui_toolkit"]
+	path = components/smooth_ui_toolkit
+	url = https://github.com/Forairaaaaa/smooth_ui_toolkit.git
