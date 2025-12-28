@@ -5,12 +5,23 @@
 */
 #pragma once
 #include <cstdint>
-#include "fonts/types.h"
-#include "images/types.h"
 #include "theme/types.h"
 #include "localization/types.h"
 #include "../hal/types.h"
 #include "../hal/hal.h"
+
+// LVGL Fonts
+extern "C" const lv_font_t lv_font_Gully_Bold_16;
+
+// LVGL Images (Menu App)
+extern "C" const lv_image_dsc_t _About_RGB565A8_34x26;
+extern "C" const lv_image_dsc_t _Detail_RGB565A8_34x26;
+extern "C" const lv_image_dsc_t _Emoji_RGB565A8_34x26;
+extern "C" const lv_image_dsc_t _Enjoy_RGB565A8_34x26;
+extern "C" const lv_image_dsc_t _Health_RGB565A8_34x26;
+extern "C" const lv_image_dsc_t _Quit_RGB565A8_34x26;
+extern "C" const lv_image_dsc_t _Setting_RGB565A8_34x26;
+extern "C" const lv_image_dsc_t _start_124X22_RGB565A8_124x22;
 
 /**
  * @brief A struct to define static binary asset
@@ -18,8 +29,8 @@
  */
 struct StaticAsset_t
 {
-    FontPool_t Font;
-    ImagePool_t Image;
+    // FontPool_t Font;
+    // ImagePool_t Image;
     ColorPool_t Color;
     TextPool_t Text;
 };
@@ -40,20 +51,11 @@ public:
     static AssetPool* Get();
 
 private:
-    struct EFontPool_t
-    {
-        lgfx::U8g2font* eFontCN_16_subset = nullptr;
-        lgfx::U8g2font* eFontCN_24_subset = nullptr;
-        lgfx::U8g2font* eFontJA_16_subset = nullptr;
-        lgfx::U8g2font* eFontJA_24_subset = nullptr;
-    };
-
     struct Data_t
     {
         StaticAsset_t* static_asset = nullptr;
         LocalTextPoolMap_t local_text_pool_map;
         LocaleCode_t locale_code = locale_code_en;
-        EFontPool_t efont_pool;
     };
     Data_t _data;
 
@@ -75,18 +77,25 @@ private:
     void _create_efont_pool();
 
 public:
-    void loadFont14(LGFX_SpriteFx* lgfxDevice);
-    void loadFont16(LGFX_SpriteFx* lgfxDevice);
-    void loadFont24(LGFX_SpriteFx* lgfxDevice);
-    void loadFont72(LGFX_SpriteFx* lgfxDevice);
-    inline const EFontPool_t& getEFontPool() { return _data.efont_pool; }
+    // LVGL Font Access
+    static const lv_font_t* GetGullyBold16() { return &lv_font_Gully_Bold_16; }
+
+    // LVGL Image Access (Menu App)
+    static const lv_image_dsc_t* GetImgAbout() { return &_About_RGB565A8_34x26; }
+    static const lv_image_dsc_t* GetImgDetail() { return &_Detail_RGB565A8_34x26; }
+    static const lv_image_dsc_t* GetImgEmoji() { return &_Emoji_RGB565A8_34x26; }
+    static const lv_image_dsc_t* GetImgEnjoy() { return &_Enjoy_RGB565A8_34x26; }
+    static const lv_image_dsc_t* GetImgHealth() { return &_Health_RGB565A8_34x26; }
+    static const lv_image_dsc_t* GetImgQuit() { return &_Quit_RGB565A8_34x26; }
+    static const lv_image_dsc_t* GetImgSetting() { return &_Setting_RGB565A8_34x26; }
+    static const lv_image_dsc_t* GetImgStartup() { return &_start_124X22_RGB565A8_124x22; }
 
     /* ------------------------------- Static wrap ------------------------------ */
 public:
     static StaticAsset_t* GetStaticAsset() { return Get()->getStaticAsset(); }
     static bool InjectStaticAsset(StaticAsset_t* asset) { return Get()->injectStaticAsset(asset); }
 
-    static const ImagePool_t& GetImage() { return GetStaticAsset()->Image; }
+    // static const ImagePool_t& GetImage() { return GetStaticAsset()->Image; }
     static const ColorPool_t& GetColor() { return GetStaticAsset()->Color; }
     static const TextPool_t& GetTextPool() { return GetStaticAsset()->Text; }
     static const LocalTextPoolMap_t& GetText() { return Get()->getText(); }
@@ -95,12 +104,6 @@ public:
     static void SetLocalTextTo(LocaleCode_t code) { Get()->setLocalTextTo(code); }
     static LocaleCode_t GetLocaleCode() { return Get()->getLocaleCode(); }
     static bool IsLocaleEn() { return Get()->isLocaleEn(); }
-
-    static void LoadFont14(LGFX_SpriteFx* lgfxDevice) { Get()->loadFont14(lgfxDevice); }
-    static void LoadFont16(LGFX_SpriteFx* lgfxDevice) { Get()->loadFont16(lgfxDevice); }
-    static void LoadFont24(LGFX_SpriteFx* lgfxDevice) { Get()->loadFont24(lgfxDevice); }
-    static void LoadFont72(LGFX_SpriteFx* lgfxDevice) { Get()->loadFont72(lgfxDevice); }
-    static const EFontPool_t& GetEFontPool() { return Get()->getEFontPool(); }
 
 public:
 #ifndef ESP_PLATFORM

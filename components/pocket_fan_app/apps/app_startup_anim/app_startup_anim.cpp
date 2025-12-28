@@ -19,17 +19,8 @@ void StartupAnimApp::onOpen() {
         
         lv_obj_t* img = lv_image_create(_screen);
         
-        static lv_image_dsc_t img_dsc;
-        img_dsc.header.magic = LV_IMAGE_HEADER_MAGIC;
-        img_dsc.header.cf = LV_COLOR_FORMAT_RGB565A8;
-        img_dsc.header.flags = 0;
-        img_dsc.header.w = 124;
-        img_dsc.header.h = 22;
-        img_dsc.header.stride = 248;
-        img_dsc.data_size = 8184;
-        img_dsc.data = AssetPool::GetImage().Startup.logo;
-
-        lv_image_set_src(img, &img_dsc);
+        // Use the pre-defined image descriptor from AssetPool
+        lv_image_set_src(img, AssetPool::GetImgStartup());
         lv_obj_center(img);
     }
     lv_scr_load(_screen);

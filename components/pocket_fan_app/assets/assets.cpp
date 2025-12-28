@@ -17,7 +17,6 @@ static const char* TAG = "AssetPool";
 
 #ifndef ESP_PLATFORM
 #include "fonts/fonts.h"
-#include "images/images.h"
 #include <iostream>
 #include <fstream>
 #endif
@@ -59,7 +58,6 @@ bool AssetPool::injectStaticAsset(StaticAsset_t* asset)
 
     // Default local text map
     setLocalTextTo(_data.locale_code);
-    _create_efont_pool();
 
     ESP_LOGI(TAG, "static asset injected");
     return true;
@@ -79,56 +77,6 @@ void AssetPool::setLocaleCode(LocaleCode_t code)
 {
     _data.locale_code = code;
     setLocalTextTo(_data.locale_code);
-}
-
-void AssetPool::_create_efont_pool()
-{
-    _data.efont_pool.eFontCN_16_subset = new lgfx::U8g2font(getStaticAsset()->Font.efontCN_16_subset_data);
-    _data.efont_pool.eFontCN_24_subset = new lgfx::U8g2font(getStaticAsset()->Font.efontCN_24_subset_data);
-    _data.efont_pool.eFontJA_16_subset = new lgfx::U8g2font(getStaticAsset()->Font.efontJA_16_subset_data);
-    _data.efont_pool.eFontJA_24_subset = new lgfx::U8g2font(getStaticAsset()->Font.efontJA_24_subset_data);
-}
-
-void AssetPool::loadFont14(LGFX_SpriteFx* lgfxDevice)
-{
-    // Only en for 14
-    lgfxDevice->setTextSize(1);
-    lgfxDevice->loadFont(getStaticAsset()->Font.montserrat_semibolditalic_14);
-}
-
-void AssetPool::loadFont16(LGFX_SpriteFx* lgfxDevice)
-{
-    lgfxDevice->setTextSize(1);
-    if (_data.locale_code == locale_code_en)
-        lgfxDevice->loadFont(getStaticAsset()->Font.montserrat_semibold_16);
-    else if (_data.locale_code == locale_code_cn)
-        lgfxDevice->setFont(_data.efont_pool.eFontCN_16_subset);
-    else if (_data.locale_code == locale_code_jp)
-        lgfxDevice->setFont(_data.efont_pool.eFontJA_16_subset);
-}
-
-void AssetPool::loadFont24(LGFX_SpriteFx* lgfxDevice)
-{
-    lgfxDevice->setTextSize(1);
-    // if (_data.locale_code == locale_code_en)
-    //     lgfxDevice->loadFont(getStaticAsset()->Font.montserrat_semibolditalic_24);
-    // else if (_data.locale_code == locale_code_cn)
-    //     lgfxDevice->setFont(_data.efont_pool.eFontCN_24_subset);
-    // else if (_data.locale_code == locale_code_jp)
-    //     lgfxDevice->setFont(_data.efont_pool.eFontJA_24_subset);
-
-    if (_data.locale_code == locale_code_en)
-        lgfxDevice->loadFont(getStaticAsset()->Font.montserrat_semibolditalic_24);
-    else if (_data.locale_code == locale_code_cn)
-        lgfxDevice->setFont(_data.efont_pool.eFontCN_24_subset);
-    else if (_data.locale_code == locale_code_jp)
-        lgfxDevice->setFont(_data.efont_pool.eFontJA_24_subset);
-}
-
-void AssetPool::loadFont72(LGFX_SpriteFx* lgfxDevice)
-{
-    lgfxDevice->setTextSize(1);
-    lgfxDevice->loadFont(getStaticAsset()->Font.montserrat_semibolditalic_72);
 }
 
 /* -------------------------------------------------------------------------- */

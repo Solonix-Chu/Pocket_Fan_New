@@ -1,6 +1,6 @@
 #include "app.h"
 // #include "apps/launcher/launcher.h"
-// #include "apps/settings/settings.h"
+#include "apps/menu/menu.h"
 // #include "apps/fan_control/fan_control.h"
 // #include "apps/app_startup_anim/app_startup_anim.h"
 #include "apps/apps.h"
@@ -48,7 +48,9 @@ public:
                 GetMooncake().uninstallApp(_startup_anim_id);
                 
                 // Install Hardware Test App
-                int test_id = GetMooncake().installApp(std::make_unique<HardwareTestApp>());
+                // int test_id = GetMooncake().installApp(std::make_unique<HardwareTestApp>());
+                // 
+                int test_id = GetMooncake().installApp(std::make_unique<MenuApp>());
                 GetMooncake().openApp(test_id);
                 
                 _is_startup_anim_done = true;
@@ -58,10 +60,10 @@ public:
         GetMooncake().update();
         HAL::Get()->LGVL_UPDATE();
 
-        if (HAL::GetButton(BUTTON::BTN_POWER) == APP_BUTTON_STATE_HOLD) {
-            ESP_LOGI(TAG, "Power Button Long Press detected. Shutting down.");
-            HAL::PowerOff();
-        }
+        // if (HAL::GetButton(BUTTON::BTN_POWER) == APP_BUTTON_STATE_HOLD) {
+        //     ESP_LOGI(TAG, "Power Button Long Press detected. Shutting down.");
+        //     HAL::PowerOff();
+        // }
 
         HAL::Get()->allButton_refresh(); // 每个周期最后调用，刷新按键状态
     }

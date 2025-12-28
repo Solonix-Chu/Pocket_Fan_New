@@ -4,7 +4,6 @@
 #include <esp_log.h>
 
 // Extern the map data from the .c file
-extern "C" const uint8_t _start_124X22_RGB565A8_124x22_map[];
 
 static const char* TAG = "AssetsLoader";
 
@@ -26,13 +25,13 @@ void LoadStaticAssets()
 
     // Load Startup Image
     // 124 * 22 * 3 bytes (RGB565 + Alpha8) = 8184 bytes
-    memcpy(assets->Image.Startup.logo, _start_124X22_RGB565A8_124x22_map, 8184);
+    // memcpy(assets->Image.Startup.logo, _start_124X22_RGB565A8_124x22_map, 8184);
 
     // Inject into AssetPool
-    if (AssetPool::InjectStaticAsset(assets)) {
-        ESP_LOGI(TAG, "Static assets injected successfully");
-    } else {
-        ESP_LOGE(TAG, "Failed to inject static assets");
-        delete assets;
-    }
+    // if (AssetPool::InjectStaticAsset(assets)) {
+    //     ESP_LOGI(TAG, "Static assets injected successfully");
+    // } else {
+    //     ESP_LOGE(TAG, "Failed to inject static assets");
+    //     delete assets;
+    // }
 }
