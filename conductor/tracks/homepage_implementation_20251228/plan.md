@@ -27,7 +27,7 @@
 - [x] Task: Implement Long Press Return 319afec
 
 ## Phase 3: Real-Time Data Display
-- [ ] Task: Layout Data Labels
+- [x] Task: Layout Data Labels 932f405
     - [ ] Based on `demo/setup_scr_screen.c`, create LVGL labels for V, A, W on the homepage.
     - [ ] Ensure labels are children of the correct tile/page in the TileView.
 - [ ] Task: Connect to HAL Telemetry
