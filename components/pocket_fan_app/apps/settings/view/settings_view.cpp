@@ -26,6 +26,16 @@ void SettingsView::init() {
     
     if (!_items_props.empty()) {
         jumpTo(0);
+        
+        // Staggered Entrance Anim
+        for (size_t i = 0; i < _item_transitions.size(); i++) {
+            _item_transitions[i].teleport(-128, getOptionList()[i].keyframe.y);
+            _item_transitions[i].move(getOptionList()[i].keyframe.x, getOptionList()[i].keyframe.y);
+            _item_transitions[i].x.delay = 0.1f + i * 0.03f;
+            _item_transitions[i].x.easingOptions().duration = 0.4f;
+            _item_transitions[i].x.easingOptions().easingFunction = ease::ease_out_back;
+        }
+
         _transition_offset.teleport(-128);
         _transition_offset.move(0);
         _transition_offset.easingOptions().duration = 0.4f;
@@ -44,6 +54,9 @@ void SettingsView::addSettingsItem(const SettingsItemProps& props) {
     option.keyframe.width = 128; // Default, will be updated dynamically
     option.keyframe.height = _item_h;
     addOption(option);
+
+    // Staggered transition setup
+    _item_transitions.emplace_back();
 }
 
 void SettingsView::updateItemValue(int index, bool checked) {
@@ -137,19 +150,35 @@ void SettingsView::onRender() {
     // Update Camera (move container) + Transition Offset
     lv_obj_set_pos(_list_cont, -(int32_t)camera.x + trans_x, -(int32_t)camera.y);
 
-    // Color Inversion
+    // Color Inversion and Staggered Position Update
     int selected_idx = getSelectedOptionIndex();
     for (size_t i = 0; i < _item_objs.size(); i++) {
+        auto pos = _item_transitions[i].value();
+        lv_obj_set_pos(_item_objs[i], (int32_t)pos.x + 4, (int32_t)pos.y + 4);
+        if (_checkbox_objs[i]) {
+            lv_obj_set_pos(_checkbox_objs[i], (int32_t)pos.x + 100, (int32_t)pos.y + 2);
+        }
+
         if (i == (size_t)selected_idx) {
             lv_obj_set_style_text_color(_item_objs[i], lv_color_white(), 0);
         } else {
             lv_obj_set_style_text_color(_item_objs[i], lv_color_black(), 0);
         }
     }
+
+    // Popup transition
+    if (_is_popup_active && _popup_cont) {
+        lv_obj_set_style_translate_y(_popup_cont, (int32_t)_popup_transition.value(), 0);
+    }
 }
 
 void SettingsView::onUpdate(const uint32_t& currentTime) {
-    _transition_offset.update(currentTime / 1000.0f);
+    float current_time_s = currentTime / 1000.0f;
+    _transition_offset.update(current_time_s);
+    _popup_transition.update(current_time_s);
+    for (auto& item : _item_transitions) {
+        item.update(current_time_s);
+    }
 }
 
 void SettingsView::showBrightnessPopup(int initialValue) {
@@ -180,6 +209,12 @@ void SettingsView::showBrightnessPopup(int initialValue) {
     lv_obj_set_style_text_color(_popup_label, lv_color_black(), 0);
     lv_obj_align(_popup_label, LV_ALIGN_TOP_MID, 0, 0);
     lv_label_set_text_fmt(_popup_label, "BRI: %d%%", initialValue);
+
+    // Entrance Anim
+    _popup_transition.teleport(64); // Start from below
+    _popup_transition.move(0);
+    _popup_transition.easingOptions().duration = 0.3f;
+    _popup_transition.easingOptions().easingFunction = ease::ease_out_back;
 }
 
 void SettingsView::updateBrightnessPopup(int value) {
