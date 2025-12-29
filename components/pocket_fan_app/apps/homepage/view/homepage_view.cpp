@@ -31,6 +31,8 @@ void HomepageView::_create_lvgl_objects() {
     if (_screen) return;
 
     _screen = lv_obj_create(NULL);
+    lv_obj_set_style_bg_color(_screen, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(_screen, LV_OPA_COVER, 0);
     lv_obj_clear_flag(_screen, LV_OBJ_FLAG_SCROLLABLE);
     
     _tileview = lv_tileview_create(_screen);
@@ -51,29 +53,59 @@ void HomepageView::_create_lvgl_objects() {
     lv_image_set_src(_bg2, AssetPool::GetImgHomePage2());
     lv_obj_align(_bg2, LV_ALIGN_CENTER, 0, 0);
 
-    // Data Labels on Screen (Overlay) or Tile1?
-    // If we want them only on Page 1, they should be children of Tile1 or bg1.
-    // To ensure they are visible ON TOP of bg1, we create them after bg1.
+    // Data Labels on Page 1
+    // Ref positions from setup_scr_screen_1.c
+    // screen_1_label_1 (V): pos(-9, 15), size(67, 15)
+    // screen_1_label_2 (A): pos(-9, 31), size(67, 18)
+    // screen_1_label_3 (W): pos(-9, 47), size(67, 18)
     
     _label_v = lv_label_create(_tile1);
-    lv_obj_set_style_text_color(_label_v, lv_color_white(), 0);
+    lv_obj_set_style_text_color(_label_v, lv_color_black(), 0);
     lv_obj_set_style_text_font(_label_v, AssetPool::GetGullyBold16(), 0);
-    lv_obj_set_pos(_label_v, 10, 5);
-    lv_label_set_text(_label_v, "--V");
+    lv_obj_set_style_text_align(_label_v, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_size(_label_v, 67, 15);
+    lv_obj_set_pos(_label_v, -9, 15);
+    lv_label_set_text(_label_v, "0.00");
 
     _label_a = lv_label_create(_tile1);
-    lv_obj_set_style_text_color(_label_a, lv_color_white(), 0);
+    lv_obj_set_style_text_color(_label_a, lv_color_black(), 0);
     lv_obj_set_style_text_font(_label_a, AssetPool::GetGullyBold16(), 0);
-    lv_obj_set_pos(_label_a, 10, 25);
-    lv_label_set_text(_label_a, "--A");
+    lv_obj_set_style_text_align(_label_a, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_size(_label_a, 67, 18);
+    lv_obj_set_pos(_label_a, -9, 31);
+    lv_label_set_text(_label_a, "0.00");
 
     _label_w = lv_label_create(_tile1);
-    lv_obj_set_style_text_color(_label_w, lv_color_white(), 0);
+    lv_obj_set_style_text_color(_label_w, lv_color_black(), 0);
     lv_obj_set_style_text_font(_label_w, AssetPool::GetGullyBold16(), 0);
-    lv_obj_set_pos(_label_w, 10, 45);
-    lv_label_set_text(_label_w, "--W");
+    lv_obj_set_style_text_align(_label_w, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_size(_label_w, 67, 18);
+    lv_obj_set_pos(_label_w, -9, 47);
+    lv_label_set_text(_label_w, "0.00");
 
-    // Force labels to foreground just in case
+    // Page 2 labels (T, Cap)
+    // screen_1_label_4 (T): pos(3, 109 - 64? = 45), size(67, 18) - Wait, screen_1 is 128x128 in demo
+    // Homepage is 128x64. So Page 2 is 0-63.
+    // label_4 pos(3, 109) -> relative to page 2 (y=64) is 45.
+    // label_5 pos(58, 87) -> relative to page 2 is 23.
+    
+    _label_t = lv_label_create(_tile2);
+    lv_obj_set_style_text_color(_label_t, lv_color_black(), 0);
+    lv_obj_set_style_text_font(_label_t, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_align(_label_t, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_size(_label_t, 67, 18);
+    lv_obj_set_pos(_label_t, 3, 45);
+    lv_label_set_text(_label_t, "0.0");
+
+    _label_cap = lv_label_create(_tile2);
+    lv_obj_set_style_text_color(_label_cap, lv_color_black(), 0);
+    lv_obj_set_style_text_font(_label_cap, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_align(_label_cap, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_size(_label_cap, 64, 18);
+    lv_obj_set_pos(_label_cap, 58, 23);
+    lv_label_set_text(_label_cap, "0.00");
+
+    // Force labels to foreground
     lv_obj_move_foreground(_label_v);
     lv_obj_move_foreground(_label_a);
     lv_obj_move_foreground(_label_w);
@@ -83,6 +115,11 @@ void HomepageView::updateData(const std::string& v, const std::string& a, const 
     if (_label_v) lv_label_set_text(_label_v, v.c_str());
     if (_label_a) lv_label_set_text(_label_a, a.c_str());
     if (_label_w) lv_label_set_text(_label_w, w.c_str());
+}
+
+void HomepageView::updatePage2Data(const std::string& t, const std::string& cap) {
+    if (_label_t) lv_label_set_text(_label_t, t.c_str());
+    if (_label_cap) lv_label_set_text(_label_cap, cap.c_str());
 }
 
 void HomepageView::setPage(int page) {

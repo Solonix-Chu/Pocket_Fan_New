@@ -16,6 +16,7 @@ public:
     
     // Telemetry updates
     void updateData(const std::string& v, const std::string& a, const std::string& w);
+    void updatePage2Data(const std::string& t, const std::string& cap);
     
     // Page switching
     void setPage(int page);
@@ -37,6 +38,8 @@ private:
     lv_obj_t* _label_v = nullptr;
     lv_obj_t* _label_a = nullptr;
     lv_obj_t* _label_w = nullptr;
+    lv_obj_t* _label_t = nullptr;
+    lv_obj_t* _label_cap = nullptr;
 
     void _create_lvgl_objects();
 };

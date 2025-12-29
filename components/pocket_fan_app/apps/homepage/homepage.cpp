@@ -30,9 +30,15 @@ void HomepageApp::onRunning()
         auto v = HAL::GetUnitAdaptatedVoltage(pm_data.busVoltage);
         auto a = HAL::GetUnitAdaptatedCurrent(pm_data.shuntCurrent);
         auto w = HAL::GetUnitAdaptatedPower(pm_data.busPower);
+        auto cap = HAL::GetUnitAdaptatedCapacity(pm_data.capacity);
+        
+        float t = HAL::GetNTC(0); // Assuming channel 0 for primary temperature
+        char t_buf[32];
+        snprintf(t_buf, sizeof(t_buf), "%.1f", t);
 
         if (_view) {
-            _view->updateData(v.value + v.unit, a.value + a.unit, w.value + w.unit);
+            _view->updateData(v.value, a.value, w.value);
+            _view->updatePage2Data(t_buf, cap.value);
         }
     }
 
