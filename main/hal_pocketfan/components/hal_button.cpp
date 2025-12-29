@@ -36,7 +36,10 @@ app_button_state_t HAL_PocketFan::getButton(BUTTON::Button_t button)
         target_btn = BtnRight;
         break;
     case BUTTON::BTN_MID:
-        target_btn = BtnOk; // Assuming MID maps to OK/Select
+        target_btn = BtnOk;
+        break;
+    case BUTTON::BTN_OK:
+        target_btn = BtnOk;
         break;
     case BUTTON::BTN_POWER:
         target_btn = BtnPower;

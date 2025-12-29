@@ -18,6 +18,22 @@ void HomepageApp::onOpen()
 
 void HomepageApp::onRunning()
 {
+    // Update telemetry labels every 200ms
+    if (HAL::GetTick() - _last_update_time > 200) {
+        _last_update_time = HAL::GetTick();
+
+        auto pm_data = HAL::GetPowerMonitorData();
+        
+        auto v = HAL::GetUnitAdaptatedVoltage(pm_data.busVoltage);
+        lv_label_set_text_fmt(_label_v, "%s%s", v.value.c_str(), v.unit.c_str());
+
+        auto a = HAL::GetUnitAdaptatedCurrent(pm_data.shuntCurrent);
+        lv_label_set_text_fmt(_label_a, "%s%s", a.value.c_str(), a.unit.c_str());
+
+        auto w = HAL::GetUnitAdaptatedPower(pm_data.busPower);
+        lv_label_set_text_fmt(_label_w, "%s%s", w.value.c_str(), w.unit.c_str());
+    }
+
     // Switch between pages using wheel (left/right buttons as wheel surrogates or raw wheel events)
     if (HAL::GetButton(BUTTON::BTN_RIGHT) == APP_BUTTON_STATE_CLICKED) {
         if (_current_page == 0) {

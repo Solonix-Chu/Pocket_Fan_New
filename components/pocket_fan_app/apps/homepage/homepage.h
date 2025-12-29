@@ -22,6 +22,7 @@ private:
     lv_obj_t* _label_a = nullptr;
     lv_obj_t* _label_w = nullptr;
     int _current_page = 0;
+    uint32_t _last_update_time = 0;
 
     void _create_view();
     void _destroy_view();
