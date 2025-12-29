@@ -38,9 +38,10 @@ void SettingsView::addSettingsItem(const SettingsItemProps& props) {
     
     Option_t option;
     int index = _items_props.size() - 1;
-    option.keyframe.x = 10; 
-    option.keyframe.y = index * (_item_h + _item_gap) + 20; 
-    option.keyframe.width = 108;
+    // Each item is 24px high + 4px gap. Start at y=10.
+    option.keyframe.x = 5; 
+    option.keyframe.y = index * (_item_h + _item_gap) + 10; 
+    option.keyframe.width = 118;
     option.keyframe.height = _item_h;
     addOption(option);
 }
@@ -73,6 +74,7 @@ void SettingsView::_create_lvgl_objects() {
         lv_obj_set_style_text_font(label, AssetPool::GetGullyBold16(), 0);
         
         const auto& kf = getOptionList()[i].keyframe;
+        // Text padding inside item
         lv_obj_set_pos(label, (int32_t)kf.x + 4, (int32_t)kf.y + 4);
         _item_objs.push_back(label);
     }
@@ -81,7 +83,10 @@ void SettingsView::_create_lvgl_objects() {
 void SettingsView::onRender() {
     if (!_screen) return;
     int32_t trans_x = (int32_t)_transition_offset.value();
-    
+    auto camera = getCameraOffset();
+
+    // Update Selector (Adjusted for camera offset if needed, 
+    // but usually selector is relative to container)
     auto selector = getSelectorCurrentFrame();
     lv_obj_set_pos(_selector_obj, 
         (int32_t)(selector.x - _selector_pad), 
@@ -90,7 +95,7 @@ void SettingsView::onRender() {
         (int32_t)(selector.width + _selector_pad * 2), 
         (int32_t)(selector.height + _selector_pad * 2));
 
-    auto camera = getCameraOffset();
+    // Update Camera (move container) + Transition Offset
     lv_obj_set_pos(_list_cont, -(int32_t)camera.x + trans_x, -(int32_t)camera.y);
 }
 
@@ -113,7 +118,10 @@ void SettingsView::onReadInput() {
 }
 
 void SettingsView::onClick() {
+    ESP_LOGI(TAG, "onClick");
+    // Expand animation
     open({0 + getCameraOffset().x, 0, 128, 64});
+    
     float duration = 0.15f;
     getSelectorPostion().x.easingOptions().duration = duration;
     getSelectorPostion().y.easingOptions().duration = duration;
@@ -122,10 +130,14 @@ void SettingsView::onClick() {
 }
 
 void SettingsView::onOpenEnd() {
+    ESP_LOGI(TAG, "onOpenEnd");
     int idx = getSelectedOptionIndex();
     if (idx >= 0 && idx < _items_props.size()) {
         if (_items_props[idx].callback) _items_props[idx].callback();
     }
+    
+    // Reset state so it can be clicked again
+    close();
 }
 
 void SettingsView::_update_camera_keyframe() {

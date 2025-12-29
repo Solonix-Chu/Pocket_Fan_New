@@ -41,20 +41,25 @@ void SettingsApp::_create_view()
     if (_view) return;
     _view = new SettingsView();
     
-    // Add items
-    _view->addSettingsItem({"Brightness", [this]() {
-        ESP_LOGI(TAG, "Open Brightness Popup");
-        // TODO: Brightness popup
+    // Add items (Based on VAMeter root.cpp)
+    _view->addSettingsItem({"About", [this]() {
+        ESP_LOGI(TAG, "Open About");
     }});
     
-    _view->addSettingsItem({"Theme", [this]() {
-        ESP_LOGI(TAG, "Toggle Theme");
-        // TODO: Theme toggle
+    _view->addSettingsItem({"Display", [this]() {
+        ESP_LOGI(TAG, "Open Display Settings");
+    }});
+
+    _view->addSettingsItem({"Buzzer", [this]() {
+        ESP_LOGI(TAG, "Open Buzzer Settings");
+    }});
+
+    _view->addSettingsItem({"Encoder", [this]() {
+        ESP_LOGI(TAG, "Open Encoder Settings");
     }});
 
     _view->addSettingsItem({"Language", [this]() {
         ESP_LOGI(TAG, "Toggle Language");
-        // TODO: Language toggle
     }});
 
     _view->addSettingsItem({"Back", [this]() {
