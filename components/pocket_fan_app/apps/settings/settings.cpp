@@ -51,6 +51,18 @@ void SettingsApp::onRunning()
     }
 }
 
+void SettingsApp::onClose()
+{
+    ESP_LOGI(TAG, "onClose");
+    _destroy_view();
+}
+
+void SettingsApp::onDestroy()
+{
+    ESP_LOGI(TAG, "onDestroy");
+    _destroy_view();
+}
+
 void SettingsApp::_create_view()
 {
     if (_view) return;
