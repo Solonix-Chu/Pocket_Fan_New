@@ -33,6 +33,7 @@
     - [ ] Update the text of the LVGL labels (e.g., using `lv_label_set_text_fmt`).
     - [ ] Limit updates to every ~200ms to avoid UI stutter.
 - [x] Task: Connect to HAL Telemetry 4a5c734
+[checkpoint: 55cc048]
 
 ## Phase 4: Final Verification
-- [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
