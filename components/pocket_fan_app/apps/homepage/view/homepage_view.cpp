@@ -90,7 +90,7 @@ void HomepageView::_create_lvgl_objects() {
     lv_obj_set_style_text_align(_label_pwm, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(_label_pwm, 40, 18);
     lv_obj_set_pos(_label_pwm, 80, 25);
-    lv_label_set_text(_label_pwm, "50%");
+    lv_label_set_text(_label_pwm, "0%");
 
     // Page 2 labels (T, Cap)
     // screen_1_label_4 (T): pos(3, 109 - 64? = 45), size(67, 18) - Wait, screen_1 is 128x128 in demo

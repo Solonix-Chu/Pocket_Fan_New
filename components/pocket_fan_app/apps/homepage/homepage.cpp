@@ -76,9 +76,9 @@ void HomepageApp::onRunning()
         _last_scroll_time = now;
 
         int step = 1;
-        if (delta < 50) step = 10;
-        else if (delta < 100) step = 5;
-        else if (delta < 200) step = 2;
+        if (delta < 30) step = 10;
+        else if (delta < 50) step = 5;
+        else if (delta < 100) step = 2;
 
         if (btn_up == APP_BUTTON_STATE_CLICKED) {
             // Actually, hal_button.cpp maps BTN_UP to BtnUp.
