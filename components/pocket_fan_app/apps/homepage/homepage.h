@@ -1,6 +1,7 @@
 #pragma once
 #include <mooncake.h>
 #include "lvgl.h"
+#include "view/homepage_view.h"
 
 class HomepageApp : public mooncake::AppAbility
 {
@@ -15,13 +16,7 @@ public:
     void onDestroy() override;
 
 private:
-    lv_obj_t* _screen = nullptr;
-    lv_obj_t* _tileview = nullptr;
-    lv_obj_t* _tile1 = nullptr;
-    lv_obj_t* _tile2 = nullptr;
-    lv_obj_t* _label_v = nullptr;
-    lv_obj_t* _label_a = nullptr;
-    lv_obj_t* _label_w = nullptr;
+    HomepageView* _view = nullptr;
     int _current_page = 0;
     uint32_t _last_update_time = 0;
 
