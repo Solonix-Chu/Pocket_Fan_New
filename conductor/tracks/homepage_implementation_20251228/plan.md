@@ -5,11 +5,12 @@
     - [ ] Create `homepage.h` and `homepage.cpp` in `components/pocket_fan_app/apps/homepage/`.
     - [ ] Implement `onSetup`, `onCreate`, `onDestroy`, etc., inheriting from Mooncake's App interface.
     - [ ] Register the new app in `components/pocket_fan_app/apps/apps.h` and the app loader.
-- [ ] Task: Implement Background & Page Switching UI
+- [~] Task: Implement Background & Page Switching UI
     - [ ] Load background images from assets.
     - [ ] Create an LVGL TileView (`lv_tileview`) to hold the two pages.
     - [ ] Implement the `onRunning` loop to handle wheel input events.
     - [ ] Map wheel scroll to `lv_tileview_set_tile_id` (or similar) with animation.
+- [x] Task: Implement Background & Page Switching UI a937e42
 - [ ] Task: Implement Menu Transition Logic
     - [ ] Detect "OK" button press in `homepage::onRunning`.
     - [ ] Call Mooncake's app manager to switch to the `Menu` app ID.
