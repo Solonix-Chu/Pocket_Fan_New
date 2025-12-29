@@ -23,6 +23,12 @@ public:
     void addSettingsItem(const SettingsItemProps& props);
     void updateItemValue(int index, bool checked);
 
+    // Popup management
+    void showBrightnessPopup(int initialValue);
+    void updateBrightnessPopup(int value);
+    void hideBrightnessPopup();
+    bool isPopupActive() const { return _is_popup_active; }
+
     // Overrides
     void onRender() override;
     void onUpdate(const uint32_t& currentTime) override;
@@ -42,6 +48,12 @@ private:
     lv_obj_t* _selector_obj = nullptr;
     std::vector<lv_obj_t*> _item_objs;
     std::vector<lv_obj_t*> _checkbox_objs;
+    
+    // Popup objects
+    lv_obj_t* _popup_cont = nullptr;
+    lv_obj_t* _popup_bar = nullptr;
+    lv_obj_t* _popup_label = nullptr;
+    bool _is_popup_active = false;
     
     void _create_lvgl_objects();
     

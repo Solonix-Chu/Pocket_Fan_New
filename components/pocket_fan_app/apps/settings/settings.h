@@ -16,6 +16,9 @@ public:
 
 private:
     SettingsView* _view = nullptr;
+    bool _is_adjusting_brightness = false;
+    int _brightness_val = 255;
+    
     void _create_view();
     void _destroy_view();
 };

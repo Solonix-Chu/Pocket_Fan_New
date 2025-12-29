@@ -152,8 +152,62 @@ void SettingsView::onUpdate(const uint32_t& currentTime) {
     _transition_offset.update(currentTime / 1000.0f);
 }
 
+void SettingsView::showBrightnessPopup(int initialValue) {
+    if (_is_popup_active) return;
+    _is_popup_active = true;
+
+    // Create popup container
+    _popup_cont = lv_obj_create(_screen);
+    lv_obj_set_size(_popup_cont, 100, 40);
+    lv_obj_align(_popup_cont, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_color(_popup_cont, lv_color_white(), 0);
+    lv_obj_set_style_border_color(_popup_cont, lv_color_black(), 0);
+    lv_obj_set_style_border_width(_popup_cont, 2, 0);
+    lv_obj_set_style_radius(_popup_cont, 8, 0);
+    lv_obj_clear_flag(_popup_cont, LV_OBJ_FLAG_SCROLLABLE);
+
+    // Progress bar
+    _popup_bar = lv_bar_create(_popup_cont);
+    lv_obj_set_size(_popup_bar, 80, 10);
+    lv_obj_align(_popup_bar, LV_ALIGN_CENTER, 0, 5);
+    lv_bar_set_range(_popup_bar, 0, 100);
+    lv_bar_set_value(_popup_bar, initialValue, LV_ANIM_OFF);
+    lv_obj_set_style_bg_color(_popup_bar, lv_color_black(), LV_PART_INDICATOR);
+
+    // Label
+    _popup_label = lv_label_create(_popup_cont);
+    lv_obj_set_style_text_font(_popup_label, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_color(_popup_label, lv_color_black(), 0);
+    lv_obj_align(_popup_label, LV_ALIGN_TOP_MID, 0, 0);
+    lv_label_set_text_fmt(_popup_label, "BRI: %d%%", initialValue);
+}
+
+void SettingsView::updateBrightnessPopup(int value) {
+    if (!_is_popup_active) return;
+    if (_popup_bar) lv_bar_set_value(_popup_bar, value, LV_ANIM_OFF);
+    if (_popup_label) lv_label_set_text_fmt(_popup_label, "BRI: %d%%", value);
+}
+
+void SettingsView::hideBrightnessPopup() {
+    if (!_is_popup_active) return;
+    if (_popup_cont) {
+        lv_obj_del(_popup_cont);
+        _popup_cont = nullptr;
+        _popup_bar = nullptr;
+        _popup_label = nullptr;
+    }
+    _is_popup_active = false;
+}
+
 void SettingsView::onReadInput() {
     if (isOpening()) return;
+
+    // If popup is active, we don't allow menu navigation
+    if (_is_popup_active) {
+        // App will handle the actual adjustment logic by calling HAL and then updateBrightnessPopup
+        return;
+    }
+
     if (HAL::GetButton(BUTTON::BTN_DOWN) == APP_BUTTON_STATE_CLICKED) {
         if (BtnDown) BtnDown->currentState = APP_BUTTON_STATE_NOCHANGE;
         goNext();
