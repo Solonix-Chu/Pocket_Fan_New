@@ -27,6 +27,7 @@ public:
     void onReadInput() override;
     
     void onClick() override;
+    void onOpenEnd() override;
 
 protected:
     void _update_camera_keyframe() override;

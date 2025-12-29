@@ -43,6 +43,9 @@ void MenuView::init() {
     // Initial jump
     if (!_settings_props.empty()) {
         jumpTo(0);
+        
+        // Entrance Anim: Slide from left
+        getCamera().jumpTo(-128, 0); 
     }
 }
 
@@ -158,11 +161,16 @@ void MenuView::onReadInput() {
 }
 
 void MenuView::onClick() {
-    // Animate press
-    auto kf = getSelectedKeyframe();
-    press({kf.x + 2, kf.y + 2, kf.width - 4, kf.height - 4});
+    // Play open anim
+    // Target: Full screen (adjusted for camera)
+    open({0 + getCameraOffset().x, 0, 128, 64});
     
-    // Callback
+    // Speed up transition
+    setDuration(350);
+}
+
+void MenuView::onOpenEnd() {
+    // Callback when animation finishes
     if (_open_callback) {
         _open_callback(getSelectedOptionIndex());
     }
