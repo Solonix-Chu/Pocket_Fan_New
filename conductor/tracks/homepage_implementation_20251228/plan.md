@@ -48,7 +48,15 @@
 - [x] Task: Implement Transition Animations 097f4c8
     - [ ] Reference `VAMeter` (Transition3D/Zoom) for app switching.
     - [ ] Implement Zoom In when entering Menu.
-    - [ ] Implement Zoom Out when returning to Homepage.
+    - [x] Implement Zoom Out when returning to Homepage.
 
-## Phase 6: Final Verification
+## Phase 6: Homepage Refactor & Fixes
+- [ ] Task: Refactor Homepage to MVC
+    - [ ] Create `components/pocket_fan_app/apps/homepage/view/homepage_view.h` and `.cpp`.
+    - [ ] Move LVGL logic from `HomepageApp` to `HomepageView`.
+- [ ] Task: Fix Data Label Visibility & Reading
+    - [ ] Ensure labels are created correctly in `HomepageView` (check parenting/z-index).
+    - [ ] Verify telemetry reading against `hardware_test` reference.
+
+## Phase 7: Final Verification
 - [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
