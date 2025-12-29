@@ -53,4 +53,7 @@ private:
     static constexpr int _icon_h = 26;
     static constexpr int _icon_gap = 20;
     static constexpr int _selector_pad = 5;
+
+    // Transition animation value
+    smooth_ui_toolkit::AnimateValue _transition_offset;
 };

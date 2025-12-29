@@ -42,8 +42,11 @@ void MenuView::init() {
     if (!_settings_props.empty()) {
         jumpTo(0);
         
-        // Entrance Anim: Slide from left
-        getCamera().teleport(-128, 0); 
+        // Entrance Anim: Slide from left using transition offset
+        _transition_offset.teleport(-128);
+        _transition_offset.move(0);
+        _transition_offset.easingOptions().duration = 0.4f;
+        
         onRender(); // Render immediately to prevent flash at 0
     }
 }
@@ -51,8 +54,8 @@ void MenuView::init() {
 void MenuView::startExitAnimation(std::function<void()> callback) {
     ESP_LOGI("MenuView", "startExitAnimation");
     // Slide out to left
-    getCamera().x.onComplete(callback);
-    getCamera().move(-128, 0);
+    _transition_offset.onComplete(callback);
+    _transition_offset.move(-128);
 }
 
 void MenuView::addSettingsOption(const SettingsOptionProps& props) {
@@ -121,6 +124,8 @@ void MenuView::_create_lvgl_objects() {
 void MenuView::onRender() {
     if (!_screen) return;
     
+    int32_t trans_x = (int32_t)_transition_offset.value();
+
     // Update Selector
     auto selector = getSelectorCurrentFrame();
     lv_obj_set_pos(_selector_obj, 
@@ -130,11 +135,14 @@ void MenuView::onRender() {
         (int32_t)(selector.width + _selector_pad * 2), 
         (int32_t)(selector.height + _selector_pad * 2));
 
-    // Update Camera (move container)
+    // Update Camera (move container) + Transition Offset
     auto camera = getCameraOffset();
-    lv_obj_set_pos(_menu_cont, -(int32_t)camera.x, -(int32_t)camera.y);
+    lv_obj_set_pos(_menu_cont, -(int32_t)camera.x + trans_x, -(int32_t)camera.y);
 
-    // Update Label
+    // Update Label (Apply transition offset)
+    lv_obj_set_pos(_label_obj, trans_x, -5); // Y offset matches original alignment
+
+    // Update Label Text
     int idx = getSelectedOptionIndex();
     if (idx >= 0 && idx < _settings_props.size()) {
         lv_label_set_text(_label_obj, _settings_props[idx].name.c_str());
@@ -142,7 +150,8 @@ void MenuView::onRender() {
 }
 
 void MenuView::onUpdate(const uint32_t& currentTime) {
-    // Other update logic if needed
+    float current_time_s = currentTime / 1000.0f;
+    _transition_offset.update(current_time_s);
 }
 
 void MenuView::_update_camera_keyframe() {
@@ -182,10 +191,11 @@ void MenuView::onClick() {
     open({0 + getCameraOffset().x, 0, 128, 64});
     
     // Speed up transition
-    getSelectorPostion().x.easingOptions().duration = 0.35f;
-    getSelectorPostion().y.easingOptions().duration = 0.35f;
-    getSelectorShape().x.easingOptions().duration = 0.35f;
-    getSelectorShape().y.easingOptions().duration = 0.35f;
+    float duration = 0.15f;
+    getSelectorPostion().x.easingOptions().duration = duration;
+    getSelectorPostion().y.easingOptions().duration = duration;
+    getSelectorShape().x.easingOptions().duration = duration;
+    getSelectorShape().y.easingOptions().duration = duration;
 }
 
 void MenuView::onOpenEnd() {
