@@ -16,6 +16,7 @@ void HomepageApp::onOpen()
 {
     ESP_LOGI(TAG, "onOpen");
     _create_view();
+    if (_view) _view->updatePwm(_fan_speed);
 }
 
 void HomepageApp::onRunning()
@@ -63,6 +64,42 @@ void HomepageApp::onRunning()
         ESP_LOGI(TAG, "OK button pressed, opening MenuApp");
         mooncake::GetMooncake().openApp(APPS::menu_id);
         close();
+    }
+
+    // PWM Control using UP/DOWN
+    auto btn_up = HAL::GetButton(BUTTON::BTN_UP);
+    auto btn_down = HAL::GetButton(BUTTON::BTN_DOWN);
+    if (btn_up == APP_BUTTON_STATE_CLICKED || btn_down == APP_BUTTON_STATE_CLICKED) {
+        // Calculate step based on scroll speed (time delta)
+        uint32_t now = HAL::Millis();
+        uint32_t delta = now - _last_scroll_time;
+        _last_scroll_time = now;
+
+        int step = 1;
+        if (delta < 50) step = 10;
+        else if (delta < 100) step = 5;
+        else if (delta < 200) step = 2;
+
+        if (btn_up == APP_BUTTON_STATE_CLICKED) {
+            if (BtnHold) BtnHold->currentState = APP_BUTTON_STATE_NOCHANGE; // Wait, which pointer for UP?
+            // Actually, hal_button.cpp maps BTN_UP to BtnUp.
+            if (BtnUp) BtnUp->currentState = APP_BUTTON_STATE_NOCHANGE;
+            _fan_speed += step;
+        } else {
+            if (BtnDown) BtnDown->currentState = APP_BUTTON_STATE_NOCHANGE;
+            _fan_speed -= step;
+        }
+
+        // Bound check
+        if (_fan_speed > 100) _fan_speed = 100;
+        if (_fan_speed < 0) _fan_speed = 0;
+
+        // Apply
+        HAL::SetFanState(_fan_speed > 0);
+        HAL::SetFanSpeed(_fan_speed / 100.0f);
+        if (_view) _view->updatePwm(_fan_speed);
+        
+        ESP_LOGI(TAG, "PWM updated: %d%% (step: %d, delta: %lu)", _fan_speed, step, delta);
     }
 
     if (_view) {

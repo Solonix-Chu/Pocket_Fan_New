@@ -19,6 +19,8 @@ private:
     HomepageView* _view = nullptr;
     int _current_page = 0;
     uint32_t _last_update_time = 0;
+    int _fan_speed = 50;
+    uint32_t _last_scroll_time = 0;
 
     void _create_view();
     void _destroy_view();
