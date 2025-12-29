@@ -38,7 +38,17 @@
 ## Phase 4: Bug Fixes
 - [x] Task: Fix Homepage UI and Navigation Bugs 66e3724
     - [ ] Fix data label visibility (check z-index/parent).
-    - [ ] Debug button event for Menu transition.
+    - [x] Debug button event for Menu transition.
 
-## Phase 5: Final Verification
+## Phase 5: Polish & Refinement
+- [ ] Task: Remove Long Press Return Logic
+    - [ ] Remove the `APP_BUTTON_STATE_HOLD` check in `MenuApp`.
+- [ ] Task: Implement Quit Option Return
+    - [ ] Ensure "Quit" option in Menu triggers return to Homepage (already implemented in `_create_view`, verify logic).
+- [ ] Task: Implement Transition Animations
+    - [ ] Reference `VAMeter` (Transition3D/Zoom) for app switching.
+    - [ ] Implement Zoom In when entering Menu.
+    - [ ] Implement Zoom Out when returning to Homepage.
+
+## Phase 6: Final Verification
 - [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
