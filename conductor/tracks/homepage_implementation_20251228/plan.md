@@ -28,12 +28,11 @@
 
 ## Phase 3: Real-Time Data Display
 - [x] Task: Layout Data Labels 932f405
-    - [ ] Based on `demo/setup_scr_screen.c`, create LVGL labels for V, A, W on the homepage.
-    - [ ] Ensure labels are children of the correct tile/page in the TileView.
-- [ ] Task: Connect to HAL Telemetry
+- [~] Task: Connect to HAL Telemetry
     - [ ] In `homepage::onRunning`, read values from `HAL::get_voltage()`, `HAL::get_current()`, etc.
     - [ ] Update the text of the LVGL labels (e.g., using `lv_label_set_text_fmt`).
     - [ ] Limit updates to every ~200ms to avoid UI stutter.
+- [x] Task: Connect to HAL Telemetry 4a5c734
 
 ## Phase 4: Final Verification
 - [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
