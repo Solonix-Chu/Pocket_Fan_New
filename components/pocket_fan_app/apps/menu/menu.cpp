@@ -33,6 +33,13 @@ void MenuApp::onRunning()
         return;
     }
 
+    // Long press OK to return to homepage
+    if (HAL::GetButton(BUTTON::BTN_OK) == APP_BUTTON_STATE_HOLD) {
+        ESP_LOGI(TAG, "OK button hold detected, returning to Homepage");
+        GetMooncake().openApp(0);
+        return;
+    }
+
     if (_view) {
         _view->update();
     }
