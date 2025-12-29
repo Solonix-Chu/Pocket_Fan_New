@@ -43,7 +43,7 @@
 ## Phase 5: Polish & Refinement
 - [x] Task: Remove Long Press Return Logic 1715005
     - [ ] Remove the `APP_BUTTON_STATE_HOLD` check in `MenuApp`.
-- [ ] Task: Implement Quit Option Return
+- [x] Task: Implement Quit Option Return 33f02a4
     - [ ] Ensure "Quit" option in Menu triggers return to Homepage (already implemented in `_create_view`, verify logic).
 - [ ] Task: Implement Transition Animations
     - [ ] Reference `VAMeter` (Transition3D/Zoom) for app switching.
