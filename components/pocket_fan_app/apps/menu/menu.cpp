@@ -71,6 +71,7 @@ void MenuApp::_create_view()
     _view->setOpenCallback([this](int index) {
         ESP_LOGI(TAG, "Selected index: %d", index);
         if (index == 6) { // Quit
+            mooncake::GetMooncake().openApp(APPS::homepage_id);
             close(); 
         } else {
             // TODO: Open sub-menus
