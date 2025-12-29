@@ -17,7 +17,7 @@
 - [x] Task: Implement Menu Transition Logic e004aa9
 
 ## Phase 2: Menu Return Logic (Inactivity & Long Press)
-- [ ] Task: Implement Menu Inactivity Timer
+- [x] Task: Implement Menu Inactivity Timer e8fa345
     - [ ] Modify `Menu` app to track the timestamp of the last input event (wheel or button).
     - [ ] In `Menu::onRunning`, check if `millis() - last_input_time > 5000`.
     - [ ] If timed out, switch back to `Homepage` app ID.
