@@ -35,5 +35,10 @@
 - [x] Task: Connect to HAL Telemetry 4a5c734
 [checkpoint: 55cc048]
 
-## Phase 4: Final Verification
-- [~] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
+## Phase 4: Bug Fixes
+- [x] Task: Fix Homepage UI and Navigation Bugs 66e3724
+    - [ ] Fix data label visibility (check z-index/parent).
+    - [ ] Debug button event for Menu transition.
+
+## Phase 5: Final Verification
+- [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
