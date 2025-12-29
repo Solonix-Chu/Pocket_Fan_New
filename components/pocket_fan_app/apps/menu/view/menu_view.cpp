@@ -4,8 +4,6 @@
 #include "../../../assets/assets.h"
 #include <esp_log.h>
 
-static const char* TAG = "MenuView";
-
 MenuView::MenuView() {
     // Config
     setConfig().cameraSize = {128, 64}; // 128x64 Screen
@@ -45,7 +43,7 @@ void MenuView::init() {
         jumpTo(0);
         
         // Entrance Anim: Slide from left
-        getCamera().jumpTo(-128, 0); 
+        getCamera().teleport(-128, 0); 
     }
 }
 
@@ -166,7 +164,10 @@ void MenuView::onClick() {
     open({0 + getCameraOffset().x, 0, 128, 64});
     
     // Speed up transition
-    setDuration(350);
+    getSelectorPostion().x.easingOptions().duration = 0.35f;
+    getSelectorPostion().y.easingOptions().duration = 0.35f;
+    getSelectorShape().x.easingOptions().duration = 0.35f;
+    getSelectorShape().y.easingOptions().duration = 0.35f;
 }
 
 void MenuView::onOpenEnd() {
