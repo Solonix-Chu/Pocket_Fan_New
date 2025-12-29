@@ -7,7 +7,7 @@
     - [ ] Implement `HomepageView::updatePwm(int dutyCycle)` to update the label text.
 
 ## Phase 2: Logic & Control
-- [ ] Task: Implement PWM Control Logic in HomepageApp
+- [x] Task: Implement PWM Control Logic in HomepageApp dc06c3c
     - [ ] Add state variables: `_fan_speed` (int, 0-100), `_last_scroll_time` (uint32_t).
     - [ ] In `onRunning`, detect `BTN_UP` and `BTN_DOWN`.
     - [ ] Implement adaptive step calculation based on `HAL::Millis() - _last_scroll_time`.
