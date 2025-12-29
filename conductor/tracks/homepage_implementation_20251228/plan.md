@@ -21,9 +21,10 @@
     - [ ] Modify `Menu` app to track the timestamp of the last input event (wheel or button).
     - [ ] In `Menu::onRunning`, check if `millis() - last_input_time > 5000`.
     - [ ] If timed out, switch back to `Homepage` app ID.
-- [ ] Task: Implement Long Press Return
+- [~] Task: Implement Long Press Return
     - [ ] Modify `Menu` app to detect "Long Press OK" event.
     - [ ] On detection, switch back to `Homepage` app ID.
+- [x] Task: Implement Long Press Return 319afec
 
 ## Phase 3: Real-Time Data Display
 - [ ] Task: Layout Data Labels
