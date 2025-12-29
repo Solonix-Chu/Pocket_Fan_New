@@ -72,7 +72,7 @@ void HomepageView::_create_lvgl_objects() {
     lv_obj_set_style_text_font(_label_a, AssetPool::GetGullyBold16(), 0);
     lv_obj_set_style_text_align(_label_a, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(_label_a, 67, 18);
-    lv_obj_set_pos(_label_a, -9, 31);
+    lv_obj_set_pos(_label_a, -9, 30);
     lv_label_set_text(_label_a, "0.00");
 
     _label_w = lv_label_create(_tile1);
@@ -80,8 +80,17 @@ void HomepageView::_create_lvgl_objects() {
     lv_obj_set_style_text_font(_label_w, AssetPool::GetGullyBold16(), 0);
     lv_obj_set_style_text_align(_label_w, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(_label_w, 67, 18);
-    lv_obj_set_pos(_label_w, -9, 47);
+    lv_obj_set_pos(_label_w, -9, 45);
     lv_label_set_text(_label_w, "0.00");
+
+    // PWM Label on Page 1 (Right side)
+    _label_pwm = lv_label_create(_tile1);
+    lv_obj_set_style_text_color(_label_pwm, lv_color_black(), 0);
+    lv_obj_set_style_text_font(_label_pwm, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_align(_label_pwm, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_size(_label_pwm, 40, 18);
+    lv_obj_set_pos(_label_pwm, 80, 25);
+    lv_label_set_text(_label_pwm, "50%");
 
     // Page 2 labels (T, Cap)
     // screen_1_label_4 (T): pos(3, 109 - 64? = 45), size(67, 18) - Wait, screen_1 is 128x128 in demo
@@ -109,6 +118,7 @@ void HomepageView::_create_lvgl_objects() {
     lv_obj_move_foreground(_label_v);
     lv_obj_move_foreground(_label_a);
     lv_obj_move_foreground(_label_w);
+    lv_obj_move_foreground(_label_pwm);
 }
 
 void HomepageView::updateData(const std::string& v, const std::string& a, const std::string& w) {
@@ -120,6 +130,12 @@ void HomepageView::updateData(const std::string& v, const std::string& a, const 
 void HomepageView::updatePage2Data(const std::string& t, const std::string& cap) {
     if (_label_t) lv_label_set_text(_label_t, t.c_str());
     if (_label_cap) lv_label_set_text(_label_cap, cap.c_str());
+}
+
+void HomepageView::updatePwm(int dutyCycle) {
+    if (_label_pwm) {
+        lv_label_set_text_fmt(_label_pwm, "%d%%", dutyCycle);
+    }
 }
 
 void HomepageView::setPage(int page) {
