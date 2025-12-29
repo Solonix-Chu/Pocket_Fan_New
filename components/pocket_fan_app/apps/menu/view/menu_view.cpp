@@ -152,16 +152,25 @@ void MenuView::_update_camera_keyframe() {
 }
 
 void MenuView::onReadInput() {
-    if (BtnRight->currentState == APP_BUTTON_STATE_CLICKED) {
-        BtnRight->currentState = APP_BUTTON_STATE_NOCHANGE;
+    if (isOpening()) return;
+
+    if (HAL::GetButton(BUTTON::BTN_RIGHT) == APP_BUTTON_STATE_CLICKED) {
+        // BtnRight->currentState = APP_BUTTON_STATE_NOCHANGE; // HAL doesn't allow reset? 
+        // We might need to const_cast or add HAL method to consume event.
+        // Or just use the global pointers if HAL doesn't support consume.
+        // But let's check what HAL::GetButton does. It returns state.
+        
+        // Direct access for consumption
+        if (BtnRight) BtnRight->currentState = APP_BUTTON_STATE_NOCHANGE;
         goNext();
     } 
-    else if (BtnLeft->currentState == APP_BUTTON_STATE_CLICKED) {
-        BtnLeft->currentState = APP_BUTTON_STATE_NOCHANGE;
+    else if (HAL::GetButton(BUTTON::BTN_LEFT) == APP_BUTTON_STATE_CLICKED) {
+        if (BtnLeft) BtnLeft->currentState = APP_BUTTON_STATE_NOCHANGE;
         goLast();
     }
-    else if (BtnOk->currentState == APP_BUTTON_STATE_CLICKED) {
-        BtnOk->currentState = APP_BUTTON_STATE_NOCHANGE;
+    else if (HAL::GetButton(BUTTON::BTN_MID) == APP_BUTTON_STATE_CLICKED) {
+        ESP_LOGI("MenuView", "BtnOk Clicked detected");
+        if (BtnOk) BtnOk->currentState = APP_BUTTON_STATE_NOCHANGE;
         onClick();
     }
 }

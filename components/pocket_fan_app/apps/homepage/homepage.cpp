@@ -2,6 +2,7 @@
 #include "../../hal/hal.h"
 #include "../../assets/assets.h"
 #include "../apps.h"
+#include "app_button.h"
 #include <esp_log.h>
 
 static const char* TAG = "HomepageApp";
@@ -50,6 +51,7 @@ void HomepageApp::onRunning()
 
     // Transition to Menu on OK button press
     if (HAL::GetButton(BUTTON::BTN_MID) == APP_BUTTON_STATE_CLICKED) {
+        if (BtnOk) BtnOk->currentState = APP_BUTTON_STATE_NOCHANGE;
         ESP_LOGI(TAG, "OK button pressed, opening MenuApp");
         mooncake::GetMooncake().openApp(APPS::menu_id);
         close();
