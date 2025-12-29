@@ -11,9 +11,10 @@
     - [ ] Implement the `onRunning` loop to handle wheel input events.
     - [ ] Map wheel scroll to `lv_tileview_set_tile_id` (or similar) with animation.
 - [x] Task: Implement Background & Page Switching UI a937e42
-- [ ] Task: Implement Menu Transition Logic
+- [~] Task: Implement Menu Transition Logic
     - [ ] Detect "OK" button press in `homepage::onRunning`.
     - [ ] Call Mooncake's app manager to switch to the `Menu` app ID.
+- [x] Task: Implement Menu Transition Logic e004aa9
 
 ## Phase 2: Menu Return Logic (Inactivity & Long Press)
 - [ ] Task: Implement Menu Inactivity Timer
