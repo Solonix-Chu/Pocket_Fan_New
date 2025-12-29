@@ -18,6 +18,9 @@ private:
     lv_obj_t* _tileview = nullptr;
     lv_obj_t* _tile1 = nullptr;
     lv_obj_t* _tile2 = nullptr;
+    lv_obj_t* _label_v = nullptr;
+    lv_obj_t* _label_a = nullptr;
+    lv_obj_t* _label_w = nullptr;
     int _current_page = 0;
 
     void _create_view();

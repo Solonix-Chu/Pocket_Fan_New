@@ -72,6 +72,25 @@ void HomepageApp::_create_view()
     lv_image_set_src(bg1, AssetPool::GetImgHomePage1());
     lv_obj_align(bg1, LV_ALIGN_CENTER, 0, 0);
 
+    // Data Labels on Page 1
+    _label_v = lv_label_create(_tile1);
+    lv_obj_set_style_text_color(_label_v, lv_color_white(), 0);
+    lv_obj_set_style_text_font(_label_v, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_pos(_label_v, 10, 5);
+    lv_label_set_text(_label_v, "0.00V");
+
+    _label_a = lv_label_create(_tile1);
+    lv_obj_set_style_text_color(_label_a, lv_color_white(), 0);
+    lv_obj_set_style_text_font(_label_a, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_pos(_label_a, 10, 25);
+    lv_label_set_text(_label_a, "0.00A");
+
+    _label_w = lv_label_create(_tile1);
+    lv_obj_set_style_text_color(_label_w, lv_color_white(), 0);
+    lv_obj_set_style_text_font(_label_w, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_pos(_label_w, 10, 45);
+    lv_label_set_text(_label_w, "0.00W");
+
     // Page 2
     _tile2 = lv_tileview_add_tile(_tileview, 1, 0, LV_DIR_HOR);
     lv_obj_t* bg2 = lv_image_create(_tile2);
