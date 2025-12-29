@@ -18,6 +18,11 @@
 #include "hardware_test/hardware_test.h"
 /* Header files locator (Don't remove) */
 
+namespace APPS {
+    extern int homepage_id;
+    extern int menu_id;
+}
+
 /**
  * @brief Run startup anim app
  *
