@@ -20,6 +20,7 @@ public:
     void init();
     void addSettingsOption(const SettingsOptionProps& props);
     void setOpenCallback(std::function<void(int)> callback) { _open_callback = callback; }
+    void startExitAnimation(std::function<void()> callback);
 
     // Overrides
     void onRender() override;

@@ -44,7 +44,15 @@ void MenuView::init() {
         
         // Entrance Anim: Slide from left
         getCamera().teleport(-128, 0); 
+        onRender(); // Render immediately to prevent flash at 0
     }
+}
+
+void MenuView::startExitAnimation(std::function<void()> callback) {
+    ESP_LOGI("MenuView", "startExitAnimation");
+    // Slide out to left
+    getCamera().x.onComplete(callback);
+    getCamera().move(-128, 0);
 }
 
 void MenuView::addSettingsOption(const SettingsOptionProps& props) {
@@ -159,6 +167,7 @@ void MenuView::onReadInput() {
 }
 
 void MenuView::onClick() {
+    ESP_LOGI("MenuView", "onClick");
     // Play open anim
     // Target: Full screen (adjusted for camera)
     open({0 + getCameraOffset().x, 0, 128, 64});
@@ -171,6 +180,7 @@ void MenuView::onClick() {
 }
 
 void MenuView::onOpenEnd() {
+    ESP_LOGI("MenuView", "onOpenEnd");
     // Callback when animation finishes
     if (_open_callback) {
         _open_callback(getSelectedOptionIndex());

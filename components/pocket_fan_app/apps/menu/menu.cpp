@@ -29,9 +29,14 @@ void MenuApp::onRunning()
 
     // Timeout: 5s
     if (HAL::Millis() - _last_input_time > 5000) {
-        ESP_LOGI(TAG, "Inactivity timeout, returning to Homepage");
-        mooncake::GetMooncake().openApp(APPS::homepage_id);
-        close();
+        ESP_LOGI(TAG, "Inactivity timeout, triggering exit anim");
+        _view->startExitAnimation([this]() {
+            ESP_LOGI(TAG, "Exit anim done, returning to Homepage");
+            mooncake::GetMooncake().openApp(APPS::homepage_id);
+            close();
+        });
+        // Reset time to prevent multiple triggers while animating
+        _last_input_time = HAL::Millis();
         return;
     }
 
