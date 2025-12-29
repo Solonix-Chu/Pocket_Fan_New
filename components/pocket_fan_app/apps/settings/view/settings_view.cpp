@@ -38,15 +38,16 @@ void SettingsView::addSettingsItem(const SettingsItemProps& props) {
     
     Option_t option;
     int index = _items_props.size() - 1;
-    option.keyframe.x = 5; 
-    option.keyframe.y = index * (_item_h + _item_gap) + 10; 
-    option.keyframe.width = 118;
+    // Start from top-left (0,0)
+    option.keyframe.x = 0; 
+    option.keyframe.y = index * (_item_h + _item_gap); 
+    option.keyframe.width = 128; // Default, will be updated dynamically
     option.keyframe.height = _item_h;
     addOption(option);
 }
 
 void SettingsView::updateItemValue(int index, bool checked) {
-    if (index >= 0 && index < _checkbox_objs.size() && _checkbox_objs[index]) {
+    if (index >= 0 && index < (int)_checkbox_objs.size() && _checkbox_objs[index]) {
         if (checked) {
             lv_obj_add_state(_checkbox_objs[index], LV_STATE_CHECKED);
         } else {
@@ -64,16 +65,18 @@ void SettingsView::_create_lvgl_objects() {
     lv_obj_clear_flag(_screen, LV_OBJ_FLAG_SCROLLABLE);
 
     _list_cont = lv_obj_create(_screen);
-    lv_obj_set_size(_list_cont, 128, 64);
+    // Allow container to grow with items
+    lv_obj_set_size(_list_cont, 128, LV_SIZE_CONTENT);
     lv_obj_set_style_bg_opa(_list_cont, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(_list_cont, 0, 0);
     lv_obj_clear_flag(_list_cont, LV_OBJ_FLAG_SCROLLABLE);
 
     _selector_obj = lv_obj_create(_list_cont);
-    lv_obj_set_style_bg_opa(_selector_obj, LV_OPA_TRANSP, 0);
+    // Solid black background for color inversion effect
+    lv_obj_set_style_bg_color(_selector_obj, lv_color_black(), 0);
+    lv_obj_set_style_bg_opa(_selector_obj, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(_selector_obj, 4, 0);
-    lv_obj_set_style_border_color(_selector_obj, lv_color_black(), 0);
-    lv_obj_set_style_border_width(_selector_obj, 1, 0);
+    lv_obj_set_style_border_width(_selector_obj, 0, 0);
     lv_obj_clear_flag(_selector_obj, LV_OBJ_FLAG_SCROLLABLE);
 
     for (size_t i = 0; i < _items_props.size(); i++) {
@@ -85,9 +88,20 @@ void SettingsView::_create_lvgl_objects() {
         lv_obj_set_style_text_color(label, lv_color_black(), 0);
         lv_obj_set_style_text_font(label, AssetPool::GetGullyBold16(), 0);
         
-        // Marquee Text support
-        lv_obj_set_size(label, 80, 18); // Limit width for scrolling
-        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        // Measure width for selective marquee
+        lv_obj_update_layout(label);
+        int text_w = lv_obj_get_self_width(label);
+        
+        // Update keyframe width for selector (text width + padding)
+        _data.option_list[i].keyframe.width = text_w + 12;
+
+        if (text_w > 110) {
+            lv_obj_set_width(label, 110);
+            lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+        } else {
+            lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
+        }
+        
         lv_obj_set_pos(label, (int32_t)kf.x + 4, (int32_t)kf.y + 4);
         _item_objs.push_back(label);
 
@@ -95,7 +109,7 @@ void SettingsView::_create_lvgl_objects() {
         if (_items_props[i].has_checkbox) {
             lv_obj_t* cb = lv_checkbox_create(_list_cont);
             lv_checkbox_set_text(cb, "");
-            lv_obj_set_pos(cb, (int32_t)kf.x + kf.width - 25, (int32_t)kf.y + 2);
+            lv_obj_set_pos(cb, 100, (int32_t)kf.y + 2);
             if (_items_props[i].checked) {
                 lv_obj_add_state(cb, LV_STATE_CHECKED);
             }
@@ -111,8 +125,7 @@ void SettingsView::onRender() {
     int32_t trans_x = (int32_t)_transition_offset.value();
     auto camera = getCameraOffset();
 
-    // Update Selector (Adjusted for camera offset if needed, 
-    // but usually selector is relative to container)
+    // Update Selector
     auto selector = getSelectorCurrentFrame();
     lv_obj_set_pos(_selector_obj, 
         (int32_t)(selector.x - _selector_pad), 
@@ -123,6 +136,16 @@ void SettingsView::onRender() {
 
     // Update Camera (move container) + Transition Offset
     lv_obj_set_pos(_list_cont, -(int32_t)camera.x + trans_x, -(int32_t)camera.y);
+
+    // Color Inversion
+    int selected_idx = getSelectedOptionIndex();
+    for (size_t i = 0; i < _item_objs.size(); i++) {
+        if (i == (size_t)selected_idx) {
+            lv_obj_set_style_text_color(_item_objs[i], lv_color_white(), 0);
+        } else {
+            lv_obj_set_style_text_color(_item_objs[i], lv_color_black(), 0);
+        }
+    }
 }
 
 void SettingsView::onUpdate(const uint32_t& currentTime) {
