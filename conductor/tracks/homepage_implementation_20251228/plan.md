@@ -45,7 +45,7 @@
     - [ ] Remove the `APP_BUTTON_STATE_HOLD` check in `MenuApp`.
 - [x] Task: Implement Quit Option Return 33f02a4
     - [ ] Ensure "Quit" option in Menu triggers return to Homepage (already implemented in `_create_view`, verify logic).
-- [ ] Task: Implement Transition Animations
+- [x] Task: Implement Transition Animations 097f4c8
     - [ ] Reference `VAMeter` (Transition3D/Zoom) for app switching.
     - [ ] Implement Zoom In when entering Menu.
     - [ ] Implement Zoom Out when returning to Homepage.
