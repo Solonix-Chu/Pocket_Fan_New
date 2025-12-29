@@ -75,7 +75,10 @@ void MenuApp::_create_view()
     // Callback
     _view->setOpenCallback([this](int index) {
         ESP_LOGI(TAG, "Selected index: %d", index);
-        if (index == 6) { // Quit
+        if (index == 0) { // Settings/General
+            mooncake::GetMooncake().openApp(APPS::settings_id);
+            close();
+        } else if (index == 6) { // Quit
             mooncake::GetMooncake().openApp(APPS::homepage_id);
             close(); 
         } else {

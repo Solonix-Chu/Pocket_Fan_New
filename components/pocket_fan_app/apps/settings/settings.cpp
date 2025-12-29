@@ -41,7 +41,27 @@ void SettingsApp::_create_view()
     if (_view) return;
     _view = new SettingsView();
     
-    // TODO: Add items and callbacks
+    // Add items
+    _view->addSettingsItem({"Brightness", [this]() {
+        ESP_LOGI(TAG, "Open Brightness Popup");
+        // TODO: Brightness popup
+    }});
+    
+    _view->addSettingsItem({"Theme", [this]() {
+        ESP_LOGI(TAG, "Toggle Theme");
+        // TODO: Theme toggle
+    }});
+
+    _view->addSettingsItem({"Language", [this]() {
+        ESP_LOGI(TAG, "Toggle Language");
+        // TODO: Language toggle
+    }});
+
+    _view->addSettingsItem({"Back", [this]() {
+        ESP_LOGI(TAG, "Back to Menu");
+        mooncake::GetMooncake().openApp(APPS::menu_id);
+        close();
+    }});
     
     _view->init();
 }
