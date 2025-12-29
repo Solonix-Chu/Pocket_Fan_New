@@ -29,14 +29,14 @@ void MenuApp::onRunning()
     // Timeout: 5s
     if (HAL::Millis() - _last_input_time > 5000) {
         ESP_LOGI(TAG, "Inactivity timeout, returning to Homepage");
-        mooncake::GetMooncake().openApp(0);
+        mooncake::GetMooncake().openApp(1);
         return;
     }
 
     // Long press OK to return to homepage
     if (HAL::GetButton(BUTTON::BTN_MID) == APP_BUTTON_STATE_HOLD) {
         ESP_LOGI(TAG, "OK button hold detected, returning to Homepage");
-        mooncake::GetMooncake().openApp(0);
+        mooncake::GetMooncake().openApp(1);
         return;
     }
 
