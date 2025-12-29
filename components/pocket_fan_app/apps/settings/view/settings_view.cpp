@@ -38,12 +38,21 @@ void SettingsView::addSettingsItem(const SettingsItemProps& props) {
     
     Option_t option;
     int index = _items_props.size() - 1;
-    // Each item is 24px high + 4px gap. Start at y=10.
     option.keyframe.x = 5; 
     option.keyframe.y = index * (_item_h + _item_gap) + 10; 
     option.keyframe.width = 118;
     option.keyframe.height = _item_h;
     addOption(option);
+}
+
+void SettingsView::updateItemValue(int index, bool checked) {
+    if (index >= 0 && index < _checkbox_objs.size() && _checkbox_objs[index]) {
+        if (checked) {
+            lv_obj_add_state(_checkbox_objs[index], LV_STATE_CHECKED);
+        } else {
+            lv_obj_remove_state(_checkbox_objs[index], LV_STATE_CHECKED);
+        }
+    }
 }
 
 void SettingsView::_create_lvgl_objects() {
@@ -68,15 +77,32 @@ void SettingsView::_create_lvgl_objects() {
     lv_obj_clear_flag(_selector_obj, LV_OBJ_FLAG_SCROLLABLE);
 
     for (size_t i = 0; i < _items_props.size(); i++) {
+        const auto& kf = getOptionList()[i].keyframe;
+
+        // Label
         lv_obj_t* label = lv_label_create(_list_cont);
         lv_label_set_text(label, _items_props[i].name.c_str());
         lv_obj_set_style_text_color(label, lv_color_black(), 0);
         lv_obj_set_style_text_font(label, AssetPool::GetGullyBold16(), 0);
         
-        const auto& kf = getOptionList()[i].keyframe;
-        // Text padding inside item
+        // Marquee Text support
+        lv_obj_set_size(label, 80, 18); // Limit width for scrolling
+        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
         lv_obj_set_pos(label, (int32_t)kf.x + 4, (int32_t)kf.y + 4);
         _item_objs.push_back(label);
+
+        // Checkbox
+        if (_items_props[i].has_checkbox) {
+            lv_obj_t* cb = lv_checkbox_create(_list_cont);
+            lv_checkbox_set_text(cb, "");
+            lv_obj_set_pos(cb, (int32_t)kf.x + kf.width - 25, (int32_t)kf.y + 2);
+            if (_items_props[i].checked) {
+                lv_obj_add_state(cb, LV_STATE_CHECKED);
+            }
+            _checkbox_objs.push_back(cb);
+        } else {
+            _checkbox_objs.push_back(nullptr);
+        }
     }
 }
 

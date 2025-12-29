@@ -11,6 +11,8 @@ class SettingsView : public SmoothSelectorMenu {
 public:
     struct SettingsItemProps {
         std::string name;
+        bool has_checkbox = false;
+        bool checked = false;
         std::function<void()> callback;
     };
 
@@ -19,6 +21,7 @@ public:
 
     void init();
     void addSettingsItem(const SettingsItemProps& props);
+    void updateItemValue(int index, bool checked);
 
     // Overrides
     void onRender() override;
@@ -38,6 +41,7 @@ private:
     lv_obj_t* _list_cont = nullptr;
     lv_obj_t* _selector_obj = nullptr;
     std::vector<lv_obj_t*> _item_objs;
+    std::vector<lv_obj_t*> _checkbox_objs;
     
     void _create_lvgl_objects();
     
