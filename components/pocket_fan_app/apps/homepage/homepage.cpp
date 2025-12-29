@@ -81,7 +81,6 @@ void HomepageApp::onRunning()
         else if (delta < 200) step = 2;
 
         if (btn_up == APP_BUTTON_STATE_CLICKED) {
-            if (BtnHold) BtnHold->currentState = APP_BUTTON_STATE_NOCHANGE; // Wait, which pointer for UP?
             // Actually, hal_button.cpp maps BTN_UP to BtnUp.
             if (BtnUp) BtnUp->currentState = APP_BUTTON_STATE_NOCHANGE;
             _fan_speed += step;
