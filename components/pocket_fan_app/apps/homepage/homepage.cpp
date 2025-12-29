@@ -19,8 +19,8 @@ void HomepageApp::onOpen()
 void HomepageApp::onRunning()
 {
     // Update telemetry labels every 200ms
-    if (HAL::GetTick() - _last_update_time > 200) {
-        _last_update_time = HAL::GetTick();
+    if (HAL::Millis() - _last_update_time > 200) {
+        _last_update_time = HAL::Millis();
 
         auto pm_data = HAL::GetPowerMonitorData();
         
@@ -48,9 +48,9 @@ void HomepageApp::onRunning()
     }
 
     // Transition to Menu on OK button press
-    if (HAL::GetButton(BUTTON::BTN_OK) == APP_BUTTON_STATE_CLICKED) {
+    if (HAL::GetButton(BUTTON::BTN_MID) == APP_BUTTON_STATE_CLICKED) {
         ESP_LOGI(TAG, "OK button pressed, opening MenuApp");
-        GetMooncake().openApp(1);
+        mooncake::GetMooncake().openApp(1);
     }
 }
 

@@ -13,30 +13,30 @@ void MenuApp::onCreate()
 void MenuApp::onOpen()
 {
     ESP_LOGI(TAG, "onOpen");
-    _last_input_time = HAL::GetTick();
+    _last_input_time = HAL::Millis();
     _create_view();
 }
 
 void MenuApp::onRunning()
 {
     // Update last input time if any button is pressed or wheel is turned
-    if (HAL::GetButton(BUTTON::BTN_OK) != APP_BUTTON_STATE_NOCHANGE ||
+    if (HAL::GetButton(BUTTON::BTN_MID) != APP_BUTTON_STATE_NOCHANGE ||
         HAL::GetButton(BUTTON::BTN_LEFT) != APP_BUTTON_STATE_NOCHANGE ||
         HAL::GetButton(BUTTON::BTN_RIGHT) != APP_BUTTON_STATE_NOCHANGE) {
-        _last_input_time = HAL::GetTick();
+        _last_input_time = HAL::Millis();
     }
 
     // Timeout: 5s
-    if (HAL::GetTick() - _last_input_time > 5000) {
+    if (HAL::Millis() - _last_input_time > 5000) {
         ESP_LOGI(TAG, "Inactivity timeout, returning to Homepage");
-        GetMooncake().openApp(0);
+        mooncake::GetMooncake().openApp(0);
         return;
     }
 
     // Long press OK to return to homepage
-    if (HAL::GetButton(BUTTON::BTN_OK) == APP_BUTTON_STATE_HOLD) {
+    if (HAL::GetButton(BUTTON::BTN_MID) == APP_BUTTON_STATE_HOLD) {
         ESP_LOGI(TAG, "OK button hold detected, returning to Homepage");
-        GetMooncake().openApp(0);
+        mooncake::GetMooncake().openApp(0);
         return;
     }
 
