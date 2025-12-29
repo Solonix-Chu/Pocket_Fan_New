@@ -19,6 +19,8 @@ class SystemApp {
 private:
     bool _is_startup_anim_done = false;
     int _startup_anim_id = -1;
+    int _homepage_id = -1;
+    int _menu_id = -1;
 
 public:
     void init(lv_display_t* disp) {
@@ -34,9 +36,10 @@ public:
 
         // Install and Open Startup Anim
         _startup_anim_id = GetMooncake().installApp(std::make_unique<StartupAnimApp>());
+        _homepage_id = GetMooncake().installApp(std::make_unique<HomepageApp>());
+        _menu_id = GetMooncake().installApp(std::make_unique<MenuApp>());
+
         GetMooncake().openApp(_startup_anim_id);
-        // int test_id = GetMooncake().installApp(std::make_unique<HardwareTestApp>());
-        //         GetMooncake().openApp(test_id);
     }
 
     void update() {
@@ -47,11 +50,8 @@ public:
                 // Startup finished
                 GetMooncake().uninstallApp(_startup_anim_id);
                 
-                // Install Hardware Test App
-                // int test_id = GetMooncake().installApp(std::make_unique<HardwareTestApp>());
-                // 
-                int test_id = GetMooncake().installApp(std::make_unique<HomepageApp>());
-                GetMooncake().openApp(test_id);
+                // Open Homepage
+                GetMooncake().openApp(_homepage_id);
                 
                 _is_startup_anim_done = true;
             }

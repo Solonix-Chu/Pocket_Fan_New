@@ -34,7 +34,7 @@ void HomepageApp::onRunning()
     // Transition to Menu on OK button press
     if (HAL::GetButton(BUTTON::BTN_OK) == APP_BUTTON_STATE_CLICKED) {
         ESP_LOGI(TAG, "OK button pressed, opening MenuApp");
-        // TODO: App switching logic
+        GetMooncake().openApp(1);
     }
 }
 
