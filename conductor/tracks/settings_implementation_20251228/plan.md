@@ -4,7 +4,7 @@
 - [x] Task: Create Settings App Skeleton b1eadce
     - [ ] Create `settings.h/cpp` and `view/settings_view.h/cpp`.
     - [ ] Register `SettingsApp` in `apps.h` and the global `APPS` registry.
-- [ ] Task: Implement Base List UI
+- [x] Task: Implement Base List UI e34db43
     - [ ] Create a vertical list using `SmoothSelectorMenu`.
     - [ ] Implement cyclic navigation (wrapping from bottom to top).
     - [ ] Add "Back" option to return to the main Menu app.
