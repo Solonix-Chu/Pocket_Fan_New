@@ -7,6 +7,7 @@
 // #include "app_base_test/app_base_test.h"
 #include "launcher/launcher.h"
 #include "homepage/homepage.h"
+#include "settings/settings.h"
 // #include "app_power_monitor/app_power_monitor.h"
 // #include "app_template/app_template.h"
 // #include "app_waveform/app_waveform.h"
@@ -21,6 +22,7 @@
 namespace APPS {
     extern int homepage_id;
     extern int menu_id;
+    extern int settings_id;
 }
 
 /**
