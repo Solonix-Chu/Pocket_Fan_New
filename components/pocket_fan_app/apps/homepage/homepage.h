@@ -1,5 +1,6 @@
 #pragma once
 #include <mooncake.h>
+#include "lvgl.h"
 
 class HomepageApp : public mooncake::AppAbility
 {
