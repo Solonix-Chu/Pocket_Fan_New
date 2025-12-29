@@ -190,6 +190,7 @@ void SettingsView::onOpenEnd() {
 }
 
 void SettingsView::_update_camera_keyframe() {
-    auto targetY = getSelectedKeyframe().y - (64 - _item_h)/2;
+    // Keep selection at the top (with a small margin)
+    auto targetY = getSelectedKeyframe().y - 10;
     getCamera().move(0, targetY);
 }
