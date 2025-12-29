@@ -52,6 +52,7 @@ void HomepageApp::onRunning()
     if (HAL::GetButton(BUTTON::BTN_MID) == APP_BUTTON_STATE_CLICKED) {
         ESP_LOGI(TAG, "OK button pressed, opening MenuApp");
         mooncake::GetMooncake().openApp(APPS::menu_id);
+        close();
     }
 }
 
