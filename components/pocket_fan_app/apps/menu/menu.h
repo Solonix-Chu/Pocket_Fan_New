@@ -16,6 +16,7 @@ public:
 
 private:
     MenuView* _view = nullptr;
+    uint32_t _last_input_time = 0;
     void _create_view();
     void _destroy_view();
 };
