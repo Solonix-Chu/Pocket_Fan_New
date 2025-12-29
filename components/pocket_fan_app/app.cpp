@@ -50,7 +50,7 @@ public:
                 // Install Hardware Test App
                 // int test_id = GetMooncake().installApp(std::make_unique<HardwareTestApp>());
                 // 
-                int test_id = GetMooncake().installApp(std::make_unique<MenuApp>());
+                int test_id = GetMooncake().installApp(std::make_unique<HomepageApp>());
                 GetMooncake().openApp(test_id);
                 
                 _is_startup_anim_done = true;

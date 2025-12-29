@@ -6,6 +6,7 @@
 #pragma once
 // #include "app_base_test/app_base_test.h"
 #include "launcher/launcher.h"
+#include "homepage/homepage.h"
 // #include "app_power_monitor/app_power_monitor.h"
 // #include "app_template/app_template.h"
 // #include "app_waveform/app_waveform.h"
