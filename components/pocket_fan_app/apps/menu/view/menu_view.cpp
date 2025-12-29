@@ -8,7 +8,7 @@ MenuView::MenuView() {
     // Config
     setConfig().cameraSize = {128, 64}; // 128x64 Screen
     setConfig().renderInterval = 15;
-    setConfig().readInputInterval = 20;
+    setConfig().readInputInterval = 0; // Read input every frame to catch transient button states
     setConfig().moveInLoop = true;
     
     // Setup transitions (Easing)
