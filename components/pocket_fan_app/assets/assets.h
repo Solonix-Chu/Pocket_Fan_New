@@ -22,6 +22,8 @@ extern "C" const lv_image_dsc_t _Health_RGB565A8_34x26;
 extern "C" const lv_image_dsc_t _Quit_RGB565A8_34x26;
 extern "C" const lv_image_dsc_t _Setting_RGB565A8_34x26;
 extern "C" const lv_image_dsc_t _start_124X22_RGB565A8_124x22;
+extern "C" const lv_image_dsc_t _HomePage_1_RGB565A8_128x64;
+extern "C" const lv_image_dsc_t _HomePage_2_RGB565A8_128x64;
 
 /**
  * @brief A struct to define static binary asset
@@ -89,6 +91,8 @@ public:
     static const lv_image_dsc_t* GetImgQuit() { return &_Quit_RGB565A8_34x26; }
     static const lv_image_dsc_t* GetImgSetting() { return &_Setting_RGB565A8_34x26; }
     static const lv_image_dsc_t* GetImgStartup() { return &_start_124X22_RGB565A8_124x22; }
+    static const lv_image_dsc_t* GetImgHomePage1() { return &_HomePage_1_RGB565A8_128x64; }
+    static const lv_image_dsc_t* GetImgHomePage2() { return &_HomePage_2_RGB565A8_128x64; }
 
     /* ------------------------------- Static wrap ------------------------------ */
 public:

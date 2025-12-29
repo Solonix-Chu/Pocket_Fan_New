@@ -17,6 +17,8 @@ idf_component_register(SRCS "app.cpp"
                        "assets/images/app_settings/_Health_RGB565A8_34x26.c"
                        "assets/images/app_settings/_Quit_RGB565A8_34x26.c"
                        "assets/images/app_settings/_Setting_RGB565A8_34x26.c"
+                       "assets/images/homepage/_HomePage_1_RGB565A8_128x64.c"
+                       "assets/images/homepage/_HomePage_2_RGB565A8_128x64.c"
                        INCLUDE_DIRS "./"
                        REQUIRES mooncake smooth_ui_toolkit lvgl app_button esp_timer ble_ota LovyanGFX
                        )
