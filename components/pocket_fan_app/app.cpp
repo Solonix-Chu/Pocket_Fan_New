@@ -39,7 +39,7 @@ public:
         });
 
         // Install and Open Startup Anim
-        _startup_anim_id = GetMooncake().installApp(std::make_unique<StartupAnimApp>());
+        _startup_anim_id = GetMooncake().installApp(std::make_unique<AppStartupAnim>());
         APPS::homepage_id = GetMooncake().installApp(std::make_unique<HomepageApp>());
         APPS::menu_id = GetMooncake().installApp(std::make_unique<MenuApp>());
         APPS::settings_id = GetMooncake().installApp(std::make_unique<SettingsApp>());

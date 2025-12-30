@@ -1,0 +1,5 @@
+dependencies:
+  smooth_ui_toolkit:
+    path: ../smooth_ui_toolkit
+  LovyanGFX:
+    path: ../LovyanGFX

@@ -51,12 +51,13 @@
     - [x] Implement Zoom Out when returning to Homepage.
 
 ## Phase 6: Homepage Refactor & Fixes
-- [ ] Task: Refactor Homepage to MVC
+- [x] Task: Refactor Homepage to MVC 76c6057
     - [ ] Create `components/pocket_fan_app/apps/homepage/view/homepage_view.h` and `.cpp`.
     - [ ] Move LVGL logic from `HomepageApp` to `HomepageView`.
-- [ ] Task: Fix Data Label Visibility & Reading
+- [x] Task: Fix Data Label Visibility & Reading c275f61
     - [ ] Ensure labels are created correctly in `HomepageView` (check parenting/z-index).
     - [ ] Verify telemetry reading against `hardware_test` reference.
+[checkpoint: c275f61]
 
 ## Phase 7: Final Verification
-- [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md) 7a6a430

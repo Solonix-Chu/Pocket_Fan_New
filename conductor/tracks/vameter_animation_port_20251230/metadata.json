@@ -1,0 +1,8 @@
+{
+  "track_id": "vameter_animation_port_20251230",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2025-12-30T10:00:00Z",
+  "updated_at": "2025-12-30T10:00:00Z",
+  "description": "分析整理 VAMeter 动画并实现 standalone 动画库组件及测试 app"
+}

@@ -12,6 +12,7 @@
 
 // LVGL Fonts
 extern "C" const lv_font_t lv_font_Gully_Bold_16;
+extern "C" const lv_font_t lv_font_Gully_Bold_12;
 
 // LVGL Images (Menu App)
 extern "C" const lv_image_dsc_t _About_RGB565A8_34x26;
@@ -81,6 +82,7 @@ private:
 public:
     // LVGL Font Access
     static const lv_font_t* GetGullyBold16() { return &lv_font_Gully_Bold_16; }
+    static const lv_font_t* GetGullyBold12() { return &lv_font_Gully_Bold_12; }
 
     // LVGL Image Access (Menu App)
     static const lv_image_dsc_t* GetImgAbout() { return &_About_RGB565A8_34x26; }

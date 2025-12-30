@@ -61,17 +61,17 @@ void HAL_PocketFan::_power_init()
         ESP_LOGI(TAG, "Power button not pressed at startup. Checking if we should stay on (e.g. charging?) - For now enforcing button rule.");
     }
 
-    ESP_LOGI(TAG, "Checking power on long press...");
-    int64_t start_time = esp_timer_get_time();
-    while ((esp_timer_get_time() - start_time) < 3000000) {  // 3s
-        if (gpio_get_level(PIN_POWER_BTN) == 1) {
-             ESP_LOGI(TAG, "Power button released early (%lld ms).", (esp_timer_get_time() - start_time) / 1000);
-             powerOff();
-             // If powerOff returns (e.g. on USB), we should probably stop init.
-             while(1) vTaskDelay(pdMS_TO_TICKS(100)); 
-        }
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
+    // ESP_LOGI(TAG, "Checking power on long press...");
+    // int64_t start_time = esp_timer_get_time();
+    // while ((esp_timer_get_time() - start_time) < 3000000) {  // 3s
+    //     if (gpio_get_level(PIN_POWER_BTN) == 1) {
+    //          ESP_LOGI(TAG, "Power button released early (%lld ms).", (esp_timer_get_time() - start_time) / 1000);
+    //          powerOff();
+    //          // If powerOff returns (e.g. on USB), we should probably stop init.
+    //          while(1) vTaskDelay(pdMS_TO_TICKS(100)); 
+    //     }
+    //     vTaskDelay(pdMS_TO_TICKS(10));
+    // }
 
     ESP_LOGI(TAG, "Power on confirmed. Holding power.");
     powerOn();

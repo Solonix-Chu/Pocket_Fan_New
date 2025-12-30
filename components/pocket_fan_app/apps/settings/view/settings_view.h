@@ -58,9 +58,12 @@ private:
     void _create_lvgl_objects();
     
     // Constants
-    static constexpr int _item_h = 24;
+    static constexpr int _item_h = 18;
     static constexpr int _item_gap = 4;
     static constexpr int _selector_pad = 2;
 
+    // Transition animation values
     smooth_ui_toolkit::AnimateValue _transition_offset;
+    std::vector<smooth_ui_toolkit::AnimateVector2> _item_transitions;
+    smooth_ui_toolkit::AnimateValue _popup_transition;
 };

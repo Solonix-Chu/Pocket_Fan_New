@@ -8,7 +8,7 @@
     - [ ] Create a vertical list using `SmoothSelectorMenu`.
     - [ ] Implement cyclic navigation (wrapping from bottom to top).
     - [ ] Add "Back" option to return to the main Menu app.
-- [ ] Task: Conductor - User Manual Verification 'Foundation & Navigation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Foundation & Navigation' (Protocol in workflow.md)
 
 ## Phase 2: UI Widgets (LVGL V9)
 - [ ] Task: Implement Long Text Auto-Scroll

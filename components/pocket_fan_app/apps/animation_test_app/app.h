@@ -2,19 +2,16 @@
 #include <mooncake.h>
 #include <lvgl.h>
 
-class AppStartupAnim : public mooncake::AppAbility {
+class AnimationTestApp : public mooncake::AppAbility {
 public:
-    AppStartupAnim();
-    ~AppStartupAnim() override;
+    AnimationTestApp();
+    ~AnimationTestApp() override = default;
 
     void onOpen() override;
     void onRunning() override;
     void onClose() override;
     void onDestroy() override;
 
-    static void PopUpGuideMap(bool force = false);
-
 private:
     lv_obj_t* _screen = nullptr;
-    uint32_t _start_time = 0;
 };

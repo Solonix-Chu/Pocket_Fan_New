@@ -2,6 +2,7 @@
 #include "../../hal/hal.h"
 #include "../../assets/assets.h"
 #include "../apps.h"
+#include "../app_startup_anim/app_startup_anim.h"
 #include <esp_log.h>
 
 static const char* TAG = "SettingsApp";
@@ -70,6 +71,12 @@ void SettingsApp::_create_view()
     
     // Get initial values
     _brightness_val = HAL::GetSystemConfig().brightness;
+
+    // 0. Operation Guide (New)
+    _view->addSettingsItem({"Operation Guide", false, false, []() {
+        ESP_LOGI(TAG, "Open Guide");
+        AppStartupAnim::PopUpGuideMap(true);
+    }});
 
     // 1. Long text auto-scroll example
     _view->addSettingsItem({"System Settings and Configuration Menu", false, false, []() {

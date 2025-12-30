@@ -90,6 +90,7 @@ void SettingsView::_create_lvgl_objects() {
     lv_obj_set_style_bg_opa(_selector_obj, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(_selector_obj, 4, 0);
     lv_obj_set_style_border_width(_selector_obj, 0, 0);
+    lv_obj_set_style_shadow_width(_selector_obj, 0, 0);
     lv_obj_clear_flag(_selector_obj, LV_OBJ_FLAG_SCROLLABLE);
 
     for (size_t i = 0; i < _items_props.size(); i++) {
@@ -99,7 +100,7 @@ void SettingsView::_create_lvgl_objects() {
         lv_obj_t* label = lv_label_create(_list_cont);
         lv_label_set_text(label, _items_props[i].name.c_str());
         lv_obj_set_style_text_color(label, lv_color_black(), 0);
-        lv_obj_set_style_text_font(label, AssetPool::GetGullyBold16(), 0);
+        lv_obj_set_style_text_font(label, AssetPool::GetGullyBold12(), 0);
         
         // Measure width for selective marquee
         lv_obj_update_layout(label);
@@ -115,14 +116,15 @@ void SettingsView::_create_lvgl_objects() {
             lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
         }
         
-        lv_obj_set_pos(label, (int32_t)kf.x + 4, (int32_t)kf.y + 4);
+        lv_obj_set_pos(label, (int32_t)kf.x + 4, (int32_t)kf.y + 2); // Adjusted Y for smaller font
         _item_objs.push_back(label);
 
         // Checkbox
         if (_items_props[i].has_checkbox) {
             lv_obj_t* cb = lv_checkbox_create(_list_cont);
             lv_checkbox_set_text(cb, "");
-            lv_obj_set_pos(cb, 100, (int32_t)kf.y + 2);
+            lv_obj_set_size(cb, 12, 12); // Smaller checkbox
+            lv_obj_set_pos(cb, 110, (int32_t)kf.y + 3);
             if (_items_props[i].checked) {
                 lv_obj_add_state(cb, LV_STATE_CHECKED);
             }
@@ -154,9 +156,9 @@ void SettingsView::onRender() {
     int selected_idx = getSelectedOptionIndex();
     for (size_t i = 0; i < _item_objs.size(); i++) {
         auto pos = _item_transitions[i].value();
-        lv_obj_set_pos(_item_objs[i], (int32_t)pos.x + 4, (int32_t)pos.y + 4);
+        lv_obj_set_pos(_item_objs[i], (int32_t)pos.x + 4, (int32_t)pos.y + 2); // Adjusted Y
         if (_checkbox_objs[i]) {
-            lv_obj_set_pos(_checkbox_objs[i], (int32_t)pos.x + 100, (int32_t)pos.y + 2);
+            lv_obj_set_pos(_checkbox_objs[i], (int32_t)pos.x + 110, (int32_t)pos.y + 3);
         }
 
         if (i == (size_t)selected_idx) {
@@ -205,7 +207,7 @@ void SettingsView::showBrightnessPopup(int initialValue) {
 
     // Label
     _popup_label = lv_label_create(_popup_cont);
-    lv_obj_set_style_text_font(_popup_label, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_font(_popup_label, AssetPool::GetGullyBold12(), 0);
     lv_obj_set_style_text_color(_popup_label, lv_color_black(), 0);
     lv_obj_align(_popup_label, LV_ALIGN_TOP_MID, 0, 0);
     lv_label_set_text_fmt(_popup_label, "BRI: %d%%", initialValue);
@@ -258,7 +260,7 @@ void SettingsView::onReadInput() {
 void SettingsView::onClick() {
     ESP_LOGI(TAG, "onClick");
     // Expand animation
-    open({0 + getCameraOffset().x, 0, 128, 64});
+    open({getCameraOffset().x, getCameraOffset().y, 128, 64});
     
     float duration = 0.15f;
     getSelectorPostion().x.easingOptions().duration = duration;

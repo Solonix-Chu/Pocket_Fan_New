@@ -17,6 +17,7 @@
 // #include "app_remote/app_remote.h"
 #include "app_startup_anim/app_startup_anim.h"
 #include "hardware_test/hardware_test.h"
+#include "animation_test_app/app.h"
 /* Header files locator (Don't remove) */
 
 namespace APPS {
@@ -32,7 +33,7 @@ namespace APPS {
  */
 inline void app_run_startup_anim(mooncake::Mooncake* mooncake)
 {
-    int id = mooncake->installApp(std::make_unique<StartupAnimApp>());
+    int id = mooncake->installApp(std::make_unique<AppStartupAnim>());
     mooncake->openApp(id);
 
     // while (1)

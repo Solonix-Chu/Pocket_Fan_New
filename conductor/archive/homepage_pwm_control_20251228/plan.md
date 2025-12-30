@@ -15,4 +15,5 @@
     - [ ] Ensure `HAL::SetFanState(true)` is called if speed > 0.
 
 ## Phase 3: Verification
-- [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md) f878930
+[checkpoint: f878930]
