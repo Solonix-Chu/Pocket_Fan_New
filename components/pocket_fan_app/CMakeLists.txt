@@ -7,6 +7,7 @@ idf_component_register(SRCS "app.cpp"
                        "apps/homepage/view/homepage_view.cpp"
                        "apps/settings/settings.cpp"
                        "apps/settings/view/settings_view.cpp"
+                       "apps/animation_test_app/app.cpp"
                     #    "apps/fan_control/fan_control.cpp"
                        "apps/app_startup_anim/app_startup_anim.cpp"
                        "assets/assets.cpp"
@@ -24,5 +25,5 @@ idf_component_register(SRCS "app.cpp"
                        "assets/images/homepage/_HomePage_1_RGB565A8_128x64.c"
                        "assets/images/homepage/_HomePage_2_RGB565A8_128x64.c"
                        INCLUDE_DIRS "./"
-                       REQUIRES mooncake smooth_ui_toolkit lvgl app_button esp_timer ble_ota LovyanGFX
+                       REQUIRES mooncake smooth_ui_toolkit lvgl app_button esp_timer ble_ota LovyanGFX va_effects
                        )

@@ -24,6 +24,7 @@ namespace APPS {
     extern int homepage_id;
     extern int menu_id;
     extern int settings_id;
+    extern int animation_test_id;
 }
 
 /**

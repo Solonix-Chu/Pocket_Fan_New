@@ -17,6 +17,7 @@ namespace APPS {
     int homepage_id = -1;
     int menu_id = -1;
     int settings_id = -1;
+    int animation_test_id = -1;
 }
 
 using namespace mooncake;
@@ -43,6 +44,7 @@ public:
         APPS::homepage_id = GetMooncake().installApp(std::make_unique<HomepageApp>());
         APPS::menu_id = GetMooncake().installApp(std::make_unique<MenuApp>());
         APPS::settings_id = GetMooncake().installApp(std::make_unique<SettingsApp>());
+        APPS::animation_test_id = GetMooncake().installApp(std::make_unique<AnimationTestApp>());
 
         GetMooncake().openApp(_startup_anim_id);
     }
