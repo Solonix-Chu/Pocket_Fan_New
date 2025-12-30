@@ -1,18 +1,18 @@
 # Plan: VAMeter Animation Port & Animation Kit Component
 
-## Phase 1: Setup & Infrastructure
-- [x] Task: Create Component Structure
+## Phase 1: Setup & Infrastructure [checkpoint: 8220a4e]
+- [x] Task: Create Component Structure [8220a4e]
     - Create directory `components/va_effects`
     - Create `CMakeLists.txt` for the component
     - Create `idf_component.yml` (if needed for dependencies)
-- [x] Task: Define Base Animation Factory API
+- [x] Task: Define Base Animation Factory API [8220a4e]
     - Create `va_effects.h` and `va_effects.cpp`
     - Define the `VaEffect` static class structure
-- [x] Task: Setup Test Application Scaffolding
+- [x] Task: Setup Test Application Scaffolding [8220a4e]
     - Create `apps/animation_test_app` directory
     - Create `app.h`, `app.cpp` for the test app
     - Register the test app in the main system (if applicable)
-- [ ] Task: Conductor - User Manual Verification 'Setup & Infrastructure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Setup & Infrastructure' (Protocol in workflow.md) [8220a4e]
 
 ## Phase 2: Core Animation Primitives (Page Transitions)
 - [ ] Task: Implement Backlight Fade
