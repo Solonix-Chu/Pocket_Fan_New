@@ -5,6 +5,7 @@
 #include <string>
 #include <functional>
 #include "../../../ui/transitions.h"
+#include "../../../ui/checkbox.h"
 
 using namespace smooth_ui_toolkit;
 
@@ -51,7 +52,7 @@ private:
     lv_obj_t* _list_cont = nullptr;
     lv_obj_t* _selector_obj = nullptr;
     std::vector<lv_obj_t*> _item_objs;
-    std::vector<lv_obj_t*> _checkbox_objs;
+    std::vector<pocket_fan::ui::Checkbox> _checkbox_objs;
     
     // Popup objects
     lv_obj_t* _popup_cont = nullptr;

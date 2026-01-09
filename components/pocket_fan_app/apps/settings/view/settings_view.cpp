@@ -2,6 +2,7 @@
 #include "app_button.h"
 #include "../../../hal/hal.h"
 #include "../../../assets/assets.h"
+#include "../../../ui/checkbox.h"
 #include <esp_log.h>
 
 static const char* TAG = "SettingsView";
@@ -53,12 +54,8 @@ void SettingsView::addSettingsItem(const SettingsItemProps& props) {
 }
 
 void SettingsView::updateItemValue(int index, bool checked) {
-    if (index >= 0 && index < (int)_checkbox_objs.size() && _checkbox_objs[index]) {
-        if (checked) {
-            lv_obj_add_state(_checkbox_objs[index], LV_STATE_CHECKED);
-        } else {
-            lv_obj_remove_state(_checkbox_objs[index], LV_STATE_CHECKED);
-        }
+    if (index >= 0 && index < (int)_checkbox_objs.size() && _checkbox_objs[index].root) {
+        pocket_fan::ui::SetCheckboxState(_checkbox_objs[index], checked);
     }
 }
 
@@ -131,16 +128,17 @@ void SettingsView::_create_lvgl_objects() {
 
         // Checkbox
         if (_items_props[i].has_checkbox) {
-            lv_obj_t* cb = lv_checkbox_create(_list_cont);
-            lv_checkbox_set_text(cb, "");
-            lv_obj_set_size(cb, 12, 12); // Smaller checkbox
-            lv_obj_set_pos(cb, 110, (int32_t)kf.y + 3);
-            if (_items_props[i].checked) {
-                lv_obj_add_state(cb, LV_STATE_CHECKED);
-            }
+            pocket_fan::ui::CheckboxStyle style;
+            style.size = 12;
+            style.inner_size = 6;
+            style.border_width = 2;
+            style.radius = 1;
+            auto cb = pocket_fan::ui::CreateCheckbox(_list_cont, style);
+            lv_obj_set_pos(cb.root, 110, (int32_t)kf.y + 2);
+            pocket_fan::ui::SetCheckboxState(cb, _items_props[i].checked);
             _checkbox_objs.push_back(cb);
         } else {
-            _checkbox_objs.push_back(nullptr);
+            _checkbox_objs.push_back({});
         }
     }
 }
@@ -167,8 +165,8 @@ void SettingsView::onRender() {
     for (size_t i = 0; i < _item_objs.size(); i++) {
         auto pos = _item_transitions[i].value();
         lv_obj_set_pos(_item_objs[i], (int32_t)pos.x + 4, (int32_t)pos.y + 2); // Adjusted Y
-        if (_checkbox_objs[i]) {
-            lv_obj_set_pos(_checkbox_objs[i], (int32_t)pos.x + 110, (int32_t)pos.y + 3);
+        if (_checkbox_objs[i].root) {
+            lv_obj_set_pos(_checkbox_objs[i].root, (int32_t)pos.x + 110, (int32_t)pos.y + 2);
         }
 
         if (i == (size_t)selected_idx) {
@@ -185,7 +183,6 @@ void SettingsView::onRender() {
 }
 
 void SettingsView::onUpdate(const uint32_t& currentTime) {
-    float current_time_s = currentTime / 1000.0f;
     _transition_offset.updateMs(currentTime);
     if (_is_popup_active || _popup_closing) {
         _popup_transition.updateMs(currentTime);

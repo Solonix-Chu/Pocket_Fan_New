@@ -132,7 +132,9 @@ void HAL_PocketFan::lvgl_update()
 void HAL_PocketFan::_lvgl_init()
 {
     _disp_ptr = HAL::GetDisplay();
-    _disp_ptr->invertDisplay(true); // Invert display colors for SSD1306
+    bool invert = HAL::GetSystemConfig().invertDisplay;
+    _disp_ptr->invertDisplay(invert); // Apply configured invert state for SSD1306
+    ESP_LOGI(TAG, "invertDisplay: %s", invert ? "ON" : "OFF");
 
     // Create the mutex for LVGL
     xGuiSemaphore = xSemaphoreCreateRecursiveMutex();

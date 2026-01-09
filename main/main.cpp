@@ -26,6 +26,9 @@ extern "C" void app_main(void)
     // app_button_init();
 
     ESP_LOGI(TAG, "LCD test_display");
+
+    // Developed-by-Solonix-Chu Morse Code
+    ESP_LOGI(TAG, "-.. . ...- . .-.. --- .--. . -.. -....- -... -.-- -....- ... --- .-.. --- -. .. -..- -....- -.-. .... ..- "); 
     
     auto hal = new HAL_PocketFan();
     HAL::Inject(hal);

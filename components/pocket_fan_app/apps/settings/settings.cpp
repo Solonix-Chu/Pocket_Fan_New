@@ -74,17 +74,22 @@ void SettingsApp::_create_view()
     
     // Get initial values
     _brightness_val = HAL::GetSystemConfig().brightness;
+    _invert_display = HAL::GetSystemConfig().invertDisplay;
+    _is_black_theme = false;
+    int item_index = 0;
 
     // 0. Operation Guide (New)
     _view->addSettingsItem({"Operation Guide", false, false, []() {
         ESP_LOGI(TAG, "Open Guide");
         AppStartupAnim::PopUpGuideMap(true);
     }});
+    item_index++;
 
     // 1. Long text auto-scroll example
     _view->addSettingsItem({"System Settings and Configuration Menu", false, false, []() {
         ESP_LOGI(TAG, "Clicked long text item");
     }});
+    item_index++;
 
     // 2. Brightness
     _view->addSettingsItem({"Brightness", false, false, [this]() {
@@ -92,15 +97,31 @@ void SettingsApp::_create_view()
         _is_adjusting_brightness = true;
         _view->showBrightnessPopup((_brightness_val * 100) / 255);
     }});
+    item_index++;
     
     // 3. Theme Toggle with Checkbox
-    static bool is_black_theme = false; 
-    _view->addSettingsItem({"Dark Theme", true, is_black_theme, [this]() {
-        is_black_theme = !is_black_theme;
-        ESP_LOGI(TAG, "Toggle Theme: %s", is_black_theme ? "Black" : "White");
-        _view->updateItemValue(2, is_black_theme);
+    _theme_item_index = item_index;
+    _view->addSettingsItem({"Dark Theme", true, _is_black_theme, [this]() {
+        _is_black_theme = !_is_black_theme;
+        ESP_LOGI(TAG, "Toggle Theme: %s", _is_black_theme ? "Black" : "White");
+        _view->updateItemValue(_theme_item_index, _is_black_theme);
         // HAL doesn't have theme yet, just toggle checkbox for now
     }});
+    item_index++;
+
+    // 4. Monochrome invert toggle (SSD1306)
+    _invert_item_index = item_index;
+    _view->addSettingsItem({"Invert Display", true, _invert_display, [this]() {
+        _invert_display = !_invert_display;
+        ESP_LOGI(TAG, "Toggle Invert Display: %s", _invert_display ? "ON" : "OFF");
+        if (HAL::GetDisplay()) {
+            HAL::GetDisplay()->invertDisplay(_invert_display);
+        }
+        HAL::GetSystemConfig().invertDisplay = _invert_display;
+        HAL::SaveSystemConfig();
+        _view->updateItemValue(_invert_item_index, _invert_display);
+    }});
+    item_index++;
 
     // 4. Language Toggle
     _view->addSettingsItem({"Language: EN", false, false, [this]() {
@@ -111,6 +132,7 @@ void SettingsApp::_create_view()
         HAL::SaveSystemConfig();
         // TODO: Update current UI text if possible, or wait for next app open
     }});
+    item_index++;
 
     // 5. Back
     _view->addSettingsItem({"Back", false, false, [this]() {
@@ -118,6 +140,7 @@ void SettingsApp::_create_view()
         mooncake::GetMooncake().openApp(APPS::menu_id);
         close();
     }});
+    item_index++;
     
     _view->init();
 }
