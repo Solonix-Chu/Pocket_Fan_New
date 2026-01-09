@@ -44,6 +44,9 @@ void SettingsApp::onRunning()
             _view->hideBrightnessPopup();
             _is_adjusting_brightness = false;
         }
+        if (_view) {
+            _view->update();
+        }
         return;
     }
 

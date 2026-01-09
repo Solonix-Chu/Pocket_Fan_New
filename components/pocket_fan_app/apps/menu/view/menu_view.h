@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include "../../../ui/transitions.h"
 
 using namespace smooth_ui_toolkit;
 
@@ -44,6 +45,9 @@ private:
     lv_obj_t* _panel_obj = nullptr;
     lv_obj_t* _label_obj = nullptr;
     std::vector<lv_obj_t*> _icon_objs;
+    std::vector<pocket_fan::ui::Transition2D> _icon_transitions;
+    pocket_fan::ui::TransitionValue _entry_offset;
+    pocket_fan::ui::TransitionValue _label_slide;
     
     void _create_lvgl_objects();
     void _update_lvgl_positions();
@@ -53,7 +57,4 @@ private:
     static constexpr int _icon_h = 26;
     static constexpr int _icon_gap = 20;
     static constexpr int _selector_pad = 5;
-
-    // Transition animation value
-    smooth_ui_toolkit::AnimateValue _transition_offset;
 };

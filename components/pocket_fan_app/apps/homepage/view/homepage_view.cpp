@@ -11,6 +11,8 @@ HomepageView::HomepageView() {
     setConfig().cameraSize = {128, 64};
     setConfig().renderInterval = 15;
     setConfig().readInputInterval = 0; // Immediate input
+    _entry_y.setDurationMs(320);
+    _entry_y.setEasing(ease::ease_out_back);
 }
 
 HomepageView::~HomepageView() {
@@ -25,6 +27,8 @@ void HomepageView::init() {
     
     // Load screen
     lv_scr_load(_screen);
+    // Re-enable entry animation from below
+    restartEntry();
 }
 
 void HomepageView::_create_lvgl_objects() {
@@ -40,6 +44,7 @@ void HomepageView::_create_lvgl_objects() {
     lv_obj_set_align(_tileview, LV_ALIGN_CENTER);
     lv_obj_set_style_bg_opa(_tileview, LV_OPA_TRANSP, 0);
     lv_obj_remove_flag(_tileview, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_translate_y(_tileview, 80, 0);
 
     // Page 1
     _tile1 = lv_tileview_add_tile(_tileview, 0, 0, LV_DIR_HOR);
@@ -147,6 +152,23 @@ void HomepageView::setPage(int page) {
 void HomepageView::onRender() {
     // SmoothSelector logic not strictly needed for this simple dashboard,
     // but we can use it if we want smooth moving elements.
+}
+
+void HomepageView::tick(uint32_t now_ms) {
+    if (_tileview && _entry_started) {
+        _entry_y.updateMs(now_ms);
+        lv_obj_set_style_translate_y(_tileview, (lv_coord_t)_entry_y.value(), 0);
+        if (_entry_y.isFinished()) {
+            _entry_started = false;
+            lv_obj_set_style_translate_y(_tileview, 0, 0);
+        }
+    }
+}
+
+void HomepageView::restartEntry() {
+    _entry_started = true;
+    _entry_y.jumpTo(80);
+    _entry_y.moveTo(0);
 }
 
 void HomepageView::onReadInput() {

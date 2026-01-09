@@ -9,6 +9,7 @@
 #include <mooncake.h>
 #include <smooth_ui_toolkit.h>
 #include <esp_timer.h>
+#include <esp_task_wdt.h>
 #include <memory>
 #include "esp_log.h"
 static const char *TAG = "PocketFan_App";
@@ -56,8 +57,9 @@ public:
             if (GetMooncake().getAppCurrentState(_startup_anim_id) == mooncake::AppAbility::StateGoClose) {
                 // Startup finished
                 GetMooncake().uninstallApp(_startup_anim_id);
-                
-                // Open Homepage
+
+                // Open Animation Test App instead of Homepage for verification
+                // GetMooncake().openApp(APPS::animation_test_id);
                 GetMooncake().openApp(APPS::homepage_id);
                 
                 _is_startup_anim_done = true;
@@ -73,6 +75,9 @@ public:
         // }
 
         HAL::Get()->allButton_refresh(); // 每个周期最后调用，刷新按键状态
+
+        // Feed task watchdog to avoid false triggers during UI animations
+        esp_task_wdt_reset();
     }
 };
 

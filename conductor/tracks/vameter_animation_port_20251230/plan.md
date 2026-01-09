@@ -15,19 +15,19 @@
 - [x] Task: Conductor - User Manual Verification 'Setup & Infrastructure' (Protocol in workflow.md) [8220a4e]
 
 ## Phase 2: Core Animation Primitives (Page Transitions)
-- [ ] Task: Implement Backlight Fade
+- [x] Task: Implement Backlight Fade
     - Add `VaEffect::FadeBacklight(to_brightness, duration)`
     - TDD: Verify duration and value updates
-- [ ] Task: Implement Circular Mask Reveal
+- [x] Task: Implement Circular Mask Reveal
     - Add `VaEffect::CircularReveal(center_x, center_y, duration)`
     - Port logic from `app_startup_anim`
-- [ ] Task: Implement Slide Transitions
+- [x] Task: Implement Slide Transitions
     - Add `VaEffect::SlideIn(direction, distance, duration)`
     - Add `VaEffect::SlideOut(direction, distance, duration)`
-- [ ] Task: Update Test App (Gallery Mode - Basics)
+- [x] Task: Update Test App (Gallery Mode - Basics)
     - Create "Transitions Gallery" page in test app
     - Add buttons to trigger each transition type
-- [ ] Task: Conductor - User Manual Verification 'Core Animation Primitives' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Core Animation Primitives' (Protocol in workflow.md)
 
 ## Phase 3: Menu & Widget Animations
 - [ ] Task: Implement Staggered List Entrance

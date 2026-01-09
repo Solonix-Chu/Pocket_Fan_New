@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include "../../../ui/transitions.h"
 
 using namespace smooth_ui_toolkit;
 
@@ -22,6 +23,7 @@ public:
     void init();
     void addSettingsItem(const SettingsItemProps& props);
     void updateItemValue(int index, bool checked);
+    void playEntryAnimation();
 
     // Popup management
     void showBrightnessPopup(int initialValue);
@@ -63,7 +65,8 @@ private:
     static constexpr int _selector_pad = 2;
 
     // Transition animation values
-    smooth_ui_toolkit::AnimateValue _transition_offset;
-    std::vector<smooth_ui_toolkit::AnimateVector2> _item_transitions;
-    smooth_ui_toolkit::AnimateValue _popup_transition;
+    pocket_fan::ui::TransitionValue _transition_offset;
+    std::vector<pocket_fan::ui::Transition2D> _item_transitions;
+    pocket_fan::ui::TransitionValue _popup_transition;
+    bool _popup_closing = false;
 };

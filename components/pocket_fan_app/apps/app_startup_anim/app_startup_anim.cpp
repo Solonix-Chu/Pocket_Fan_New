@@ -4,6 +4,7 @@
 #include <esp_log.h>
 #include <lvgl.h>
 #include <smooth_ui_toolkit.h>
+#include <algorithm>
 
 static const char* TAG = "AppStartupAnim";
 
@@ -17,6 +18,8 @@ AppStartupAnim::~AppStartupAnim()
 {
 }
 
+bool AppStartupAnim::_guide_active = false;
+
 void AppStartupAnim::onOpen()
 {
     ESP_LOGI(TAG, "onOpen");
@@ -27,15 +30,57 @@ void AppStartupAnim::onOpen()
     lv_obj_t* img = lv_image_create(_screen);
     lv_image_set_src(img, AssetPool::GetImgStartup());
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
+
+    // Mask for reveal transition
+    _mask = lv_obj_create(_screen);
+    lv_obj_set_size(_mask, 128, 64);
+    lv_obj_clear_flag(_mask, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_color(_mask, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(_mask, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(_mask, 0, 0);
+    lv_obj_set_style_pad_all(_mask, 0, 0);
+    lv_obj_set_style_translate_y(_mask, 0, 0);
     
     lv_scr_load(_screen);
+
+    // Prepare transitions
+    _backlight.setDurationMs(600);
+    _backlight.setEasing(ease::ease_out_back);
+    _backlight.jumpTo(0);
+    _backlight.moveTo(static_cast<float>(HAL::GetSystemConfig().brightness));
+    HAL::GetDisplay()->setBrightness(0);
+
+    _mask_translate.setDurationMs(450);
+    _mask_translate.setDelayMs(120);
+    _mask_translate.setEasing(ease::ease_out_back);
+    _mask_translate.jumpTo(0);
+    _mask_translate.moveTo(-80);
+
     _start_time = HAL::Millis();
+    _finish_time = 0;
 }
 
 void AppStartupAnim::onRunning()
 {
-    if (HAL::Millis() - _start_time > 1500) {
-        close();
+    uint32_t now = HAL::Millis();
+
+    // Animate backlight
+    _backlight.updateMs(now);
+    float brightness = std::clamp(_backlight.value(), 0.0f, 255.0f);
+    HAL::GetDisplay()->setBrightness(static_cast<uint8_t>(brightness));
+
+    // Animate mask reveal
+    _mask_translate.updateMs(now);
+    if (_mask) {
+        lv_obj_set_style_translate_y(_mask, static_cast<lv_coord_t>(_mask_translate.value()), 0);
+    }
+
+    if (_backlight.isFinished() && _mask_translate.isFinished()) {
+        if (_finish_time == 0) {
+            _finish_time = now;
+        } else if (now - _finish_time > 300) {
+            close();
+        }
     }
 }
 
@@ -46,6 +91,7 @@ void AppStartupAnim::onClose()
         lv_obj_del(_screen);
         _screen = nullptr;
     }
+    _mask = nullptr;
 }
 
 void AppStartupAnim::onDestroy()
@@ -56,6 +102,11 @@ void AppStartupAnim::onDestroy()
 void AppStartupAnim::PopUpGuideMap(bool force)
 {
     if (!force) return;
+    if (_guide_active) {
+        ESP_LOGW(TAG, "Guide already active, skip");
+        return;
+    }
+    _guide_active = true;
 
     ESP_LOGI(TAG, "PopUpGuideMap");
 
@@ -104,6 +155,7 @@ void AppStartupAnim::PopUpGuideMap(bool force)
     }
 
     // Wait for input to dismiss
+    const uint32_t wait_start = HAL::Millis();
     while (1)
     {
         HAL::Delay(50);
@@ -114,6 +166,11 @@ void AppStartupAnim::PopUpGuideMap(bool force)
         if (HAL::GetButton(BUTTON::BTN_MID) == APP_BUTTON_STATE_CLICKED || 
             HAL::GetButton(BUTTON::BTN_LEFT) == APP_BUTTON_STATE_CLICKED) {
             // Dismiss anim
+            break;
+        }
+        // Auto close after 2.5s to avoid blocking / WDT
+        if (HAL::Millis() - wait_start > 2500) {
+            ESP_LOGW(TAG, "Guide auto-dismiss due to timeout");
             break;
         }
     }
@@ -135,4 +192,5 @@ void AppStartupAnim::PopUpGuideMap(bool force)
     }
 
     lv_obj_del(popup_img);
+    _guide_active = false;
 }

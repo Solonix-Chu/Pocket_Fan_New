@@ -3,6 +3,7 @@
 #include "../../../hal/hal.h"
 #include "../../../assets/assets.h"
 #include <esp_log.h>
+#include <utility>
 
 MenuView::MenuView() {
     // Config
@@ -23,6 +24,12 @@ MenuView::MenuView() {
     getCamera().x.easingOptions().duration = 0.4f;
     getCamera().x.easingOptions().easingFunction = ease::ease_out_cubic;
     getCamera().y.easingOptions().duration = 0.4f;
+
+    _entry_offset.setDurationMs(400);
+    _entry_offset.setEasing(ease::ease_out_back);
+
+    _label_slide.setDurationMs(320);
+    _label_slide.setEasing(ease::ease_out_back);
 }
 
 MenuView::~MenuView() {
@@ -41,11 +48,26 @@ void MenuView::init() {
     // Initial jump
     if (!_settings_props.empty()) {
         jumpTo(0);
-        
+
+        _icon_transitions.resize(_settings_props.size());
+        for (size_t i = 0; i < _settings_props.size(); i++) {
+            const auto& kf = getOptionList()[i].keyframe;
+            auto& trans = _icon_transitions[i];
+            trans.setDurationMs(380);
+            trans.setDelayMs(80 + static_cast<uint32_t>(i) * 40);
+            trans.setEasing(ease::ease_out_back);
+            trans.jumpTo(kf.x - 24, kf.y + 12);
+            trans.moveTo(kf.x, kf.y);
+        }
+
         // Entrance Anim: Slide from left using transition offset
-        _transition_offset.teleport(-128);
-        _transition_offset.move(0);
-        _transition_offset.easingOptions().duration = 0.4f;
+        _entry_offset.setDelayMs(0);
+        _entry_offset.jumpTo(-128);
+        _entry_offset.moveTo(0);
+
+        _label_slide.setDelayMs(150);
+        _label_slide.jumpTo(18);
+        _label_slide.moveTo(0);
         
         onRender(); // Render immediately to prevent flash at 0
     }
@@ -54,8 +76,23 @@ void MenuView::init() {
 void MenuView::startExitAnimation(std::function<void()> callback) {
     ESP_LOGI("MenuView", "startExitAnimation");
     // Slide out to left
-    _transition_offset.onComplete(callback);
-    _transition_offset.move(-128);
+    _entry_offset.setDurationMs(280);
+    _entry_offset.setDelayMs(0);
+    _entry_offset.setCompleteCallback(std::move(callback));
+    _entry_offset.moveTo(-128);
+
+    _label_slide.setDurationMs(240);
+    _label_slide.setDelayMs(0);
+    _label_slide.setEasing(ease::ease_out_cubic);
+    _label_slide.moveTo(-64);
+
+    for (size_t i = 0; i < _icon_transitions.size(); i++) {
+        auto base = getOptionList()[i].keyframe;
+        _icon_transitions[i].setDurationMs(260);
+        _icon_transitions[i].setDelayMs(0);
+        _icon_transitions[i].setEasing(ease::ease_out_cubic);
+        _icon_transitions[i].moveTo(base.x - 24, base.y + 10);
+    }
 }
 
 void MenuView::addSettingsOption(const SettingsOptionProps& props) {
@@ -124,7 +161,7 @@ void MenuView::_create_lvgl_objects() {
 void MenuView::onRender() {
     if (!_screen) return;
     
-    int32_t trans_x = (int32_t)_transition_offset.value();
+    int32_t trans_x = (int32_t)_entry_offset.value();
 
     // Update Selector
     auto selector = getSelectorCurrentFrame();
@@ -139,8 +176,20 @@ void MenuView::onRender() {
     auto camera = getCameraOffset();
     lv_obj_set_pos(_menu_cont, -(int32_t)camera.x + trans_x, -(int32_t)camera.y);
 
+    // Icon transitions
+    for (size_t i = 0; i < _icon_objs.size(); i++) {
+        Vector2 pos;
+        if (i < _icon_transitions.size()) {
+            pos = _icon_transitions[i].value();
+        } else {
+            const auto& kf = getOptionList()[i].keyframe;
+            pos = Vector2(kf.x, kf.y);
+        }
+        lv_obj_set_pos(_icon_objs[i], (int32_t)pos.x, (int32_t)pos.y);
+    }
+
     // Update Label (Apply transition offset)
-    lv_obj_set_pos(_label_obj, trans_x, -5); // Y offset matches original alignment
+    lv_obj_set_pos(_label_obj, (int32_t)(trans_x + _label_slide.value()), -5); // Y offset matches original alignment
 
     // Update Label Text
     int idx = getSelectedOptionIndex();
@@ -150,8 +199,11 @@ void MenuView::onRender() {
 }
 
 void MenuView::onUpdate(const uint32_t& currentTime) {
-    float current_time_s = currentTime / 1000.0f;
-    _transition_offset.update(current_time_s);
+    _entry_offset.updateMs(currentTime);
+    _label_slide.updateMs(currentTime);
+    for (auto& t : _icon_transitions) {
+        t.updateMs(currentTime);
+    }
 }
 
 void MenuView::_update_camera_keyframe() {
@@ -186,16 +238,10 @@ void MenuView::onReadInput() {
 
 void MenuView::onClick() {
     ESP_LOGI("MenuView", "onClick");
-    // Play open anim
-    // Target: Full screen (adjusted for camera)
-    open({0 + getCameraOffset().x, 0, 128, 64});
-    
-    // Speed up transition
-    float duration = 0.15f;
-    getSelectorPostion().x.easingOptions().duration = duration;
-    getSelectorPostion().y.easingOptions().duration = duration;
-    getSelectorShape().x.easingOptions().duration = duration;
-    getSelectorShape().y.easingOptions().duration = duration;
+    // Skip scale-up / open animation; trigger selection immediately
+    if (_open_callback) {
+        _open_callback(getSelectedOptionIndex());
+    }
 }
 
 void MenuView::onOpenEnd() {

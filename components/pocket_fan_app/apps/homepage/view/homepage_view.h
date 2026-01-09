@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include "../../../ui/transitions.h"
 
 using namespace smooth_ui_toolkit;
 
@@ -21,6 +22,8 @@ public:
     
     // Page switching
     void setPage(int page);
+    void tick(uint32_t now_ms);
+    void restartEntry();
 
     // Overrides
     void onRender() override;
@@ -44,4 +47,6 @@ private:
     lv_obj_t* _label_pwm = nullptr;
 
     void _create_lvgl_objects();
+    pocket_fan::ui::TransitionValue _entry_y;
+    bool _entry_started = false;
 };

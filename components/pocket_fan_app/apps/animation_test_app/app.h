@@ -12,6 +12,10 @@ public:
     void onClose() override;
     void onDestroy() override;
 
+    void startStaggerListDemo();
+    void startPanelSlideDemo();
+    void startMaskRevealDemo();
+
 private:
     lv_obj_t* _screen = nullptr;
 };

@@ -11,6 +11,11 @@ SettingsView::SettingsView() {
     setConfig().renderInterval = 15;
     setConfig().readInputInterval = 0;
     setConfig().moveInLoop = true;
+
+    _transition_offset.setDurationMs(350);
+    _transition_offset.setEasing(smooth_ui_toolkit::ease::ease_out_cubic);
+    _popup_transition.setDurationMs(420);
+    _popup_transition.setEasing(smooth_ui_toolkit::ease::ease_out_back);
 }
 
 SettingsView::~SettingsView() {
@@ -26,19 +31,7 @@ void SettingsView::init() {
     
     if (!_items_props.empty()) {
         jumpTo(0);
-        
-        // Staggered Entrance Anim
-        for (size_t i = 0; i < _item_transitions.size(); i++) {
-            _item_transitions[i].teleport(-128, getOptionList()[i].keyframe.y);
-            _item_transitions[i].move(getOptionList()[i].keyframe.x, getOptionList()[i].keyframe.y);
-            _item_transitions[i].x.delay = 0.1f + i * 0.03f;
-            _item_transitions[i].x.easingOptions().duration = 0.4f;
-            _item_transitions[i].x.easingOptions().easingFunction = ease::ease_out_back;
-        }
-
-        _transition_offset.teleport(-128);
-        _transition_offset.move(0);
-        _transition_offset.easingOptions().duration = 0.4f;
+        playEntryAnimation();
         onRender();
     }
 }
@@ -67,6 +60,23 @@ void SettingsView::updateItemValue(int index, bool checked) {
             lv_obj_remove_state(_checkbox_objs[index], LV_STATE_CHECKED);
         }
     }
+}
+
+void SettingsView::playEntryAnimation() {
+    // Staggered Entrance Anim (slide in from left)
+    for (size_t i = 0; i < _item_transitions.size(); i++) {
+        _item_transitions[i].setDurationMs(420);
+        _item_transitions[i].setDelayMs(60 * i);
+        _item_transitions[i].setEasing(smooth_ui_toolkit::ease::ease_out_back);
+        _item_transitions[i].jumpTo(-140, getOptionList()[i].keyframe.y);
+        _item_transitions[i].moveTo(getOptionList()[i].keyframe.x, getOptionList()[i].keyframe.y);
+    }
+
+    _transition_offset.setDurationMs(350);
+    _transition_offset.setDelayMs(0);
+    _transition_offset.setEasing(smooth_ui_toolkit::ease::ease_out_cubic);
+    _transition_offset.jumpTo(-140);
+    _transition_offset.moveTo(0);
 }
 
 void SettingsView::_create_lvgl_objects() {
@@ -169,23 +179,26 @@ void SettingsView::onRender() {
     }
 
     // Popup transition
-    if (_is_popup_active && _popup_cont) {
+    if ((_is_popup_active || _popup_closing) && _popup_cont) {
         lv_obj_set_style_translate_y(_popup_cont, (int32_t)_popup_transition.value(), 0);
     }
 }
 
 void SettingsView::onUpdate(const uint32_t& currentTime) {
     float current_time_s = currentTime / 1000.0f;
-    _transition_offset.update(current_time_s);
-    _popup_transition.update(current_time_s);
+    _transition_offset.updateMs(currentTime);
+    if (_is_popup_active || _popup_closing) {
+        _popup_transition.updateMs(currentTime);
+    }
     for (auto& item : _item_transitions) {
-        item.update(current_time_s);
+        item.updateMs(currentTime);
     }
 }
 
 void SettingsView::showBrightnessPopup(int initialValue) {
     if (_is_popup_active) return;
     _is_popup_active = true;
+    _popup_closing = false;
 
     // Create popup container
     _popup_cont = lv_obj_create(_screen);
@@ -212,11 +225,17 @@ void SettingsView::showBrightnessPopup(int initialValue) {
     lv_obj_align(_popup_label, LV_ALIGN_TOP_MID, 0, 0);
     lv_label_set_text_fmt(_popup_label, "BRI: %d%%", initialValue);
 
-    // Entrance Anim
-    _popup_transition.teleport(64); // Start from below
-    _popup_transition.move(0);
-    _popup_transition.easingOptions().duration = 0.3f;
-    _popup_transition.easingOptions().easingFunction = ease::ease_out_back;
+    // Entrance Anim (panel slide style)
+    lv_obj_set_style_translate_y(_popup_cont, 80, 0);
+    _popup_transition.setDurationMs(420);
+    _popup_transition.setDelayMs(0);
+    _popup_transition.setEasing(smooth_ui_toolkit::ease::ease_out_back);
+    _popup_transition.setCompleteCallback(nullptr); // ensure no stale hide callback fires on entry
+    _popup_transition.jumpTo(80);
+    _popup_transition.moveTo(0);
+    // Apply first frame immediately so it shows without waiting for the next tick
+    _popup_transition.updateMs(HAL::Millis());
+    lv_obj_set_style_translate_y(_popup_cont, (int32_t)_popup_transition.value(), 0);
 }
 
 void SettingsView::updateBrightnessPopup(int value) {
@@ -226,14 +245,23 @@ void SettingsView::updateBrightnessPopup(int value) {
 }
 
 void SettingsView::hideBrightnessPopup() {
-    if (!_is_popup_active) return;
-    if (_popup_cont) {
-        lv_obj_del(_popup_cont);
+    if (!_is_popup_active || !_popup_cont) return;
+    _popup_closing = true;
+    _popup_transition.setDurationMs(260);
+    _popup_transition.setDelayMs(0);
+    _popup_transition.setEasing(smooth_ui_toolkit::ease::ease_out_cubic);
+    _popup_transition.setCompleteCallback([this]() {
+        if (_popup_cont) {
+            lv_obj_del(_popup_cont);
+        }
         _popup_cont = nullptr;
         _popup_bar = nullptr;
         _popup_label = nullptr;
-    }
-    _is_popup_active = false;
+        _is_popup_active = false;
+        _popup_closing = false;
+        _popup_transition.setCompleteCallback(nullptr); // clear handler after use
+    });
+    _popup_transition.moveTo(80);
 }
 
 void SettingsView::onReadInput() {
@@ -259,25 +287,16 @@ void SettingsView::onReadInput() {
 
 void SettingsView::onClick() {
     ESP_LOGI(TAG, "onClick");
-    // Expand animation
-    open({getCameraOffset().x, getCameraOffset().y, 128, 64});
-    
-    float duration = 0.15f;
-    getSelectorPostion().x.easingOptions().duration = duration;
-    getSelectorPostion().y.easingOptions().duration = duration;
-    getSelectorShape().x.easingOptions().duration = duration;
-    getSelectorShape().y.easingOptions().duration = duration;
-}
-
-void SettingsView::onOpenEnd() {
-    ESP_LOGI(TAG, "onOpenEnd");
+    // Skip selector expand animation; fire callback immediately
     int idx = getSelectedOptionIndex();
     if (idx >= 0 && idx < _items_props.size()) {
         if (_items_props[idx].callback) _items_props[idx].callback();
     }
-    
-    // Reset state so it can be clicked again
-    close();
+}
+
+void SettingsView::onOpenEnd() {
+    ESP_LOGI(TAG, "onOpenEnd");
+    // No-op; selection is handled immediately in onClick
 }
 
 void SettingsView::_update_camera_keyframe() {

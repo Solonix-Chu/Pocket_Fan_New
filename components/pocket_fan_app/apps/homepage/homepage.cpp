@@ -16,7 +16,11 @@ void HomepageApp::onOpen()
 {
     ESP_LOGI(TAG, "onOpen");
     _create_view();
-    if (_view) _view->updatePwm(_fan_speed);
+    if (_view) {
+        _view->updatePwm(_fan_speed);
+        _view->restartEntry();
+        _view->tick(HAL::Millis());
+    }
 }
 
 void HomepageApp::onRunning()
@@ -102,7 +106,7 @@ void HomepageApp::onRunning()
     }
 
     if (_view) {
-        _view->update();
+        _view->tick(HAL::Millis());
     }
 }
 
