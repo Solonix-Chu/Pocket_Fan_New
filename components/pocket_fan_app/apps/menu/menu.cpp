@@ -81,6 +81,9 @@ void MenuApp::_create_view()
         } else if (index == 6) { // Quit
             mooncake::GetMooncake().openApp(APPS::homepage_id);
             close(); 
+        } else if (index == 4) { // Enjoy
+            mooncake::GetMooncake().openApp(APPS::enjoy_id);
+            close();
         } else {
             // TODO: Open sub-menus
         }

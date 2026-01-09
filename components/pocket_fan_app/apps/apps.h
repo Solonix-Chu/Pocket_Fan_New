@@ -18,6 +18,7 @@
 #include "app_startup_anim/app_startup_anim.h"
 #include "hardware_test/hardware_test.h"
 #include "animation_test_app/app.h"
+#include "enjoy/enjoy.h"
 /* Header files locator (Don't remove) */
 
 namespace APPS {
@@ -25,6 +26,7 @@ namespace APPS {
     extern int menu_id;
     extern int settings_id;
     extern int animation_test_id;
+    extern int enjoy_id;
 }
 
 /**
