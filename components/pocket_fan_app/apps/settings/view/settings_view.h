@@ -37,6 +37,8 @@ public:
     void onReadInput() override;
     void onClick() override;
     void onOpenEnd() override;
+    void goNext() override;
+    void goLast() override;
 
 protected:
     void _update_camera_keyframe() override;
@@ -69,4 +71,5 @@ private:
     std::vector<pocket_fan::ui::Transition2D> _item_transitions;
     pocket_fan::ui::TransitionValue _popup_transition;
     bool _popup_closing = false;
+    uint32_t _last_wrap_ms = 0;
 };

@@ -285,6 +285,42 @@ void SettingsView::onReadInput() {
     }
 }
 
+void SettingsView::goNext() {
+    if (_data.option_list.empty()) return;
+    const uint32_t now = HAL::Millis();
+    if (now - _last_wrap_ms < 300) {
+        return;
+    }
+
+    const int last_idx = static_cast<int>(_data.option_list.size() - 1);
+    if (_data.selected_option_index == last_idx) {
+        _data.selected_option_index = 0;
+        _last_wrap_ms = now;
+    } else {
+        _data.selected_option_index++;
+    }
+    _data.is_changed = true;
+    onGoNext();
+}
+
+void SettingsView::goLast() {
+    if (_data.option_list.empty()) return;
+    const uint32_t now = HAL::Millis();
+    if (now - _last_wrap_ms < 300) {
+        return;
+    }
+
+    const int last_idx = static_cast<int>(_data.option_list.size() - 1);
+    if (_data.selected_option_index == 0) {
+        _data.selected_option_index = last_idx;
+        _last_wrap_ms = now;
+    } else {
+        _data.selected_option_index--;
+    }
+    _data.is_changed = true;
+    onGoLast();
+}
+
 void SettingsView::onClick() {
     ESP_LOGI(TAG, "onClick");
     // Skip selector expand animation; fire callback immediately

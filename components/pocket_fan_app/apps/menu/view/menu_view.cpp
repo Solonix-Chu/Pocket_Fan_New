@@ -212,6 +212,43 @@ void MenuView::_update_camera_keyframe() {
     getCamera().move(targetX, 0);
 }
 
+void MenuView::goNext() {
+    if (_data.option_list.empty()) return;
+    const uint32_t now = HAL::Millis();
+    // Cooldown after a wrap: ignore any moves during the window
+    if (now - _last_wrap_ms < 300) {
+        return;
+    }
+
+    const int last_idx = static_cast<int>(_data.option_list.size() - 1);
+    if (_data.selected_option_index == last_idx) {
+        _data.selected_option_index = 0;
+        _last_wrap_ms = now;
+    } else {
+        _data.selected_option_index++;
+    }
+    _data.is_changed = true;
+    onGoNext();
+}
+
+void MenuView::goLast() {
+    if (_data.option_list.empty()) return;
+    const uint32_t now = HAL::Millis();
+    if (now - _last_wrap_ms < 300) {
+        return;
+    }
+
+    const int last_idx = static_cast<int>(_data.option_list.size() - 1);
+    if (_data.selected_option_index == 0) {
+        _data.selected_option_index = last_idx;
+        _last_wrap_ms = now;
+    } else {
+        _data.selected_option_index--;
+    }
+    _data.is_changed = true;
+    onGoLast();
+}
+
 void MenuView::onReadInput() {
     if (isOpening()) return;
 

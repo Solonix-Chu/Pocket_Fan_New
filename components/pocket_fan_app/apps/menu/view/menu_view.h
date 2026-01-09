@@ -30,6 +30,8 @@ public:
     
     void onClick() override;
     void onOpenEnd() override;
+    void goNext() override;
+    void goLast() override;
 
 protected:
     void _update_camera_keyframe() override;
@@ -48,6 +50,7 @@ private:
     std::vector<pocket_fan::ui::Transition2D> _icon_transitions;
     pocket_fan::ui::TransitionValue _entry_offset;
     pocket_fan::ui::TransitionValue _label_slide;
+    uint32_t _last_wrap_ms = 0;
     
     void _create_lvgl_objects();
     void _update_lvgl_positions();
