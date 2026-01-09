@@ -63,6 +63,9 @@ public:
     // void resetEncoderCount(int value) override;
 
     void updatePowerMonitor() override;
+    float getBatteryCycles() override;
+    float getBatteryDischargedMah() override;
+    float getMotorHours() override;
     void resetPowerMonitorData() override;
     bool isPowerMonitorInLowCurrentMode() override;
     void powerMonitorCalibration(const float& currentOffset) override;

@@ -214,6 +214,13 @@ public:
     static void UpdatePowerMonitor() { Get()->updatePowerMonitor(); }
     virtual void updatePowerMonitor() {}
 
+    static float GetBatteryCycles() { return Get()->getBatteryCycles(); }
+    static float GetBatteryDischargedMah() { return Get()->getBatteryDischargedMah(); }
+    virtual float getBatteryCycles() { return 0.0f; }
+    virtual float getBatteryDischargedMah() { return 0.0f; }
+    static float GetMotorHours() { return Get()->getMotorHours(); }
+    virtual float getMotorHours() { return 0.0f; }
+
     static const POWER_MONITOR::PMData_t& GetPowerMonitorData() { return Get()->getPowerMonitorData(); }
     virtual const POWER_MONITOR::PMData_t& getPowerMonitorData() { return _pm_data; }
 

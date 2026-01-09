@@ -11,6 +11,8 @@
 #include <cstring>
 #include <esp_timer.h>
 #include <LovyanGFX.hpp> // Include LovyanGFX for I2C
+#include <nvs_flash.h>
+#include <nvs.h>
 
 static const char *TAG = "HAL_PM";
 
@@ -18,6 +20,19 @@ static lgfx::Bus_I2C _ina_bus;
 static SemaphoreHandle_t _pm_data_handle_mutex = NULL;
 static POWER_MONITOR::PMData_t _pm_data_daemon;
 static bool _is_initialized = false;
+static float _total_discharged_mah = 0.0f;
+static float _battery_cycles = 0.0f;
+static float _motor_hours = 0.0f;
+static uint32_t _last_state_save_ms = 0;
+static bool _pending_state_save = false;
+
+static constexpr float _nominal_capacity_mah = 2000.0f; // TODO: adjust if real battery capacity differs
+static constexpr const char* _nvs_namespace = "pm";
+static constexpr const char* _nvs_key_mah10 = "mah10";
+static constexpr const char* _nvs_key_cycles = "cycles";
+static constexpr const char* _nvs_key_mtrh10 = "mtrh10";
+static constexpr float _motor_power_threshold_w = 20.0f;
+static constexpr float _motor_hours_cap = 10000.0f;
 
 // INA219 Registers
 #define INA219_REG_CONFIG       0x00
@@ -54,8 +69,58 @@ static uint16_t readReg(uint8_t reg) {
     return (buf[0] << 8) | buf[1];
 }
 
+static void _pm_load_state() {
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ESP_ERROR_CHECK(nvs_flash_init());
+    }
+
+    nvs_handle_t handle;
+    if (nvs_open(_nvs_namespace, NVS_READWRITE, &handle) != ESP_OK) {
+        ESP_LOGW(TAG, "NVS open failed");
+        return;
+    }
+
+    uint32_t mah10 = 0;
+    if (nvs_get_u32(handle, _nvs_key_mah10, &mah10) == ESP_OK) {
+        _total_discharged_mah = mah10 / 10.0f;
+    }
+
+    uint32_t cyc = 0;
+    if (nvs_get_u32(handle, _nvs_key_cycles, &cyc) == ESP_OK) {
+        _battery_cycles = (float)cyc;
+    }
+
+    uint32_t mtrh10 = 0;
+    if (nvs_get_u32(handle, _nvs_key_mtrh10, &mtrh10) == ESP_OK) {
+        _motor_hours = mtrh10 / 10.0f;
+    }
+
+    nvs_close(handle);
+}
+
+static void _pm_save_state() {
+    nvs_handle_t handle;
+    if (nvs_open(_nvs_namespace, NVS_READWRITE, &handle) != ESP_OK) {
+        ESP_LOGW(TAG, "NVS open failed (save)");
+        return;
+    }
+
+    uint32_t mah10 = (uint32_t)(_total_discharged_mah * 10.0f);
+    uint32_t cyc = (uint32_t)(_battery_cycles + 0.5f); // store rounded cycles
+    uint32_t mtrh10 = (uint32_t)(_motor_hours * 10.0f);
+
+    nvs_set_u32(handle, _nvs_key_mah10, mah10);
+    nvs_set_u32(handle, _nvs_key_cycles, cyc);
+    nvs_set_u32(handle, _nvs_key_mtrh10, mtrh10);
+    nvs_commit(handle);
+    nvs_close(handle);
+}
+
 static void _power_monitor_task(void *pvParameters) {
     ESP_LOGI(TAG, "Task started");
+    int64_t last_tick_us = esp_timer_get_time();
     
     // Init INA219
     // Calibrate: 0.01 Ohm, 1mA LSB -> Cal = 4096
@@ -69,6 +134,11 @@ static void _power_monitor_task(void *pvParameters) {
     memset(&_pm_data_daemon, 0, sizeof(POWER_MONITOR::PMData_t));
 
     while (1) {
+        int64_t now_us = esp_timer_get_time();
+        float dt_s = (now_us - last_tick_us) / 1000000.0f;
+        if (dt_s < 0) dt_s = 0;
+        last_tick_us = now_us;
+
         float v_bus = 0;
         float v_shunt = 0;
         float current = 0;
@@ -96,8 +166,33 @@ static void _power_monitor_task(void *pvParameters) {
             _pm_data_daemon.currentPeak = _pm_data_daemon.shuntCurrent;
         if (_pm_data_daemon.shuntCurrent < _pm_data_daemon.currentMin)
             _pm_data_daemon.currentMin = _pm_data_daemon.shuntCurrent;
+
+        // Integrate discharge to estimate cycles
+        if (_pm_data_daemon.shuntCurrent > 0.0f && _nominal_capacity_mah > 0.0f) {
+            float delta_mah = _pm_data_daemon.shuntCurrent * 1000.0f * (dt_s / 3600.0f);
+            _total_discharged_mah += delta_mah;
+            while (_total_discharged_mah >= _nominal_capacity_mah) {
+                _battery_cycles += 1.0f;
+                _total_discharged_mah -= _nominal_capacity_mah;
+                _pending_state_save = true;
+            }
+        }
+
+        // Integrate motor runtime when power >= threshold
+        if (_pm_data_daemon.busPower >= _motor_power_threshold_w && _motor_hours < _motor_hours_cap) {
+            _motor_hours += dt_s / 3600.0f;
+            if (_motor_hours > _motor_hours_cap) _motor_hours = _motor_hours_cap;
+            _pending_state_save = true;
+        }
             
         xSemaphoreGive(_pm_data_handle_mutex);
+
+        uint32_t now_ms = (uint32_t)(now_us / 1000);
+        if (_pending_state_save || (now_ms - _last_state_save_ms) > 60000) {
+            _pm_save_state();
+            _last_state_save_ms = now_ms;
+            _pending_state_save = false;
+        }
 
         vTaskDelay(pdMS_TO_TICKS(100));
     }
@@ -119,6 +214,7 @@ void HAL_PocketFan::_power_monitor_init() {
     _ina_bus.init();
     
     _pm_data_handle_mutex = xSemaphoreCreateMutex();
+    _pm_load_state();
     // Start task
     xTaskCreate(_power_monitor_task, "pm_task", 4096, NULL, 5, NULL);
     _is_initialized = true;
@@ -144,4 +240,16 @@ bool HAL_PocketFan::isPowerMonitorInLowCurrentMode() {
 
 void HAL_PocketFan::powerMonitorCalibration(const float& currentOffset) {
     // Implement offset if needed
+}
+
+float HAL_PocketFan::getBatteryCycles() {
+    return _battery_cycles;
+}
+
+float HAL_PocketFan::getBatteryDischargedMah() {
+    return _total_discharged_mah;
+}
+
+float HAL_PocketFan::getMotorHours() {
+    return _motor_hours;
 }

@@ -19,6 +19,7 @@
 #include "hardware_test/hardware_test.h"
 #include "animation_test_app/app.h"
 #include "enjoy/enjoy.h"
+#include "health/health.h"
 /* Header files locator (Don't remove) */
 
 namespace APPS {
@@ -27,6 +28,7 @@ namespace APPS {
     extern int settings_id;
     extern int animation_test_id;
     extern int enjoy_id;
+    extern int health_id;
 }
 
 /**
