@@ -76,10 +76,10 @@ static void _lv_port_disp_init()
     lv_display_set_flush_cb(disp, _disp_flush);
 
     /* 3. Allocate draw buffer */
-    // Allocate a buffer for 1/10th of the screen or full screen depending on RAM.
-    // SSD1306 is small (128x64), so full buffer is fine (~16KB for 16-bit).
-    size_t buf_size_pixels = _disp_ptr->width() * _disp_ptr->height();
-    size_t buf_size_bytes = buf_size_pixels * sizeof(lv_color_t);
+    // Use a small partial buffer to avoid large allocations
+    uint32_t buf_lines = 8; // 8 rows of pixels
+    size_t buf_size_bytes = _disp_ptr->width() * buf_lines * sizeof(lv_color_t);
+    if (buf_size_bytes < 256) buf_size_bytes = 256;
 
     void *buf1 = heap_caps_malloc(buf_size_bytes, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
     if (!buf1)
@@ -90,21 +90,11 @@ static void _lv_port_disp_init()
 
     if (!buf1)
     {
-        ESP_LOGW(TAG, "Full buffer malloc failed, trying 1/10 buffer");
-        buf_size_pixels /= 2;
-        buf_size_bytes = buf_size_pixels * sizeof(lv_color_t);
-        // Ensure at least some minimum size
-        if (buf_size_bytes < 128) buf_size_bytes = 128; 
-        buf1 = malloc(buf_size_bytes);
-    }
-
-    if (!buf1)
-    {
-        ESP_LOGE(TAG, "Buffer malloc failed");
+        ESP_LOGE(TAG, "LVGL buffer malloc failed (%d bytes)", (int)buf_size_bytes);
         return;
     }
 
-    ESP_LOGI(TAG, "Display buffer allocated: %d bytes", (int)buf_size_bytes);
+    ESP_LOGI(TAG, "Display buffer allocated (partial): %d bytes", (int)buf_size_bytes);
 
     /* 4. Set buffer */
     // LV_DISPLAY_RENDER_MODE_PARTIAL is suitable for most cases
@@ -138,6 +128,10 @@ void HAL_PocketFan::_lvgl_init()
 
     // Create the mutex for LVGL
     xGuiSemaphore = xSemaphoreCreateRecursiveMutex();
+    if (!xGuiSemaphore) {
+        ESP_LOGE(TAG, "Failed to create LVGL semaphore");
+        return;
+    }
 
     if (!lv_is_initialized())
     {

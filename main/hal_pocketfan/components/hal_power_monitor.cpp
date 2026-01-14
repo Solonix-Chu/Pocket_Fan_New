@@ -111,10 +111,19 @@ static void _pm_save_state() {
     uint32_t cyc = (uint32_t)(_battery_cycles + 0.5f); // store rounded cycles
     uint32_t mtrh10 = (uint32_t)(_motor_hours * 10.0f);
 
-    nvs_set_u32(handle, _nvs_key_mah10, mah10);
-    nvs_set_u32(handle, _nvs_key_cycles, cyc);
-    nvs_set_u32(handle, _nvs_key_mtrh10, mtrh10);
-    nvs_commit(handle);
+    esp_err_t err = nvs_set_u32(handle, _nvs_key_mah10, mah10);
+    if (err != ESP_OK) ESP_LOGW(TAG, "NVS write mah10 failed: %s", esp_err_to_name(err));
+
+    err = nvs_set_u32(handle, _nvs_key_cycles, cyc);
+    if (err != ESP_OK) ESP_LOGW(TAG, "NVS write cycles failed: %s", esp_err_to_name(err));
+
+    err = nvs_set_u32(handle, _nvs_key_mtrh10, mtrh10);
+    if (err != ESP_OK) ESP_LOGW(TAG, "NVS write motor hours failed: %s", esp_err_to_name(err));
+
+    err = nvs_commit(handle);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "NVS commit failed: %s", esp_err_to_name(err));
+    }
     nvs_close(handle);
 }
 
@@ -171,6 +180,7 @@ static void _power_monitor_task(void *pvParameters) {
         if (_pm_data_daemon.shuntCurrent > 0.0f && _nominal_capacity_mah > 0.0f) {
             float delta_mah = _pm_data_daemon.shuntCurrent * 1000.0f * (dt_s / 3600.0f);
             _total_discharged_mah += delta_mah;
+            // ESP_LOGW(TAG, "Discharged +%.6f mAh, total %.3f mAh", delta_mah, _total_discharged_mah);
             while (_total_discharged_mah >= _nominal_capacity_mah) {
                 _battery_cycles += 1.0f;
                 _total_discharged_mah -= _nominal_capacity_mah;

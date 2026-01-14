@@ -32,7 +32,8 @@ void HAL_PocketFan::_motor_init()
         .duty_resolution  = MOTOR_PWM_RES,
         .timer_num        = LEDC_TIMER_0,
         .freq_hz          = MOTOR_PWM_FREQ,
-        .clk_cfg          = LEDC_AUTO_CLK
+        .clk_cfg          = LEDC_AUTO_CLK,
+        .deconfigure      = false,
     };
     esp_err_t ret = ledc_timer_config(&ledc_timer);
     if (ret != ESP_OK) ESP_LOGE(TAG, "LEDC Timer Config Failed: %s", esp_err_to_name(ret));
@@ -45,7 +46,9 @@ void HAL_PocketFan::_motor_init()
         .intr_type      = LEDC_INTR_DISABLE,
         .timer_sel      = LEDC_TIMER_0,
         .duty           = 0,
-        .hpoint         = 0
+        .hpoint         = 0,
+        .sleep_mode     = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD,
+        .flags          = { .output_invert = 0 },
     };
     ret = ledc_channel_config(&ledc_channel);
     if (ret != ESP_OK) ESP_LOGE(TAG, "LEDC Channel Config Failed: %s", esp_err_to_name(ret));
