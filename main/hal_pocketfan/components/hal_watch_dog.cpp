@@ -10,6 +10,7 @@
 #include <freertos/task.h>
 #include <esp_err.h>
 #include <esp_task_wdt.h>
+#include <esp_idf_version.h>
 #include "esp_log.h"
 static const char *TAG = "hal_watch_dog";
 // Refs:
@@ -20,20 +21,29 @@ void HAL_PocketFan::_watch_dog_init()
 {
     ESP_LOGI(TAG, "Watch dog init");
 
-    // Deinitialize TWDT first to apply new configuration
-    esp_task_wdt_deinit();
-    
-    // Init twdt
-    esp_task_wdt_config_t twdt_config = {
-        .timeout_ms = 5000, // Increased timeout for debugging
-        // .idle_core_mask = (1 << portNUM_PROCESSORS) - 1, // Bitmask of all cores
-        .idle_core_mask = 1 << 1, // Only IDLE1
+    // Prefer using IDF's built-in TWDT init, and only (re)configure if needed.
+    // Monitoring all idle cores is safer, but requires the main loop to yield (see main/main.cpp).
+    const esp_task_wdt_config_t twdt_config = {
+        .timeout_ms = 5000,
+        .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
         .trigger_panic = true,
     };
-    esp_err_t ret = esp_task_wdt_init(&twdt_config);
+
+    esp_err_t ret = ESP_OK;
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    ret = esp_task_wdt_reconfigure(&twdt_config);
+    if (ret == ESP_ERR_INVALID_STATE) {
+        // TWDT not initialized yet (or disabled in menuconfig)
+        ret = esp_task_wdt_init(&twdt_config);
+    }
+#else
+    // Fallback for older IDF: deinit then init with new config
+    esp_task_wdt_deinit();
+    ret = esp_task_wdt_init(&twdt_config);
+#endif
     if (ret != ESP_OK) {
-        // If it's still INVALID_STATE after deinit, something is fundamentally wrong, or another component re-inited it.
-        ESP_ERROR_CHECK(ret); 
+        ESP_LOGE(TAG, "Failed to configure TWDT: %s", esp_err_to_name(ret));
+        return;
     }
 
     // Subscribes main task

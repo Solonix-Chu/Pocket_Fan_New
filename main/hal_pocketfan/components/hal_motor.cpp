@@ -6,13 +6,16 @@
 #include "../hal_pocketfan.h"
 #include <driver/ledc.h>
 #include <esp_log.h>
+#include <esp_err.h>
 
 static const char *TAG = "HAL_Motor";
 
 #define MOTOR_PIN 5
 #define MOTOR_PWM_FREQ 20000
 #define MOTOR_PWM_RES LEDC_TIMER_10_BIT
-#define MOTOR_LEDC_CHANNEL LEDC_CHANNEL_0
+// Avoid conflicts with RGBW LED driver (uses TIMER_0 / CHANNEL_0..3)
+#define MOTOR_LEDC_TIMER   LEDC_TIMER_1
+#define MOTOR_LEDC_CHANNEL LEDC_CHANNEL_4
 
 static bool _motor_enabled = false;
 static float _current_speed = 0.0f;
@@ -30,7 +33,7 @@ void HAL_PocketFan::_motor_init()
     ledc_timer_config_t ledc_timer = {
         .speed_mode       = LEDC_LOW_SPEED_MODE,
         .duty_resolution  = MOTOR_PWM_RES,
-        .timer_num        = LEDC_TIMER_0,
+        .timer_num        = MOTOR_LEDC_TIMER,
         .freq_hz          = MOTOR_PWM_FREQ,
         .clk_cfg          = LEDC_AUTO_CLK,
         .deconfigure      = false,
@@ -44,7 +47,7 @@ void HAL_PocketFan::_motor_init()
         .speed_mode     = LEDC_LOW_SPEED_MODE,
         .channel        = MOTOR_LEDC_CHANNEL,
         .intr_type      = LEDC_INTR_DISABLE,
-        .timer_sel      = LEDC_TIMER_0,
+        .timer_sel      = MOTOR_LEDC_TIMER,
         .duty           = 0,
         .hpoint         = 0,
         .sleep_mode     = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD,
@@ -61,8 +64,10 @@ void HAL_PocketFan::setFanState(bool enable)
     if (enable) {
         setFanSpeed(_current_speed);
     } else {
-        ledc_set_duty(LEDC_LOW_SPEED_MODE, MOTOR_LEDC_CHANNEL, 0);
-        ledc_update_duty(LEDC_LOW_SPEED_MODE, MOTOR_LEDC_CHANNEL);
+        esp_err_t ret = ledc_set_duty(LEDC_LOW_SPEED_MODE, MOTOR_LEDC_CHANNEL, 0);
+        if (ret != ESP_OK) ESP_LOGE(TAG, "ledc_set_duty failed: %s", esp_err_to_name(ret));
+        ret = ledc_update_duty(LEDC_LOW_SPEED_MODE, MOTOR_LEDC_CHANNEL);
+        if (ret != ESP_OK) ESP_LOGE(TAG, "ledc_update_duty failed: %s", esp_err_to_name(ret));
     }
 }
 
@@ -75,7 +80,9 @@ void HAL_PocketFan::setFanSpeed(float speed)
     if (_motor_enabled) {
         uint32_t duty = (uint32_t)(speed * 1023.0f); // 10-bit resolution
         ESP_LOGI(TAG, "Set Fan Speed: %.2f (Duty: %lu)", speed, duty);
-        ledc_set_duty(LEDC_LOW_SPEED_MODE, MOTOR_LEDC_CHANNEL, duty);
-        ledc_update_duty(LEDC_LOW_SPEED_MODE, MOTOR_LEDC_CHANNEL);
+        esp_err_t ret = ledc_set_duty(LEDC_LOW_SPEED_MODE, MOTOR_LEDC_CHANNEL, duty);
+        if (ret != ESP_OK) ESP_LOGE(TAG, "ledc_set_duty failed: %s", esp_err_to_name(ret));
+        ret = ledc_update_duty(LEDC_LOW_SPEED_MODE, MOTOR_LEDC_CHANNEL);
+        if (ret != ESP_OK) ESP_LOGE(TAG, "ledc_update_duty failed: %s", esp_err_to_name(ret));
     }
 }

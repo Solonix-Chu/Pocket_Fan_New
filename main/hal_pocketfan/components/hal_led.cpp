@@ -2,6 +2,8 @@
 #include <driver/ledc.h>
 #include <esp_timer.h>
 #include <cmath>
+#include <esp_log.h>
+#include <esp_err.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -26,6 +28,8 @@
 #define LEDC_DUTY_RES           LEDC_TIMER_13_BIT // Set duty resolution to 13 bits
 #define LEDC_FREQUENCY          (5000) // Frequency in Hertz. Set frequency at 5 kHz
 
+static const char *TAG = "hal_led";
+
 // Breathing control
 static bool _breathing_enabled = false;
 static esp_timer_handle_t _breath_timer = nullptr;
@@ -43,7 +47,10 @@ static void _ledc_init(void)
         .clk_cfg          = LEDC_AUTO_CLK,
         .deconfigure      = false
     };
-    ledc_timer_config(&ledc_timer);
+    esp_err_t ret = ledc_timer_config(&ledc_timer);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "LEDC timer config failed: %s", esp_err_to_name(ret));
+    }
 
     // Prepare and then apply the LEDC PWM channel configuration
     ledc_channel_config_t ledc_channel[4] = {
@@ -94,7 +101,10 @@ static void _ledc_init(void)
     };
 
     for (int i = 0; i < 4; i++) {
-        ledc_channel_config(&ledc_channel[i]);
+        ret = ledc_channel_config(&ledc_channel[i]);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "LEDC channel config failed (idx=%d): %s", i, esp_err_to_name(ret));
+        }
     }
 }
 
@@ -102,8 +112,15 @@ static void _set_duty(ledc_channel_t channel, uint8_t val)
 {
     // Map 0-255 to 0-8191 (13 bit)
     uint32_t duty = (uint32_t)val * 8191 / 255;
-    ledc_set_duty(LEDC_MODE, channel, duty);
-    ledc_update_duty(LEDC_MODE, channel);
+    esp_err_t ret = ledc_set_duty(LEDC_MODE, channel, duty);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "ledc_set_duty failed (ch=%d): %s", (int)channel, esp_err_to_name(ret));
+        return;
+    }
+    ret = ledc_update_duty(LEDC_MODE, channel);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "ledc_update_duty failed (ch=%d): %s", (int)channel, esp_err_to_name(ret));
+    }
 }
 
 static void _breath_timer_callback(void* arg)
@@ -136,8 +153,16 @@ void HAL_PocketFan::_led_init()
         .name = "led_breath",
         .skip_unhandled_events = false
     };
-    esp_timer_create(&timer_args, &_breath_timer);
-    esp_timer_start_periodic(_breath_timer, 20000); // 20ms update period (50Hz)
+    esp_err_t ret = esp_timer_create(&timer_args, &_breath_timer);
+    if (ret != ESP_OK || !_breath_timer) {
+        ESP_LOGE(TAG, "esp_timer_create failed: %s", esp_err_to_name(ret));
+        _breath_timer = nullptr;
+        return;
+    }
+    ret = esp_timer_start_periodic(_breath_timer, 20000); // 20ms update period (50Hz)
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "esp_timer_start_periodic failed: %s", esp_err_to_name(ret));
+    }
 }
 
 void HAL_PocketFan::setLed(uint8_t r, uint8_t g, uint8_t b, uint8_t w)
