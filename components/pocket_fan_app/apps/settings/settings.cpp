@@ -22,14 +22,14 @@ void SettingsApp::onRunning()
 {
     if (_is_adjusting_brightness) {
         // Intercept inputs for brightness
-        if (HAL::GetButton(BUTTON::BTN_UP) == APP_BUTTON_STATE_CLICKED) {
+        if (HAL::GetButton(BUTTON::BTN_RIGHT) == APP_BUTTON_STATE_CLICKED) {
             if (BtnUp) BtnUp->currentState = APP_BUTTON_STATE_NOCHANGE;
             _brightness_val += 10;
             if (_brightness_val > 255) _brightness_val = 255;
             HAL::GetDisplay()->setBrightness(_brightness_val);
             _view->updateBrightnessPopup((_brightness_val * 100) / 255);
         }
-        else if (HAL::GetButton(BUTTON::BTN_DOWN) == APP_BUTTON_STATE_CLICKED) {
+        else if (HAL::GetButton(BUTTON::BTN_LEFT) == APP_BUTTON_STATE_CLICKED) {
             if (BtnDown) BtnDown->currentState = APP_BUTTON_STATE_NOCHANGE;
             _brightness_val -= 10;
             if (_brightness_val < 0) _brightness_val = 0;

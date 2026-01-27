@@ -23,7 +23,7 @@ static const char *TAG = "hall_wheel";
 #define HALL_WHEEL_MAX_CB        3  // 每个事件最多回调函数数量
 #define DEFAULT_DEBOUNCE_MS      2   // 默认防抖时间 (ms)
 #define DEFAULT_TIMEOUT_MS       100 // 默认滚动会话超时 (ms)
-#define DEFAULT_MIN_PULSES       2   // 默认最小脉冲数量
+#define DEFAULT_MIN_PULSES       1   // 默认最小脉冲数量
 #define SPEED_AVG_COUNT          4   // 用于计算平均速度的脉冲数
 
 // 中断处理和任务相关

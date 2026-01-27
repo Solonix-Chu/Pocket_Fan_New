@@ -5,6 +5,8 @@
 #include <esp_log.h>
 
 static const char* TAG = "MenuApp";
+static int s_menu_last_index = 0;
+static bool s_menu_has_opened = false;
 
 void MenuApp::onCreate()
 {
@@ -15,6 +17,8 @@ void MenuApp::onOpen()
 {
     ESP_LOGI(TAG, "onOpen");
     _last_input_time = HAL::Millis();
+    _exit_to_app = false;
+    _exit_to_home = false;
     _create_view();
 }
 
@@ -32,6 +36,8 @@ void MenuApp::onRunning()
         ESP_LOGI(TAG, "Inactivity timeout, triggering exit anim");
         _view->startExitAnimation([this]() {
             ESP_LOGI(TAG, "Exit anim done, returning to Homepage");
+            _exit_to_home = true;
+            _exit_to_app = false;
             mooncake::GetMooncake().openApp(APPS::homepage_id);
             close();
         });
@@ -76,15 +82,23 @@ void MenuApp::_create_view()
     _view->setOpenCallback([this](int index) {
         ESP_LOGI(TAG, "Selected index: %d", index);
         if (index == 0) { // Settings/General
+            _exit_to_app = true;
+            _exit_to_home = false;
             mooncake::GetMooncake().openApp(APPS::settings_id);
             close();
         } else if (index == 6) { // Quit
+            _exit_to_home = true;
+            _exit_to_app = false;
             mooncake::GetMooncake().openApp(APPS::homepage_id);
             close(); 
         } else if (index == 4) { // Enjoy
+            _exit_to_app = true;
+            _exit_to_home = false;
             mooncake::GetMooncake().openApp(APPS::enjoy_id);
             close();
         } else if (index == 2) { // Health
+            _exit_to_app = true;
+            _exit_to_home = false;
             mooncake::GetMooncake().openApp(APPS::health_id);
             close();
         } else {
@@ -92,12 +106,21 @@ void MenuApp::_create_view()
         }
     });
 
+    _view->setInitialIndex(s_menu_last_index);
+    _view->setSkipEntryAnimation(s_menu_has_opened);
     _view->init();
+    s_menu_has_opened = true;
 }
 
 void MenuApp::_destroy_view()
 {
     if (_view) {
+        if (_exit_to_app) {
+            s_menu_last_index = _view->getSelectedOptionIndex();
+        } else {
+            s_menu_last_index = 0;
+            s_menu_has_opened = false;
+        }
         delete _view;
         _view = nullptr;
     }

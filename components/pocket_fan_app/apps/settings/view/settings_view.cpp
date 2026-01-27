@@ -11,12 +11,14 @@ SettingsView::SettingsView() {
     setConfig().cameraSize = {128, 64};
     setConfig().renderInterval = 15;
     setConfig().readInputInterval = 0;
-    setConfig().moveInLoop = true;
+    setConfig().moveInLoop = false;
 
     _transition_offset.setDurationMs(350);
     _transition_offset.setEasing(smooth_ui_toolkit::ease::ease_out_cubic);
     _popup_transition.setDurationMs(420);
     _popup_transition.setEasing(smooth_ui_toolkit::ease::ease_out_back);
+    _edge_bounce.setDurationMs(160);
+    _edge_bounce.setEasing(smooth_ui_toolkit::ease::ease_out_back);
 }
 
 SettingsView::~SettingsView() {
@@ -146,6 +148,7 @@ void SettingsView::_create_lvgl_objects() {
 void SettingsView::onRender() {
     if (!_screen) return;
     int32_t trans_x = (int32_t)_transition_offset.value();
+    int32_t bounce_y = (int32_t)_edge_bounce.value();
     auto camera = getCameraOffset();
 
     // Update Selector
@@ -158,7 +161,7 @@ void SettingsView::onRender() {
         (int32_t)(selector.height + _selector_pad * 2));
 
     // Update Camera (move container) + Transition Offset
-    lv_obj_set_pos(_list_cont, -(int32_t)camera.x + trans_x, -(int32_t)camera.y);
+    lv_obj_set_pos(_list_cont, -(int32_t)camera.x + trans_x, -(int32_t)camera.y + bounce_y);
 
     // Color Inversion and Staggered Position Update
     int selected_idx = getSelectedOptionIndex();
@@ -184,6 +187,16 @@ void SettingsView::onRender() {
 
 void SettingsView::onUpdate(const uint32_t& currentTime) {
     _transition_offset.updateMs(currentTime);
+    _edge_bounce.updateMs(currentTime);
+    if (_edge_bounce_state == EdgeBounceState::Kick && _edge_bounce.isFinished()) {
+        _edge_bounce.setDelayMs(0);
+        _edge_bounce.setDurationMs(220);
+        _edge_bounce.setEasing(smooth_ui_toolkit::ease::ease_out_back);
+        _edge_bounce.moveTo(0.0f);
+        _edge_bounce_state = EdgeBounceState::Return;
+    } else if (_edge_bounce_state == EdgeBounceState::Return && _edge_bounce.isFinished()) {
+        _edge_bounce_state = EdgeBounceState::Idle;
+    }
     if (_is_popup_active || _popup_closing) {
         _popup_transition.updateMs(currentTime);
     }
@@ -284,36 +297,24 @@ void SettingsView::onReadInput() {
 
 void SettingsView::goNext() {
     if (_data.option_list.empty()) return;
-    const uint32_t now = HAL::Millis();
-    if (now - _last_wrap_ms < 300) {
-        return;
-    }
-
     const int last_idx = static_cast<int>(_data.option_list.size() - 1);
     if (_data.selected_option_index == last_idx) {
-        _data.selected_option_index = 0;
-        _last_wrap_ms = now;
-    } else {
-        _data.selected_option_index++;
+        _trigger_edge_bounce(-12.0f);
+        return;
     }
+    _data.selected_option_index++;
     _data.is_changed = true;
     onGoNext();
 }
 
 void SettingsView::goLast() {
     if (_data.option_list.empty()) return;
-    const uint32_t now = HAL::Millis();
-    if (now - _last_wrap_ms < 300) {
-        return;
-    }
-
     const int last_idx = static_cast<int>(_data.option_list.size() - 1);
     if (_data.selected_option_index == 0) {
-        _data.selected_option_index = last_idx;
-        _last_wrap_ms = now;
-    } else {
-        _data.selected_option_index--;
+        _trigger_edge_bounce(12.0f);
+        return;
     }
+    _data.selected_option_index--;
     _data.is_changed = true;
     onGoLast();
 }
@@ -336,4 +337,22 @@ void SettingsView::_update_camera_keyframe() {
     // Keep selection at the very top
     auto targetY = getSelectedKeyframe().y;
     getCamera().move(0, targetY);
+}
+
+void SettingsView::_trigger_edge_bounce(float offset) {
+    if (_edge_bounce_state != EdgeBounceState::Idle) {
+        return;
+    }
+    const uint32_t now = HAL::Millis();
+    if (now - _edge_bounce_last_ms < _edge_bounce_cooldown_ms) {
+        return;
+    }
+    _edge_bounce_last_ms = now;
+
+    _edge_bounce.setDelayMs(0);
+    _edge_bounce.setDurationMs(70);
+    _edge_bounce.setEasing(smooth_ui_toolkit::ease::ease_out_quad);
+    _edge_bounce.jumpTo(0.0f);
+    _edge_bounce.moveTo(offset);
+    _edge_bounce_state = EdgeBounceState::Kick;
 }

@@ -43,8 +43,15 @@ public:
 
 protected:
     void _update_camera_keyframe() override;
+    void _trigger_edge_bounce(float offset);
 
 private:
+    enum class EdgeBounceState {
+        Idle = 0,
+        Kick,
+        Return,
+    };
+
     std::vector<SettingsItemProps> _items_props;
 
     // LVGL Objects
@@ -71,6 +78,10 @@ private:
     pocket_fan::ui::TransitionValue _transition_offset;
     std::vector<pocket_fan::ui::Transition2D> _item_transitions;
     pocket_fan::ui::TransitionValue _popup_transition;
+    pocket_fan::ui::TransitionValue _edge_bounce;
+    EdgeBounceState _edge_bounce_state = EdgeBounceState::Idle;
+    uint32_t _edge_bounce_last_ms = 0;
+    static constexpr uint32_t _edge_bounce_cooldown_ms = 180;
     bool _popup_closing = false;
     uint32_t _last_wrap_ms = 0;
 };

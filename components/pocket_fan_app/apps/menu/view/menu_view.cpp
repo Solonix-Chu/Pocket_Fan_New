@@ -10,7 +10,7 @@ MenuView::MenuView() {
     setConfig().cameraSize = {128, 64}; // 128x64 Screen
     setConfig().renderInterval = 15;
     setConfig().readInputInterval = 0; // Read input every frame to catch transient button states
-    setConfig().moveInLoop = true;
+    setConfig().moveInLoop = false;
     
     // Setup transitions (Easing)
     getSelectorPostion().x.easingOptions().duration = 0.3f;
@@ -30,6 +30,9 @@ MenuView::MenuView() {
 
     _label_slide.setDurationMs(320);
     _label_slide.setEasing(ease::ease_out_back);
+
+    _edge_bounce.setDurationMs(160);
+    _edge_bounce.setEasing(ease::ease_out_back);
 }
 
 MenuView::~MenuView() {
@@ -47,27 +50,52 @@ void MenuView::init() {
     
     // Initial jump
     if (!_settings_props.empty()) {
-        jumpTo(0);
+        int start_index = _initial_index;
+        if (start_index < 0 || start_index >= static_cast<int>(_settings_props.size())) {
+            start_index = 0;
+        }
+        jumpTo(start_index);
+        if (_skip_entry_anim) {
+            const auto& kf = getSelectedKeyframe();
+            getSelectorPostion().teleport(kf.x, kf.y);
+            getSelectorShape().teleport(kf.width, kf.height);
+            float target_x = kf.x - (128 - _icon_w) / 2.0f;
+            getCamera().teleport(target_x, 0.0f);
+        } else {
+            _update_camera_keyframe();
+        }
 
         _icon_transitions.resize(_settings_props.size());
         for (size_t i = 0; i < _settings_props.size(); i++) {
             const auto& kf = getOptionList()[i].keyframe;
             auto& trans = _icon_transitions[i];
-            trans.setDurationMs(380);
-            trans.setDelayMs(80 + static_cast<uint32_t>(i) * 40);
-            trans.setEasing(ease::ease_out_back);
-            trans.jumpTo(kf.x - 24, kf.y + 12);
-            trans.moveTo(kf.x, kf.y);
+            if (_skip_entry_anim) {
+                trans.setDelayMs(0);
+                trans.jumpTo(kf.x, kf.y);
+            } else {
+                trans.setDurationMs(380);
+                trans.setDelayMs(80 + static_cast<uint32_t>(i) * 40);
+                trans.setEasing(ease::ease_out_back);
+                trans.jumpTo(kf.x - 24, kf.y + 12);
+                trans.moveTo(kf.x, kf.y);
+            }
         }
 
         // Entrance Anim: Slide from left using transition offset
-        _entry_offset.setDelayMs(0);
-        _entry_offset.jumpTo(-128);
-        _entry_offset.moveTo(0);
+        if (_skip_entry_anim) {
+            _entry_offset.setDelayMs(0);
+            _entry_offset.jumpTo(0);
+            _label_slide.setDelayMs(0);
+            _label_slide.jumpTo(0);
+        } else {
+            _entry_offset.setDelayMs(0);
+            _entry_offset.jumpTo(-128);
+            _entry_offset.moveTo(0);
 
-        _label_slide.setDelayMs(150);
-        _label_slide.jumpTo(18);
-        _label_slide.moveTo(0);
+            _label_slide.setDelayMs(150);
+            _label_slide.jumpTo(18);
+            _label_slide.moveTo(0);
+        }
         
         onRender(); // Render immediately to prevent flash at 0
     }
@@ -162,6 +190,7 @@ void MenuView::onRender() {
     if (!_screen) return;
     
     int32_t trans_x = (int32_t)_entry_offset.value();
+    int32_t bounce_x = (int32_t)_edge_bounce.value();
 
     // Update Selector
     auto selector = getSelectorCurrentFrame();
@@ -174,7 +203,7 @@ void MenuView::onRender() {
 
     // Update Camera (move container) + Transition Offset
     auto camera = getCameraOffset();
-    lv_obj_set_pos(_menu_cont, -(int32_t)camera.x + trans_x, -(int32_t)camera.y);
+    lv_obj_set_pos(_menu_cont, -(int32_t)camera.x + trans_x + bounce_x, -(int32_t)camera.y);
 
     // Icon transitions
     for (size_t i = 0; i < _icon_objs.size(); i++) {
@@ -189,7 +218,7 @@ void MenuView::onRender() {
     }
 
     // Update Label (Apply transition offset)
-    lv_obj_set_pos(_label_obj, (int32_t)(trans_x + _label_slide.value()), -5); // Y offset matches original alignment
+    lv_obj_set_pos(_label_obj, (int32_t)(trans_x + _label_slide.value() + bounce_x), -5); // Y offset matches original alignment
 
     // Update Label Text
     int idx = getSelectedOptionIndex();
@@ -201,6 +230,16 @@ void MenuView::onRender() {
 void MenuView::onUpdate(const uint32_t& currentTime) {
     _entry_offset.updateMs(currentTime);
     _label_slide.updateMs(currentTime);
+    _edge_bounce.updateMs(currentTime);
+    if (_edge_bounce_state == EdgeBounceState::Kick && _edge_bounce.isFinished()) {
+        _edge_bounce.setDelayMs(0);
+        _edge_bounce.setDurationMs(220);
+        _edge_bounce.setEasing(ease::ease_out_back);
+        _edge_bounce.moveTo(0.0f);
+        _edge_bounce_state = EdgeBounceState::Return;
+    } else if (_edge_bounce_state == EdgeBounceState::Return && _edge_bounce.isFinished()) {
+        _edge_bounce_state = EdgeBounceState::Idle;
+    }
     for (auto& t : _icon_transitions) {
         t.updateMs(currentTime);
     }
@@ -214,37 +253,24 @@ void MenuView::_update_camera_keyframe() {
 
 void MenuView::goNext() {
     if (_data.option_list.empty()) return;
-    const uint32_t now = HAL::Millis();
-    // Cooldown after a wrap: ignore any moves during the window
-    if (now - _last_wrap_ms < 300) {
-        return;
-    }
-
     const int last_idx = static_cast<int>(_data.option_list.size() - 1);
     if (_data.selected_option_index == last_idx) {
-        _data.selected_option_index = 0;
-        _last_wrap_ms = now;
-    } else {
-        _data.selected_option_index++;
+        _trigger_edge_bounce(-12.0f);
+        return;
     }
+    _data.selected_option_index++;
     _data.is_changed = true;
     onGoNext();
 }
 
 void MenuView::goLast() {
     if (_data.option_list.empty()) return;
-    const uint32_t now = HAL::Millis();
-    if (now - _last_wrap_ms < 300) {
-        return;
-    }
-
     const int last_idx = static_cast<int>(_data.option_list.size() - 1);
     if (_data.selected_option_index == 0) {
-        _data.selected_option_index = last_idx;
-        _last_wrap_ms = now;
-    } else {
-        _data.selected_option_index--;
+        _trigger_edge_bounce(12.0f);
+        return;
     }
+    _data.selected_option_index--;
     _data.is_changed = true;
     onGoLast();
 }
@@ -287,4 +313,22 @@ void MenuView::onOpenEnd() {
     if (_open_callback) {
         _open_callback(getSelectedOptionIndex());
     }
+}
+
+void MenuView::_trigger_edge_bounce(float offset) {
+    if (_edge_bounce_state != EdgeBounceState::Idle) {
+        return;
+    }
+    const uint32_t now = HAL::Millis();
+    if (now - _edge_bounce_last_ms < _edge_bounce_cooldown_ms) {
+        return;
+    }
+    _edge_bounce_last_ms = now;
+
+    _edge_bounce.setDelayMs(0);
+    _edge_bounce.setDurationMs(70);
+    _edge_bounce.setEasing(ease::ease_out_quad);
+    _edge_bounce.jumpTo(0.0f);
+    _edge_bounce.moveTo(offset);
+    _edge_bounce_state = EdgeBounceState::Kick;
 }

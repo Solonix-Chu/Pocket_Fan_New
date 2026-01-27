@@ -20,6 +20,8 @@ public:
 
     void init();
     void addSettingsOption(const SettingsOptionProps& props);
+    void setInitialIndex(int index) { _initial_index = index; }
+    void setSkipEntryAnimation(bool skip) { _skip_entry_anim = skip; }
     void setOpenCallback(std::function<void(int)> callback) { _open_callback = callback; }
     void startExitAnimation(std::function<void()> callback);
 
@@ -35,8 +37,15 @@ public:
 
 protected:
     void _update_camera_keyframe() override;
+    void _trigger_edge_bounce(float offset);
 
 private:
+    enum class EdgeBounceState {
+        Idle = 0,
+        Kick,
+        Return,
+    };
+
     std::vector<SettingsOptionProps> _settings_props;
     std::function<void(int)> _open_callback;
 
@@ -50,7 +59,13 @@ private:
     std::vector<pocket_fan::ui::Transition2D> _icon_transitions;
     pocket_fan::ui::TransitionValue _entry_offset;
     pocket_fan::ui::TransitionValue _label_slide;
+    pocket_fan::ui::TransitionValue _edge_bounce;
+    EdgeBounceState _edge_bounce_state = EdgeBounceState::Idle;
+    uint32_t _edge_bounce_last_ms = 0;
+    static constexpr uint32_t _edge_bounce_cooldown_ms = 360;
     uint32_t _last_wrap_ms = 0;
+    int _initial_index = 0;
+    bool _skip_entry_anim = false;
     
     void _create_lvgl_objects();
     void _update_lvgl_positions();
