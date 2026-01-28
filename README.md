@@ -38,6 +38,21 @@ The GPIO number used by this example can be changed in [lvgl_example_main.c](mai
 
 Run `idf.py -p PORT build flash monitor` to build, flash and monitor the project. A scrolling text will show up on the LCD as expected.
 
+#### FlashTool（GUI）烧录指南（固件地址填写）
+
+如果你使用 Espressif 的 Flash Download Tool / FlashTool（GUI）进行烧录，本工程（`ESP32-S3`）在当前配置下需要按下表填写 `Bin` 与 `Address`（十六进制）：
+
+| Bin 文件（build 产物） | Address | 说明 |
+| --- | --- | --- |
+| `build/bootloader/bootloader.bin` | `0x0` | 二级 Bootloader |
+| `build/partition_table/partition-table.bin` | `0x8000` | 分区表 |
+| `build/ota_data_initial.bin` | `0xf000` | OTA 数据初始化 |
+| `build/i2c_oled.bin` | `0x20000` | APP 固件 |
+
+FlashTool 里的 Flash 参数建议与工程一致：`FLASH MODE = dio`、`FLASH FREQ = 80MHz`、`FLASH SIZE = 4MB`。
+
+如果你修改了分区表/偏移，或升级了 ESP-IDF，以上地址可能会变化；以 `idf.py build` 生成的 `build/flash_args` / `build/flasher_args.json` 为准。
+
 The first time you run `idf.py` for the example will cost extra time as the build system needs to address the component dependencies and downloads the missing components from the ESP Component Registry into `managed_components` folder.
 
 (To exit the serial monitor, type ``Ctrl-]``.)
