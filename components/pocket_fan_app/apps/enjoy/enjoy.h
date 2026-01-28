@@ -27,5 +27,7 @@ private:
     float _vx = 0.0f;
     float _vy = 0.0f;
     float _radius = 6.0f;
+    float _screen_w = 128.0f;
+    float _screen_h = 64.0f;
     uint32_t _last_ms = 0;
 };

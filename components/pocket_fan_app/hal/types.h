@@ -84,6 +84,7 @@ namespace CONFIG
         bool highRefreshRate = true;
         bool reverseEncoder = false;
         bool invertDisplay = true;
+        bool darkTheme = false;
         LocaleCode_t localeCode = locale_code_en;
         float currentOffset = 0.0f;
         std::string wifiSsid;

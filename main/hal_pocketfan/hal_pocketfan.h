@@ -25,6 +25,7 @@ public:
 
     inline void init() override
     {
+        loadSystemConfig();
         _power_init();
         _power_monitor_init();
         _ntc_init();
@@ -32,6 +33,7 @@ public:
         _led_init();
         _watch_dog_init();
         _disp_init();
+        applySystemConfig();
         _lvgl_init();
         _button_init();
     }
@@ -82,8 +84,9 @@ public:
     // void setBaseRelay(bool state) override;
     // bool getBaseRelayState() override;
 
-    // void loadSystemConfig() override;
-    // void saveSystemConfig() override;
+    void loadSystemConfig() override;
+    void saveSystemConfig() override;
+    void applySystemConfig() override;
     // void startMscMode() override;
     // void stopMscMode() override;
     // void factoryReset(OnLogPageRenderCallback_t onLogPageRender) override;

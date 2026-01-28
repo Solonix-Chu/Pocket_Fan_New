@@ -22,6 +22,7 @@ private:
     bool _is_black_theme = false;
     int _theme_item_index = -1;
     int _invert_item_index = -1;
+    uint32_t _last_scroll_time = 0;
     
     void _create_view();
     void _destroy_view();

@@ -5,6 +5,7 @@
 // #include "apps/app_startup_anim/app_startup_anim.h"
 #include "apps/apps.h"
 #include "app_button.h"
+#include "assets/assets.h"
 #include "assets/assets_loader.h"
 #include <mooncake.h>
 #include <smooth_ui_toolkit.h>
@@ -36,6 +37,7 @@ public:
 
         // Load Assets
         LoadStaticAssets();
+        AssetPool::SetLocaleCode(HAL::GetSystemConfig().localeCode);
 
         // Setup HAL for smooth_ui_toolkit
         smooth_ui_toolkit::ui_hal::on_get_tick([]() {

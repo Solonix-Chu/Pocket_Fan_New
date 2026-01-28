@@ -6,7 +6,7 @@
 
 static const char* TAG = "MenuApp";
 static int s_menu_last_index = 0;
-static bool s_menu_has_opened = false;
+static bool s_menu_skip_entry = false;
 
 void MenuApp::onCreate()
 {
@@ -107,9 +107,8 @@ void MenuApp::_create_view()
     });
 
     _view->setInitialIndex(s_menu_last_index);
-    _view->setSkipEntryAnimation(s_menu_has_opened);
+    _view->setSkipEntryAnimation(s_menu_skip_entry);
     _view->init();
-    s_menu_has_opened = true;
 }
 
 void MenuApp::_destroy_view()
@@ -117,9 +116,10 @@ void MenuApp::_destroy_view()
     if (_view) {
         if (_exit_to_app) {
             s_menu_last_index = _view->getSelectedOptionIndex();
+            s_menu_skip_entry = true;
         } else {
             s_menu_last_index = 0;
-            s_menu_has_opened = false;
+            s_menu_skip_entry = false;
         }
         delete _view;
         _view = nullptr;

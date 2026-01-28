@@ -17,7 +17,7 @@ static const char *TAG = "hal_display";
 static esp_lcd_panel_io_handle_t s_io_handle = nullptr;
 static esp_lcd_panel_handle_t s_panel_handle = nullptr;
 
-static constexpr uint32_t SSD1306_PIXEL_CLOCK_HZ = 400 * 1000;
+static constexpr uint32_t SSD1306_PIXEL_CLOCK_HZ = 800 * 1000;
 static constexpr int SSD1306_H_RES = 128;
 static constexpr int SSD1306_V_RES = 64;
 static constexpr int SSD1306_I2C_ADDR = 0x3C;

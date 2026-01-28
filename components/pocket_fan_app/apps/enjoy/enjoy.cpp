@@ -10,16 +10,19 @@ EnjoyApp::EnjoyApp() {
 
 void EnjoyApp::onOpen() {
     _screen = lv_obj_create(nullptr);
-    lv_obj_set_style_bg_color(_screen, lv_color_white(), 0);
     lv_obj_set_style_bg_opa(_screen, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(_screen, 0, 0);
     lv_obj_clear_flag(_screen, LV_OBJ_FLAG_SCROLLABLE);
-    lv_scr_load(_screen);
+
+    lv_display_t* disp = lv_display_get_default();
+    lv_color_t bg_color = lv_color_white();
+    lv_color_t ball_color = lv_color_black();
+    lv_obj_set_style_bg_color(_screen, bg_color, 0);
 
     _ball = lv_obj_create(_screen);
     lv_obj_set_size(_ball, (int)(_radius * 2), (int)(_radius * 2));
     lv_obj_set_style_radius(_ball, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(_ball, lv_color_make(0x20, 0xd0, 0xff), 0);
+    lv_obj_set_style_bg_color(_ball, ball_color, 0);
     lv_obj_set_style_bg_opa(_ball, LV_OPA_COVER, 0);
     lv_obj_set_style_shadow_width(_ball, 8, 0);
     lv_obj_set_style_shadow_color(_ball, lv_color_make(0x30, 0x30, 0x30), 0);
@@ -31,12 +34,25 @@ void EnjoyApp::onOpen() {
     // lv_obj_set_style_text_color(_hint, lv_color_black(), 0);
     // lv_obj_align(_hint, LV_ALIGN_TOP_MID, 0, 2);
 
-    _x = 64.0f;
-    _y = 32.0f;
+    if (disp) {
+        _screen_w = (float)lv_display_get_horizontal_resolution(disp);
+        _screen_h = (float)lv_display_get_vertical_resolution(disp);
+    } else {
+        _screen_w = 128.0f;
+        _screen_h = 64.0f;
+    }
+
+    if (_screen_w < _radius * 2.0f) _screen_w = _radius * 2.0f;
+    if (_screen_h < _radius * 2.0f) _screen_h = _radius * 2.0f;
+
+    _x = _screen_w * 0.5f;
+    _y = _screen_h * 0.5f;
     _vx = 35.0f;
     _vy = -20.0f;
     _last_ms = HAL::Millis();
     _updateBall();
+    lv_scr_load(_screen);
+    lv_obj_invalidate(_screen);
 }
 
 void EnjoyApp::_applyInput(float dt) {
@@ -89,9 +105,9 @@ void EnjoyApp::_stepPhysics(float dt) {
     _y += _vy * dt;
 
     float min_x = _radius;
-    float max_x = 128.0f - _radius;
+    float max_x = _screen_w - _radius;
     float min_y = _radius;
-    float max_y = 64.0f - _radius;
+    float max_y = _screen_h - _radius;
 
     bool bounced = false;
 
