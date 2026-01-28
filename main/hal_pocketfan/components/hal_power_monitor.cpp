@@ -69,6 +69,15 @@ static constexpr float IP2369_NTC_R0 = 10000.0f;
 static constexpr float IP2369_NTC_T0 = 25.0f + 273.15f;
 static constexpr float IP2369_NTC_VREF = 3.3f;
 static constexpr float IP2369_NTC_ADC_MAX = 4095.0f;
+static constexpr float PM_HEALTH_MAX_CYCLES = 1500.0f;
+static constexpr float PM_HEALTH_MIN = 40.0f;
+
+static float _calc_battery_health(float cycles) {
+    float h = 100.0f - (100.0f - PM_HEALTH_MIN) * cycles / PM_HEALTH_MAX_CYCLES;
+    if (h < PM_HEALTH_MIN) h = PM_HEALTH_MIN;
+    if (h > 100.0f) h = 100.0f;
+    return h;
+}
 
 static constexpr uint16_t INA226_CONFIG_DEFAULT =
     (static_cast<uint16_t>(2U) << 9) | (static_cast<uint16_t>(4U) << 6) |
@@ -348,9 +357,17 @@ static void _power_monitor_task(void *pvParameters) {
         if (_pm_data_daemon.shuntCurrent < _pm_data_daemon.currentMin)
             _pm_data_daemon.currentMin = _pm_data_daemon.shuntCurrent;
 
-        // Integrate discharge to estimate cycles
-        if (_pm_data_daemon.shuntCurrent > 0.0f && _nominal_capacity_mah > 0.0f) {
-            float delta_mah = _pm_data_daemon.shuntCurrent * 1000.0f * (dt_s / 3600.0f);
+        // Integrate discharge using IP2369 IBAT when available.
+        float discharge_current_a = 0.0f;
+        if (ip_ok) {
+            if (!charging) {
+                discharge_current_a = fabsf(ibat_a);
+            }
+        } else if (_pm_data_daemon.shuntCurrent > 0.0f) {
+            discharge_current_a = _pm_data_daemon.shuntCurrent;
+        }
+        if (discharge_current_a > 0.0f && _nominal_capacity_mah > 0.0f) {
+            float delta_mah = discharge_current_a * 1000.0f * (dt_s / 3600.0f);
             _total_discharged_mah += delta_mah;
             // ESP_LOGW(TAG, "Discharged +%.6f mAh, total %.3f mAh", delta_mah, _total_discharged_mah);
             while (_total_discharged_mah >= _nominal_capacity_mah) {
@@ -377,18 +394,22 @@ static void _power_monitor_task(void *pvParameters) {
                 if (charging && output_en) mode_str = "DUAL";
                 else if (charging) mode_str = "IN";
                 else if (output_en) mode_str = "OUT";
-                ESP_LOGI(TAG,
-                         "IP2369[%s]: VBAT=%.3fV IBAT=%.3fA Pin=%.2fW VSYS=%.3fV ISYS=%.3fA Pout=%.2fW",
-                         mode_str, vbat_v, ibat_a, input_power_w, vsys_v, isys_a, output_power_w);
+                // ESP_LOGI(TAG,
+                //          "IP2369[%s]: VBAT=%.3fV IBAT=%.3fA Pin=%.2fW VSYS=%.3fV ISYS=%.3fA Pout=%.2fW",
+                //          mode_str, vbat_v, ibat_a, input_power_w, vsys_v, isys_a, output_power_w);
             } else {
                 ESP_LOGW(TAG, "IP2369 read failed");
             }
 
             if (ina_ok) {
-                ESP_LOGI(TAG, "INA226: V=%.3fV I=%.3fA P=%.2fW", bus_v, current_a, ina_power_w);
+                // ESP_LOGI(TAG, "INA226: V=%.3fV I=%.3fA P=%.2fW", bus_v, current_a, ina_power_w);
             } else {
                 ESP_LOGW(TAG, "INA226 read failed");
             }
+
+            float health = _calc_battery_health(_battery_cycles);
+            ESP_LOGI(TAG, "Battery: cycles=%.1f discharged=%.1fmAh health=%.0f%%",
+                     _battery_cycles, _total_discharged_mah, health);
         }
         if (_pending_state_save || (now_ms - _last_state_save_ms) > 60000) {
             _pm_save_state();
