@@ -18,7 +18,6 @@ namespace APPS {
     int homepage_id = -1;
     int menu_id = -1;
     int settings_id = -1;
-    int animation_test_id = -1;
     int enjoy_id = -1;
     int health_id = -1;
 }
@@ -33,6 +32,7 @@ private:
 public:
     void init(lv_display_t* disp) {
         ESP_LOGI(TAG, "SystemApp init");
+        HAL::LvglLock();
 
         // Load Assets
         LoadStaticAssets();
@@ -47,14 +47,15 @@ public:
         APPS::homepage_id = GetMooncake().installApp(std::make_unique<HomepageApp>());
         APPS::menu_id = GetMooncake().installApp(std::make_unique<MenuApp>());
         APPS::settings_id = GetMooncake().installApp(std::make_unique<SettingsApp>());
-        APPS::animation_test_id = GetMooncake().installApp(std::make_unique<AnimationTestApp>());
         APPS::enjoy_id = GetMooncake().installApp(std::make_unique<EnjoyApp>());
         APPS::health_id = GetMooncake().installApp(std::make_unique<HealthApp>());
 
         GetMooncake().openApp(_startup_anim_id);
+        HAL::LvglUnlock();
     }
 
     void update() {
+        HAL::LvglLock();
         // Check startup anim status
         if (!_is_startup_anim_done) {
             // ESP_LOGI(TAG, "StartupAnimApp state: %d", (int)GetMooncake().getAppCurrentState(_startup_anim_id));
@@ -72,6 +73,7 @@ public:
 
         GetMooncake().update();
         HAL::Get()->LGVL_UPDATE();
+        HAL::LvglUnlock();
 
         // if (HAL::GetButton(BUTTON::BTN_POWER) == APP_BUTTON_STATE_HOLD) {
         //     ESP_LOGI(TAG, "Power Button Long Press detected. Shutting down.");

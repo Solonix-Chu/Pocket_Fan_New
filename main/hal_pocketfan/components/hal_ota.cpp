@@ -133,41 +133,68 @@ void HAL_PocketFan::startBleOta()
         char mac_str[18];
         snprintf(mac_str, sizeof(mac_str), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
+        lv_obj_t *ota_screen = nullptr;
+        lv_obj_t *label_title = nullptr;
+        lv_obj_t *label_name = nullptr;
+        lv_obj_t *label_mac = nullptr;
+        lv_obj_t *label_status = nullptr;
+        lv_obj_t *label_progress = nullptr;
+
+        if (lv_is_initialized()) {
+            ota_screen = lv_obj_create(NULL);
+            lv_obj_clear_flag(ota_screen, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_set_style_bg_color(ota_screen, lv_color_black(), 0);
+            lv_obj_set_style_bg_opa(ota_screen, LV_OPA_COVER, 0);
+
+            label_title = lv_label_create(ota_screen);
+            lv_label_set_text(label_title, "BLE OTA Ready");
+            lv_obj_set_pos(label_title, 4, 2);
+
+            label_name = lv_label_create(ota_screen);
+            lv_label_set_text(label_name, "Name: nimble-ble-ota");
+            lv_obj_set_pos(label_name, 4, 14);
+
+            label_mac = lv_label_create(ota_screen);
+            lv_label_set_text(label_mac, mac_str);
+            lv_obj_set_pos(label_mac, 4, 26);
+
+            label_status = lv_label_create(ota_screen);
+            lv_obj_set_pos(label_status, 4, 38);
+
+            label_progress = lv_label_create(ota_screen);
+            lv_obj_set_pos(label_progress, 4, 50);
+
+            lv_obj_set_style_text_color(label_title, lv_color_white(), 0);
+            lv_obj_set_style_text_color(label_name, lv_color_white(), 0);
+            lv_obj_set_style_text_color(label_mac, lv_color_white(), 0);
+            lv_obj_set_style_text_color(label_status, lv_color_white(), 0);
+            lv_obj_set_style_text_color(label_progress, lv_color_white(), 0);
+            lv_scr_load(ota_screen);
+        }
+
         // Enter Blocking Loop for OTA
         while (true) {
-            if (GetCanvas()) {
-                GetCanvas()->fillScreen(0);
-                GetCanvas()->setTextColor(0xFFFF);
-                GetCanvas()->setTextSize(1);
-                GetCanvas()->drawString("BLE OTA Ready", 10, 10);      
-    
-                GetCanvas()->setTextSize(1);
-                GetCanvas()->drawString("Name: nimble-ble-ota", 10, 20);
-                GetCanvas()->drawString(mac_str, 10, 30);
-    
+            if (label_status) {
                 if (_is_ota_started) {
-                    GetCanvas()->drawString("Writing Firmware...", 10, 40);
-                    char progress[32];
+                    lv_label_set_text(label_status, "Writing Firmware...");
                     uint32_t total_len = esp_ble_ota_get_fw_length();
                     if (total_len > 0) {
-                        snprintf(progress, sizeof(progress), "%lu / %lu (%lu%%)", _received_len, total_len, (_received_len * 100) / total_len);
-    
+                        lv_label_set_text_fmt(label_progress, "%lu/%lu (%lu%%)", _received_len, total_len,
+                                              (_received_len * 100) / total_len);
                     } else {
-                         snprintf(progress, sizeof(progress), "%lu bytes", _received_len);
+                        lv_label_set_text_fmt(label_progress, "%lu bytes", _received_len);
                     }
-                    GetCanvas()->drawString(progress, 10, 90);
                 } else {
-                    GetCanvas()->drawString("Waiting connect...", 10, 40);
-                    // ESP_LOGI(TAG, "Waiting connect...");
+                    lv_label_set_text(label_status, "Waiting connect...");
+                    lv_label_set_text(label_progress, "");
                 }
-    
-                CanvasUpdate();
-    
             }
-    
+
+            HAL::LGVL_UPDATE();
+
             // Feed watchdog
             FeedTheDog();
-            
+
             // Delay
             vTaskDelay(pdMS_TO_TICKS(100));
         }

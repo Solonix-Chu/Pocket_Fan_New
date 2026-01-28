@@ -5,7 +5,6 @@
  */
 #pragma once
 #include <hal/hal.h>
-#include <LovyanGFX.hpp>
 // #include "components/hal_lvgl.hpp"
 
 class HAL_PocketFan : public HAL
@@ -55,6 +54,9 @@ public:
     void lvgl_update() override;
     void lvgl_lock() override;
     void lvgl_unlock() override;
+
+    void setDisplayBrightness(uint8_t level) override;
+    void setDisplayInvert(bool invert) override;
 
     // void beep(float frequency, uint32_t duration) override;
     // void beepStop() override;

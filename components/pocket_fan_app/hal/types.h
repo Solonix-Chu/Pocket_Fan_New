@@ -36,6 +36,8 @@ namespace POWER_MONITOR
         // Basic
         float busVoltage = 0.0f;
         float busPower = 0.0f;
+        float inputPower = 0.0f;
+        float outputPower = 0.0f;
         float shuntVoltage = 0.0f;
         float shuntCurrent = 0.0f;
 

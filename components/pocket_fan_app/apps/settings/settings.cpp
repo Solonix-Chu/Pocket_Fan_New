@@ -26,14 +26,14 @@ void SettingsApp::onRunning()
             if (BtnUp) BtnUp->currentState = APP_BUTTON_STATE_NOCHANGE;
             _brightness_val += 10;
             if (_brightness_val > 255) _brightness_val = 255;
-            HAL::GetDisplay()->setBrightness(_brightness_val);
+            HAL::SetDisplayBrightness(static_cast<uint8_t>(_brightness_val));
             _view->updateBrightnessPopup((_brightness_val * 100) / 255);
         }
         else if (HAL::GetButton(BUTTON::BTN_LEFT) == APP_BUTTON_STATE_CLICKED) {
             if (BtnDown) BtnDown->currentState = APP_BUTTON_STATE_NOCHANGE;
             _brightness_val -= 10;
             if (_brightness_val < 0) _brightness_val = 0;
-            HAL::GetDisplay()->setBrightness(_brightness_val);
+            HAL::SetDisplayBrightness(static_cast<uint8_t>(_brightness_val));
             _view->updateBrightnessPopup((_brightness_val * 100) / 255);
         }
         else if (HAL::GetButton(BUTTON::BTN_MID) == APP_BUTTON_STATE_CLICKED) {
@@ -114,9 +114,7 @@ void SettingsApp::_create_view()
     _view->addSettingsItem({"Invert Display", true, _invert_display, [this]() {
         _invert_display = !_invert_display;
         ESP_LOGI(TAG, "Toggle Invert Display: %s", _invert_display ? "ON" : "OFF");
-        if (HAL::GetDisplay()) {
-            HAL::GetDisplay()->invertDisplay(_invert_display);
-        }
+        HAL::SetDisplayInvert(_invert_display);
         HAL::GetSystemConfig().invertDisplay = _invert_display;
         HAL::SaveSystemConfig();
         _view->updateItemValue(_invert_item_index, _invert_display);

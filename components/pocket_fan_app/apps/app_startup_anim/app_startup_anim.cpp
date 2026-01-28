@@ -48,7 +48,7 @@ void AppStartupAnim::onOpen()
     _backlight.setEasing(ease::ease_out_back);
     _backlight.jumpTo(0);
     _backlight.moveTo(static_cast<float>(HAL::GetSystemConfig().brightness));
-    HAL::GetDisplay()->setBrightness(0);
+    HAL::SetDisplayBrightness(0);
 
     _mask_translate.setDurationMs(450);
     _mask_translate.setDelayMs(120);
@@ -67,7 +67,7 @@ void AppStartupAnim::onRunning()
     // Animate backlight
     _backlight.updateMs(now);
     float brightness = std::clamp(_backlight.value(), 0.0f, 255.0f);
-    HAL::GetDisplay()->setBrightness(static_cast<uint8_t>(brightness));
+    HAL::SetDisplayBrightness(static_cast<uint8_t>(brightness));
 
     // Animate mask reveal
     _mask_translate.updateMs(now);

@@ -1,4 +1,5 @@
 idf_component_register(SRCS "main.cpp" 
+                       "hal_pocketfan/components/hal_i2c.cpp"
                        "hal_pocketfan/components/hal_display.cpp"
                        "hal_pocketfan/components/hal_lvgl.cpp"
                        "hal_pocketfan/components/hal_button.cpp"
@@ -10,5 +11,5 @@ idf_component_register(SRCS "main.cpp"
                        "hal_pocketfan/components/hal_led.cpp"
                        "hal_pocketfan/components/hal_ota.cpp"
                        INCLUDE_DIRS "." "hal_pocketfan"
-                       PRIV_REQUIRES esp_driver_gpio esp_timer LovyanGFX app_button pocket_fan_app mooncake esp_adc nvs_flash esp_common espressif__ble_ota esp_partition app_update
+                       PRIV_REQUIRES esp_driver_gpio esp_driver_i2c esp_timer esp_lcd esp_lvgl_port app_button pocket_fan_app mooncake esp_adc nvs_flash esp_common espressif__ble_ota esp_partition app_update
                        )

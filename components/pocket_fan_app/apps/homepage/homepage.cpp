@@ -34,7 +34,11 @@ void HomepageApp::onRunning()
         
         auto v = HAL::GetUnitAdaptatedVoltage(pm_data.busVoltage);
         auto a = HAL::GetUnitAdaptatedCurrent(pm_data.shuntCurrent);
-        auto w = HAL::GetUnitAdaptatedPower(pm_data.busPower);
+        float display_power = pm_data.outputPower;
+        if (pm_data.inputPower > 0.01f && pm_data.outputPower < 0.01f) {
+            display_power = -pm_data.inputPower;
+        }
+        auto w = HAL::GetUnitAdaptatedPower(display_power);
         auto cap = HAL::GetUnitAdaptatedCapacity(pm_data.capacity);
         
         float t = HAL::GetNTC(0); // Assuming channel 0 for primary temperature

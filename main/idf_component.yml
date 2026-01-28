@@ -1,5 +1,6 @@
 dependencies:
   lvgl/lvgl: ^9.0.0
+  espressif/esp_lvgl_port: ">=1.4.0"
   espressif/button: ^4.1.4
   espressif/ble_ota: ^0.1.15
   espressif/esp_delta_ota: ^1.1.0

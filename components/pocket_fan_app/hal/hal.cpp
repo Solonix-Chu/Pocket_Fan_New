@@ -85,48 +85,8 @@ void HAL::renderFpsPanel()
 
 void HAL::popFatalError(std::string msg)
 {
-    // Echo
-    // ESP_LOGE(TAG, "{}", msg);
-
-    /* ---------------------------------- Face ---------------------------------- */
-    // _canvas->setTextColor(TFT_WHITE, AssetPool::GetColor().Misc.bgPopFatalError);
-    // _canvas->setBaseColor(AssetPool::GetColor().Misc.bgPopFatalError);
-    // _canvas->fillScreen(AssetPool::GetColor().Misc.bgPopFatalError);
-
-    // _canvas->setTextSize(1);
-    // _canvas->setTextDatum(top_left);
-    // _canvas->loadFont(AssetPool::GetStaticAsset()->Font.montserrat_semibolditalic_72);
-    // _canvas->setCursor(20, 10);
-    // _canvas->printf(":(");
-
-    /* ----------------------------------- Msg ---------------------------------- */
-    // int line_height = _msg_start_y;
-    // AssetPool::LoadFont24(_canvas);
-    // _canvas->setCursor(_msg_start_x, line_height);
-    // _canvas->printf("Fatal Error!");
-
-    // std::istringstream msg_stream(msg);
-    // std::string line;
-    // while (std::getline(msg_stream, line))
-    // {
-    //     line_height += _msg_line_height;
-    //     _canvas->setCursor(_msg_start_x, line_height);
-    //     _canvas->print(line.c_str());
-    // }
-
-    /* ---------------------------------- Push ---------------------------------- */
-    _canvas->pushSprite(0, 0);
-    _display->setBrightness(255);
-
-    // Press any button to poweroff
-    while (1)
-    {
-        feedTheDog();
-        delay(50);
-
-        // if (getAnyButton())
-            reboot();
-    }
+    ESP_LOGE(TAG, "FATAL ERROR: %s", msg.c_str());
+    reboot();
 }
 
 // void HAL::popFatalError(std::string msg)
@@ -192,111 +152,15 @@ void HAL::popFatalError(std::string msg)
 
 void HAL::popWarning(std::string msg)
 {
-    // Echo
-    // ESP_LOGW(TAG, "{}", msg);
-
-    /* ---------------------------------- Face ---------------------------------- */
-    // _canvas->setTextColor(TFT_WHITE, AssetPool::GetColor().Misc.bgPopWarning);
-    // _canvas->setBaseColor(AssetPool::GetColor().Misc.bgPopWarning);
-    // _canvas->fillScreen(AssetPool::GetColor().Misc.bgPopWarning);
-
-    // _canvas->setTextSize(1);
-    // _canvas->setTextDatum(top_left);
-    // _canvas->loadFont(AssetPool::GetStaticAsset()->Font.montserrat_semibolditalic_72);
-    // _canvas->setCursor(15, 15);
-    // _canvas->printf("o.O?");
-
-    /* ----------------------------------- Msg ---------------------------------- */
-    // int line_height = _msg_start_y;
-    // AssetPool::LoadFont24(_canvas);
-    // _canvas->setCursor(_msg_start_x, line_height);
-    // _canvas->printf("Warning!");
-
-    // std::istringstream msg_stream(msg);
-    // std::string line;
-    // while (std::getline(msg_stream, line))
-    // {
-    //     line_height += _msg_line_height;
-    //     _canvas->setCursor(_msg_start_x, line_height);
-    //     _canvas->print(line.c_str());
-    // }
-
-    /* ---------------------------------- Push ---------------------------------- */
-    _canvas->pushSprite(0, 0);
-    // _display->setBrightness(255);
-
-    // Press any button to poweroff
-    while (1)
-    {
-        feedTheDog();
-        delay(50);
-
-        // if (getAnyButton())
-        {
-            // while (getAnyButton())
-            {
-                feedTheDog();
-                delay(50);
-            }
-            break;
-        }
-    }
+    ESP_LOGW(TAG, "WARNING: %s", msg.c_str());
+    delay(100);
 }
 
 void HAL::popSuccess(std::string msg, bool showSuccessLabel)
 {
-    // Echo
-    // ESP_LOGI(TAG, "{}", msg);
-
-    /* ---------------------------------- Face ---------------------------------- */
-    // _canvas->setTextColor(TFT_WHITE, AssetPool::GetColor().Misc.bgPopSuccess);
-    // _canvas->setBaseColor(AssetPool::GetColor().Misc.bgPopSuccess);
-    // _canvas->fillScreen(AssetPool::GetColor().Misc.bgPopSuccess);
-
-    // _canvas->setTextSize(1);
-    // _canvas->setTextDatum(top_left);
-    // _canvas->loadFont(AssetPool::GetStaticAsset()->Font.montserrat_semibolditalic_72);
-    // _canvas->setCursor(20, 10);
-    // _canvas->printf(":)");
-
-    /* ----------------------------------- Msg ---------------------------------- */
-    // int line_height = _msg_start_y;
-    // AssetPool::LoadFont24(_canvas);
-    // if (showSuccessLabel)
-    // {
-    //     _canvas->setCursor(_msg_start_x, line_height);
-    //     _canvas->printf("Success!");
-    // }
-
-    // std::istringstream msg_stream(msg);
-    // std::string line;
-    // while (std::getline(msg_stream, line))
-    // {
-    //     line_height += _msg_line_height;
-    //     _canvas->setCursor(_msg_start_x, line_height);
-    //     _canvas->print(line.c_str());
-    // }
-
-    /* ---------------------------------- Push ---------------------------------- */
-    _canvas->pushSprite(0, 0);
-    // _display->setBrightness(255);
-
-    // Press any button to poweroff
-    while (1)
-    {
-        feedTheDog();
-        delay(50);
-
-        // if (getAnyButton())
-        {
-            // while (getAnyButton())
-            {
-                feedTheDog();
-                delay(50);
-            }
-            break;
-        }
-    }
+    (void)showSuccessLabel;
+    ESP_LOGI(TAG, "SUCCESS: %s", msg.c_str());
+    delay(100);
 }
 
 /* -------------------------------------------------------------------------- */

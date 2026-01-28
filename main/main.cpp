@@ -62,7 +62,7 @@ extern "C" void app_main(void)
     // lv_obj_center(img);
 
     // Initialize the application
-    app_init(NULL);
+    app_init(HAL::GetDisplay());
 
     printf("free_heap_size = %d\n", (int)esp_get_free_heap_size());
 

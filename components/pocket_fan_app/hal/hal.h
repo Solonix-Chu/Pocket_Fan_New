@@ -9,8 +9,7 @@
 #include <string>
 #include <cmath>
 #include "lvgl.h"
-#include "utils/lgfx_fx/lgfx_fx.h"
-#include <LovyanGFX.hpp>
+#include <cstdint>
 #include "types.h"
 #include "app_button.h"
 
@@ -29,7 +28,7 @@ public:
     static void Destroy();
 
 public:
-    HAL() : _display(nullptr), _canvas(nullptr) {}
+    HAL() : _display(nullptr) {}
     virtual ~HAL() {}
 
     static std::string Type() { return Get()->type(); }
@@ -47,8 +46,7 @@ public:
     using OnLogPageRenderCallback_t = std::function<void(const std::string&)>;
 
 protected:
-    LGFX_Device* _display;
-    LGFX_SpriteFx* _canvas;
+    lv_display_t* _display;
     time_t _time_buffer;
     POWER_MONITOR::PMData_t _pm_data;
     CONFIG::SystemConfig_t _config;
@@ -69,25 +67,23 @@ public:
     virtual void lvgl_update() {}
 
     /**
-     * @brief Display device
+     * @brief LVGL display handle
      *
-     * @return LGFX_Device*
+     * @return lv_display_t*
      */
-    static LGFX_Device* GetDisplay() { return Get()->_display; }
+    static lv_display_t* GetDisplay() { return Get()->_display; }
 
     /**
-     * @brief Full screen canvas (sprite)
-     *
-     * @return LGFX_SpriteFx*
+     * @brief Set display brightness/contrast (if supported)
      */
-    static LGFX_SpriteFx* GetCanvas() { return Get()->_canvas; }
+    static void SetDisplayBrightness(uint8_t level) { Get()->setDisplayBrightness(level); }
+    virtual void setDisplayBrightness(uint8_t level) { (void)level; }
 
     /**
-     * @brief Push framebuffer
-     *
+     * @brief Set display inversion (if supported)
      */
-    static void CanvasUpdate() { Get()->canvasUpdate(); }
-    virtual void canvasUpdate() { GetCanvas()->pushSprite(0, 0); }
+    static void SetDisplayInvert(bool invert) { Get()->setDisplayInvert(invert); }
+    virtual void setDisplayInvert(bool invert) { (void)invert; }
 
     /**
      * @brief Render fps panel
