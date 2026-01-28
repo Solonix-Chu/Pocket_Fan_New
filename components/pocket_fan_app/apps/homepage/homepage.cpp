@@ -40,7 +40,7 @@ void HomepageApp::onRunning()
         }
         auto w = HAL::GetUnitAdaptatedPower(display_power);
         auto cap = HAL::GetUnitAdaptatedCapacity(pm_data.capacity);
-        
+
         float t = HAL::GetNTC(0); // Assuming channel 0 for primary temperature
         char t_buf[32];
         snprintf(t_buf, sizeof(t_buf), "%.1f", t);
@@ -49,19 +49,84 @@ void HomepageApp::onRunning()
             _view->updateData(v.value, a.value, w.value);
             _view->updatePage2Data(t_buf, cap.value);
         }
+
+        if (_view) {
+            char title_buf[20] = {};
+            const char* mode_str = "IDLE";
+            bool show_in = false;
+            bool show_out = false;
+            if (pm_data.ip2369_ok) {
+                switch (pm_data.ip2369_mode) {
+                case POWER_MONITOR::IP2369_MODE_IN:
+                    mode_str = "IN";
+                    show_in = true;
+                    break;
+                case POWER_MONITOR::IP2369_MODE_OUT:
+                    mode_str = "OUT";
+                    show_out = true;
+                    break;
+                case POWER_MONITOR::IP2369_MODE_DUAL:
+                    mode_str = "DUAL";
+                    show_in = true;
+                    show_out = true;
+                    break;
+                case POWER_MONITOR::IP2369_MODE_IDLE:
+                default:
+                    mode_str = "IDLE";
+                    break;
+                }
+            } else {
+                mode_str = "N/A";
+            }
+            snprintf(title_buf, sizeof(title_buf), "IP2369 %s", mode_str);
+
+            char in_buf[28] = {};
+            char out_buf[28] = {};
+            char power_buf[28] = {};
+            char ntc_buf[20] = {};
+            if (pm_data.ip2369_ok && show_in) {
+                snprintf(in_buf, sizeof(in_buf), "IN : %4.2fV %+.2fA",
+                         pm_data.ip2369_vbat, pm_data.ip2369_ibat);
+            } else {
+                snprintf(in_buf, sizeof(in_buf), "IN : --.-");
+            }
+
+            if (pm_data.ip2369_ok && show_out) {
+                snprintf(out_buf, sizeof(out_buf), "OUT: %4.2fV %+.2fA",
+                         pm_data.ip2369_vsys, pm_data.ip2369_isys);
+            } else {
+                snprintf(out_buf, sizeof(out_buf), "OUT: --.-");
+            }
+
+            if (pm_data.ip2369_ok && (show_in || show_out)) {
+                double pin = show_in ? pm_data.ip2369_input_power : 0.0;
+                double pout = show_out ? pm_data.ip2369_output_power : 0.0;
+                snprintf(power_buf, sizeof(power_buf), "P: %4.2f/%4.2fW", pin, pout);
+            } else {
+                snprintf(power_buf, sizeof(power_buf), "P: --.-/--.-W");
+            }
+
+            if (pm_data.ip2369_ntc_ok) {
+                snprintf(ntc_buf, sizeof(ntc_buf), "NTC: %.1fC", pm_data.ip2369_ntc_temp);
+            } else {
+                snprintf(ntc_buf, sizeof(ntc_buf), "NTC: --.-C");
+            }
+            _view->updateIp2369(title_buf, in_buf, out_buf, power_buf, ntc_buf);
+        }
     }
 
     // Switch between pages using wheel
+    const int k_last_page = 2;
     if (HAL::GetButton(BUTTON::BTN_RIGHT) == APP_BUTTON_STATE_CLICKED) {
         if (BtnRight) BtnRight->currentState = APP_BUTTON_STATE_NOCHANGE;
-        if (_current_page == 0) {
-            _current_page = 1;
+        if (_current_page < k_last_page) {
+            _current_page++;
             if (_view) _view->setPage(_current_page);
         }
     } else if (HAL::GetButton(BUTTON::BTN_LEFT) == APP_BUTTON_STATE_CLICKED) {
         if (BtnLeft) BtnLeft->currentState = APP_BUTTON_STATE_NOCHANGE;
-        if (_current_page == 1) {
-            _current_page = 0;
+        if (_current_page > 0) {
+            _current_page--;
             if (_view) _view->setPage(_current_page);
         }
     }

@@ -31,6 +31,15 @@ namespace BUTTON
 /* -------------------------------------------------------------------------- */
 namespace POWER_MONITOR
 {
+    enum Ip2369Mode_t : uint8_t
+    {
+        IP2369_MODE_IDLE = 0,
+        IP2369_MODE_IN = 1,
+        IP2369_MODE_OUT = 2,
+        IP2369_MODE_DUAL = 3,
+        IP2369_MODE_UNKNOWN = 255,
+    };
+
     struct PMData_t
     {
         // Basic
@@ -51,6 +60,18 @@ namespace POWER_MONITOR
         float energy = 0.0f;
         // char time[12];
         uint32_t time = 0;
+
+        // IP2369 telemetry
+        bool ip2369_ok = false;
+        Ip2369Mode_t ip2369_mode = IP2369_MODE_UNKNOWN;
+        float ip2369_vbat = 0.0f;
+        float ip2369_ibat = 0.0f;
+        float ip2369_vsys = 0.0f;
+        float ip2369_isys = 0.0f;
+        float ip2369_input_power = 0.0f;
+        float ip2369_output_power = 0.0f;
+        bool ip2369_ntc_ok = false;
+        float ip2369_ntc_temp = 0.0f;
     };
 
     struct UnitAdaptatedData_t

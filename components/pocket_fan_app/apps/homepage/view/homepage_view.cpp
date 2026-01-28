@@ -58,6 +58,16 @@ void HomepageView::_create_lvgl_objects() {
     lv_image_set_src(_bg2, AssetPool::GetImgHomePage2());
     lv_obj_align(_bg2, LV_ALIGN_CENTER, 0, 0);
 
+    // Page 3
+    _tile3 = lv_tileview_add_tile(_tileview, 2, 0, LV_DIR_HOR);
+    _bg3 = lv_obj_create(_tile3);
+    lv_obj_set_size(_bg3, 128, 64);
+    lv_obj_set_style_bg_color(_bg3, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(_bg3, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(_bg3, 0, 0);
+    lv_obj_clear_flag(_bg3, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(_bg3, LV_ALIGN_CENTER, 0, 0);
+
     // Data Labels on Page 1
     // Ref positions from setup_scr_screen_1.c
     // screen_1_label_1 (V): pos(-9, 15), size(67, 15)
@@ -98,11 +108,6 @@ void HomepageView::_create_lvgl_objects() {
     lv_label_set_text(_label_pwm, "0%");
 
     // Page 2 labels (T, Cap)
-    // screen_1_label_4 (T): pos(3, 109 - 64? = 45), size(67, 18) - Wait, screen_1 is 128x128 in demo
-    // Homepage is 128x64. So Page 2 is 0-63.
-    // label_4 pos(3, 109) -> relative to page 2 (y=64) is 45.
-    // label_5 pos(58, 87) -> relative to page 2 is 23.
-    
     _label_t = lv_label_create(_tile2);
     lv_obj_set_style_text_color(_label_t, lv_color_black(), 0);
     lv_obj_set_style_text_font(_label_t, AssetPool::GetGullyBold16(), 0);
@@ -119,11 +124,59 @@ void HomepageView::_create_lvgl_objects() {
     lv_obj_set_pos(_label_cap, 58, 23);
     lv_label_set_text(_label_cap, "0.00");
 
+    // Page 3 labels (IP2369 telemetry, demo style)
+    _label_ip_title = lv_label_create(_tile3);
+    lv_obj_set_style_text_color(_label_ip_title, lv_color_black(), 0);
+    lv_obj_set_style_text_font(_label_ip_title, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_align(_label_ip_title, LV_TEXT_ALIGN_LEFT, 0);
+    lv_obj_set_size(_label_ip_title, 124, 12);
+    lv_obj_set_pos(_label_ip_title, 0, 0);
+    lv_label_set_text(_label_ip_title, "IP2369 IDLE");
+
+    _label_ip_in = lv_label_create(_tile3);
+    lv_obj_set_style_text_color(_label_ip_in, lv_color_black(), 0);
+    lv_obj_set_style_text_font(_label_ip_in, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_align(_label_ip_in, LV_TEXT_ALIGN_LEFT, 0);
+    lv_obj_set_size(_label_ip_in, 124, 12);
+    lv_obj_set_pos(_label_ip_in, 0, 12);
+    lv_label_set_text(_label_ip_in, "IN : --.-");
+
+    _label_ip_out = lv_label_create(_tile3);
+    lv_obj_set_style_text_color(_label_ip_out, lv_color_black(), 0);
+    lv_obj_set_style_text_font(_label_ip_out, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_align(_label_ip_out, LV_TEXT_ALIGN_LEFT, 0);
+    lv_obj_set_size(_label_ip_out, 124, 12);
+    lv_obj_set_pos(_label_ip_out, 0, 24);
+    lv_label_set_text(_label_ip_out, "OUT: --.-");
+
+    _label_ip_power = lv_label_create(_tile3);
+    lv_obj_set_style_text_color(_label_ip_power, lv_color_black(), 0);
+    lv_obj_set_style_text_font(_label_ip_power, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_align(_label_ip_power, LV_TEXT_ALIGN_LEFT, 0);
+    lv_obj_set_size(_label_ip_power, 124, 12);
+    lv_obj_set_pos(_label_ip_power, 0, 36);
+    lv_label_set_text(_label_ip_power, "P: --.-/--.-W");
+
+    _label_ip_ntc = lv_label_create(_tile3);
+    lv_obj_set_style_text_color(_label_ip_ntc, lv_color_black(), 0);
+    lv_obj_set_style_text_font(_label_ip_ntc, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_align(_label_ip_ntc, LV_TEXT_ALIGN_LEFT, 0);
+    lv_obj_set_size(_label_ip_ntc, 124, 12);
+    lv_obj_set_pos(_label_ip_ntc, 0, 48);
+    lv_label_set_text(_label_ip_ntc, "NTC: --.-C");
+
     // Force labels to foreground
     lv_obj_move_foreground(_label_v);
     lv_obj_move_foreground(_label_a);
     lv_obj_move_foreground(_label_w);
     lv_obj_move_foreground(_label_pwm);
+    lv_obj_move_foreground(_label_t);
+    lv_obj_move_foreground(_label_cap);
+    lv_obj_move_foreground(_label_ip_title);
+    lv_obj_move_foreground(_label_ip_in);
+    lv_obj_move_foreground(_label_ip_out);
+    lv_obj_move_foreground(_label_ip_power);
+    lv_obj_move_foreground(_label_ip_ntc);
 }
 
 void HomepageView::updateData(const std::string& v, const std::string& a, const std::string& w) {
@@ -135,6 +188,18 @@ void HomepageView::updateData(const std::string& v, const std::string& a, const 
 void HomepageView::updatePage2Data(const std::string& t, const std::string& cap) {
     if (_label_t) lv_label_set_text(_label_t, t.c_str());
     if (_label_cap) lv_label_set_text(_label_cap, cap.c_str());
+}
+
+void HomepageView::updateIp2369(const std::string& title,
+                                const std::string& in,
+                                const std::string& out,
+                                const std::string& power,
+                                const std::string& ntc) {
+    if (_label_ip_title) lv_label_set_text(_label_ip_title, title.c_str());
+    if (_label_ip_in) lv_label_set_text(_label_ip_in, in.c_str());
+    if (_label_ip_out) lv_label_set_text(_label_ip_out, out.c_str());
+    if (_label_ip_power) lv_label_set_text(_label_ip_power, power.c_str());
+    if (_label_ip_ntc) lv_label_set_text(_label_ip_ntc, ntc.c_str());
 }
 
 void HomepageView::updatePwm(int dutyCycle) {

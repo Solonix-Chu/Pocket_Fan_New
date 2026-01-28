@@ -58,9 +58,17 @@ static bool _ina_is_226 = false;
 #define IP2369_REG_BAT_CURR       0x6E
 #define IP2369_REG_SYS_CURR       0x70
 #define IP2369_REG_SYS_POWER      0x74
+#define IP2369_REG_TEMP_CURR      0x77
+#define IP2369_REG_TEMP_VOLT_LOW  0x78
 
 #define IP2369_CHG_STATUS_CHARGING   (1U << 5)
 #define IP2369_CHG_STATUS_OUTPUT_EN  (1U << 3)
+
+static constexpr float IP2369_NTC_BETA = 3380.0f;
+static constexpr float IP2369_NTC_R0 = 10000.0f;
+static constexpr float IP2369_NTC_T0 = 25.0f + 273.15f;
+static constexpr float IP2369_NTC_VREF = 3.3f;
+static constexpr float IP2369_NTC_ADC_MAX = 4095.0f;
 
 static constexpr uint16_t INA226_CONFIG_DEFAULT =
     (static_cast<uint16_t>(2U) << 9) | (static_cast<uint16_t>(4U) << 6) |
@@ -243,6 +251,8 @@ static void _power_monitor_task(void *pvParameters) {
         uint16_t vsys_power_raw = 0;
         int16_t ibat_ma = 0;
         int16_t isys_ma = 0;
+        uint8_t ntc_curr_raw = 0;
+        uint16_t ntc_volt_raw = 0;
         bool ip_ok = true;
         ip_ok = ip_ok && i2c_read_u8(s_ip2369_dev, IP2369_REG_CHARGE_STATUS1, &charge_status1);
         ip_ok = ip_ok && i2c_read_u16_le(s_ip2369_dev, IP2369_REG_BAT_VOLT, &vbat_mv);
@@ -252,6 +262,11 @@ static void _power_monitor_task(void *pvParameters) {
         ip_ok = ip_ok && i2c_read_u16_le(s_ip2369_dev, IP2369_REG_BAT_CURR, &ibat_raw);
         ip_ok = ip_ok && i2c_read_u16_le(s_ip2369_dev, IP2369_REG_SYS_CURR, &isys_raw);
         ip_ok = ip_ok && i2c_read_u16_le(s_ip2369_dev, IP2369_REG_SYS_POWER, &vsys_power_raw);
+        bool ntc_ok = false;
+        if (ip_ok) {
+            ntc_ok = i2c_read_u8(s_ip2369_dev, IP2369_REG_TEMP_CURR, &ntc_curr_raw) &&
+                     i2c_read_u16_le(s_ip2369_dev, IP2369_REG_TEMP_VOLT_LOW, &ntc_volt_raw);
+        }
 
         float vbat_v = 0.0f;
         float vsys_v = 0.0f;
@@ -259,8 +274,10 @@ static void _power_monitor_task(void *pvParameters) {
         float isys_a = 0.0f;
         float input_power_w = 0.0f;
         float output_power_w = 0.0f;
+        float ntc_temp_c = 0.0f;
         bool charging = false;
         bool output_en = false;
+        POWER_MONITOR::Ip2369Mode_t ip_mode = POWER_MONITOR::IP2369_MODE_UNKNOWN;
 
         if (ip_ok) {
             vbat_v = static_cast<float>(vbat_mv) / 1000.0f;
@@ -277,8 +294,28 @@ static void _power_monitor_task(void *pvParameters) {
 
             input_power_w = charging ? fabsf(bat_power_w) : 0.0f;
             output_power_w = (vsys_power_reg_w > 0.001f) ? vsys_power_reg_w : vsys_power_calc_w;
-            if (!output_en) {
-                output_power_w = 0.0f;
+
+            if (charging && output_en) {
+                ip_mode = POWER_MONITOR::IP2369_MODE_DUAL;
+            } else if (charging) {
+                ip_mode = POWER_MONITOR::IP2369_MODE_IN;
+            } else if (output_en) {
+                ip_mode = POWER_MONITOR::IP2369_MODE_OUT;
+            } else {
+                ip_mode = POWER_MONITOR::IP2369_MODE_IDLE;
+            }
+
+            if (ntc_ok) {
+                float ntc_current = (ntc_curr_raw & 0x80) ? 80.0e-6f : 20.0e-6f;
+                float ntc_voltage = static_cast<float>(ntc_volt_raw) * IP2369_NTC_VREF / IP2369_NTC_ADC_MAX;
+                if (ntc_current > 0.0f && ntc_voltage > 0.0f && ntc_voltage < (IP2369_NTC_VREF - 0.01f)) {
+                    float ntc_res = ntc_voltage / ntc_current;
+                    float steinhart = logf(ntc_res / IP2369_NTC_R0);
+                    steinhart = (1.0f / IP2369_NTC_T0) + (steinhart / IP2369_NTC_BETA);
+                    ntc_temp_c = (1.0f / steinhart) - 273.15f;
+                } else {
+                    ntc_ok = false;
+                }
             }
         } else {
             output_power_w = ina_power_w;
@@ -295,6 +332,16 @@ static void _power_monitor_task(void *pvParameters) {
         _pm_data_daemon.inputPower = input_power_w;
         _pm_data_daemon.outputPower = report_output_w;
         _pm_data_daemon.time = esp_timer_get_time() / 1000;
+        _pm_data_daemon.ip2369_ok = ip_ok;
+        _pm_data_daemon.ip2369_mode = ip_ok ? ip_mode : POWER_MONITOR::IP2369_MODE_UNKNOWN;
+        _pm_data_daemon.ip2369_vbat = ip_ok ? vbat_v : 0.0f;
+        _pm_data_daemon.ip2369_ibat = ip_ok ? ibat_a : 0.0f;
+        _pm_data_daemon.ip2369_vsys = ip_ok ? vsys_v : 0.0f;
+        _pm_data_daemon.ip2369_isys = ip_ok ? isys_a : 0.0f;
+        _pm_data_daemon.ip2369_input_power = ip_ok ? input_power_w : 0.0f;
+        _pm_data_daemon.ip2369_output_power = ip_ok ? output_power_w : 0.0f;
+        _pm_data_daemon.ip2369_ntc_ok = (ip_ok && ntc_ok);
+        _pm_data_daemon.ip2369_ntc_temp = (ip_ok && ntc_ok) ? ntc_temp_c : 0.0f;
         
         if (_pm_data_daemon.shuntCurrent > _pm_data_daemon.currentPeak)
             _pm_data_daemon.currentPeak = _pm_data_daemon.shuntCurrent;
