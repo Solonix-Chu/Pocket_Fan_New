@@ -334,9 +334,39 @@ void SettingsView::onOpenEnd() {
 }
 
 void SettingsView::_update_camera_keyframe() {
-    // Keep selection at the very top
-    auto targetY = getSelectedKeyframe().y;
-    getCamera().move(0, targetY);
+    if (_data.option_list.empty()) {
+        getCamera().move(0, 0);
+        return;
+    }
+
+    constexpr float view_h = 64.0f;
+    const float selector_h = getSelectedKeyframe().height + _selector_pad * 2.0f;
+    const float top_margin = 2.0f;
+    const float bottom_margin = view_h - selector_h - 1.0f;
+
+    const float selected_y = getSelectedKeyframe().y;
+    const float current_cam_y = getCameraOffset().y;
+
+    float target_cam_y = current_cam_y;
+    const float selected_screen_y = selected_y - current_cam_y;
+
+    if (selected_screen_y < top_margin) {
+        target_cam_y = selected_y - top_margin;
+    } else if (selected_screen_y > bottom_margin) {
+        target_cam_y = selected_y - bottom_margin;
+    }
+
+    // Clamp so the last item stays at the bottom instead of snapping to top.
+    const auto& last_kf = _data.option_list.back().keyframe;
+    const float content_h = last_kf.y + last_kf.height;
+    // Allow a small extra scroll range at the bottom so the selector (with padding)
+    // is fully visible even on the last item.
+    const float extra_bottom_scroll = _selector_pad * 2.0f + 4.0f;
+    const float max_cam_y = (content_h > view_h) ? (content_h - view_h + extra_bottom_scroll) : 0.0f;
+    if (target_cam_y < 0.0f) target_cam_y = 0.0f;
+    if (target_cam_y > max_cam_y) target_cam_y = max_cam_y;
+
+    getCamera().move(0, target_cam_y);
 }
 
 void SettingsView::_trigger_edge_bounce(float offset) {
