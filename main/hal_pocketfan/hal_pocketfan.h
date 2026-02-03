@@ -22,6 +22,7 @@ private:
 
 public:
     inline std::string type() override { return "VAMeter"; }
+    std::string version() override;
 
     inline void init() override
     {
@@ -80,6 +81,8 @@ public:
     void setLedBreath(bool enable) override;
 
     void startBleOta() override;
+    bool stopBleOta() override;
+    BLE_OTA::Status getBleOtaStatus() override;
 
     // void setBaseRelay(bool state) override;
     // bool getBaseRelayState() override;

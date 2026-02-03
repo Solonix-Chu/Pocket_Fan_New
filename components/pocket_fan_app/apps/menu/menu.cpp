@@ -7,6 +7,7 @@
 static const char* TAG = "MenuApp";
 static int s_menu_last_index = 0;
 static bool s_menu_skip_entry = false;
+static int s_menu_deferred_open_app = -1;
 
 void MenuApp::onCreate()
 {
@@ -55,6 +56,11 @@ void MenuApp::onClose()
 {
     ESP_LOGI(TAG, "onClose");
     _destroy_view();
+
+    if (s_menu_deferred_open_app >= 0) {
+        mooncake::GetMooncake().openApp(s_menu_deferred_open_app);
+        s_menu_deferred_open_app = -1;
+    }
 }
 
 void MenuApp::onDestroy()
@@ -100,6 +106,12 @@ void MenuApp::_create_view()
             _exit_to_app = true;
             _exit_to_home = false;
             mooncake::GetMooncake().openApp(APPS::health_id);
+            close();
+        } else if (index == 5) { // About (BLE OTA)
+            _exit_to_app = true;
+            _exit_to_home = false;
+            // Defer open to next frame so MenuView resources are freed first.
+            s_menu_deferred_open_app = APPS::about_id;
             close();
         } else {
             // TODO: Open sub-menus

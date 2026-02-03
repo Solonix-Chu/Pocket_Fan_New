@@ -57,7 +57,7 @@ private:
     struct Data_t
     {
         StaticAsset_t* static_asset = nullptr;
-        LocalTextPoolMap_t local_text_pool_map;
+        LocalTextPoolMap_t local_text_pool_map{};
         LocaleCode_t locale_code = locale_code_en;
     };
     Data_t _data;

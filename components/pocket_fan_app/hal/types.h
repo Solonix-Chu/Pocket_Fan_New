@@ -134,6 +134,27 @@ namespace OTA_UPGRADE
     };
 }; // namespace OTA_UPGRADE
 
+/* -------------------------------------------------------------------------- */
+/*                                 BLE OTA UI                                 */
+/* -------------------------------------------------------------------------- */
+namespace BLE_OTA
+{
+    enum State : uint8_t
+    {
+        STATE_IDLE = 0,
+        STATE_READY,
+        STATE_WRITING,
+    };
+
+    struct Status
+    {
+        State state = STATE_IDLE;
+        uint32_t received_len = 0;
+        uint32_t total_len = 0;
+        int32_t init_error = 0;
+    };
+}; // namespace BLE_OTA
+
 
 #define APP_VERSION "V0.0.1"
 

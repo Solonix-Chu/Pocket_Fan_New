@@ -10,9 +10,11 @@
 #include <nvs_flash.h>
 #include <esp_bt.h>
 #include <esp_mac.h>
+#include <esp_event.h>
 #include <esp_ota_ops.h>
 #include <esp_partition.h>
 #include <ble_ota.h>
+#include <nimble/nimble_port.h>
 
 // Global semaphore required by espressif__ble_ota component (nimble_ota.c)
 SemaphoreHandle_t notify_sem = NULL;
@@ -22,6 +24,27 @@ static esp_ota_handle_t _ota_handle = 0;
 static const esp_partition_t *_update_partition = NULL;
 static bool _is_ota_started = false;
 static uint32_t _received_len = 0;
+static uint32_t _total_len = 0;
+static bool _ble_ota_ready = false;
+static esp_err_t _ble_ota_init_error = ESP_OK;
+static bool _nimble_started = false;
+
+static void _ble_ota_controller_cleanup()
+{
+    const auto status = esp_bt_controller_get_status();
+    if (status == ESP_BT_CONTROLLER_STATUS_ENABLED) {
+        esp_err_t err = esp_bt_controller_disable();
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "esp_bt_controller_disable failed (%s)", esp_err_to_name(err));
+        }
+    }
+    if (status == ESP_BT_CONTROLLER_STATUS_ENABLED || status == ESP_BT_CONTROLLER_STATUS_INITED) {
+        esp_err_t err = esp_bt_controller_deinit();
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "esp_bt_controller_deinit failed (%s)", esp_err_to_name(err));
+        }
+    }
+}
 
 static void _ota_recv_fw_cb(uint8_t *buf, uint32_t length)
 {
@@ -43,6 +66,7 @@ static void _ota_recv_fw_cb(uint8_t *buf, uint32_t length)
         }
         _is_ota_started = true;
         _received_len = 0;
+        _total_len = esp_ble_ota_get_fw_length();
     }
 
     // Write data
@@ -53,12 +77,12 @@ static void _ota_recv_fw_cb(uint8_t *buf, uint32_t length)
     }
     
     _received_len += length;
-    uint32_t total_len = esp_ble_ota_get_fw_length();
+    _total_len = esp_ble_ota_get_fw_length();
     
-    ESP_LOGI(TAG, "OTA Progress: %lu / %lu", _received_len, total_len);
+    ESP_LOGI(TAG, "OTA Progress: %lu / %lu", _received_len, _total_len);
 
     // Check if finished
-    if (_received_len >= total_len && total_len > 0) {
+    if (_received_len >= _total_len && _total_len > 0) {
         ESP_LOGI(TAG, "OTA Complete. Validating...");
         
         err = esp_ota_end(_ota_handle);
@@ -82,120 +106,137 @@ static void _ota_recv_fw_cb(uint8_t *buf, uint32_t length)
 
 void HAL_PocketFan::startBleOta()
 {
+    if (_ble_ota_ready) {
+        return;
+    }
+
     ESP_LOGI(TAG, "Starting BLE OTA Service...");
-    
-        // Create the semaphore required by the component
-        if (notify_sem == NULL) {
-            notify_sem = xSemaphoreCreateBinary();
-            xSemaphoreGive(notify_sem);
-        }
-    
-        // Release Classic BT memory (save RAM)
-        ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
-    
-        // Initialize NVS.
-        esp_err_t ret = nvs_flash_init();
-        if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-            ESP_ERROR_CHECK(nvs_flash_erase());
-            ret = nvs_flash_init();
-        }
-        ESP_ERROR_CHECK(ret);
-    
-        // Initialize BLE Controller (Required for NimBLE)
-        esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-        ret = esp_bt_controller_init(&bt_cfg);
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "esp_bt_controller_init failed (%s)", esp_err_to_name(ret));
-            return;
-        }
-    
-        ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "esp_bt_controller_enable failed (%s)", esp_err_to_name(ret));
-            return;
-        }
-    
-        // Initialize BLE OTA Host (this initializes NimBLE stack)
-        ret = esp_ble_ota_host_init();
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "esp_ble_ota_host_init failed (%s)", esp_err_to_name(ret));
-            return;
-        }
-    
-        // Register callback
-        esp_ble_ota_recv_fw_data_callback(_ota_recv_fw_cb);
-    
-        ESP_LOGI(TAG, "BLE OTA Ready. Waiting for connection...");
-    
-        // Get MAC
-        uint8_t mac[6];
-        esp_read_mac(mac, ESP_MAC_BT);
-        char mac_str[18];
-        snprintf(mac_str, sizeof(mac_str), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-        lv_obj_t *ota_screen = nullptr;
-        lv_obj_t *label_title = nullptr;
-        lv_obj_t *label_name = nullptr;
-        lv_obj_t *label_mac = nullptr;
-        lv_obj_t *label_status = nullptr;
-        lv_obj_t *label_progress = nullptr;
+    esp_err_t ret = ESP_OK;
 
-        if (lv_is_initialized()) {
-            ota_screen = lv_obj_create(NULL);
-            lv_obj_clear_flag(ota_screen, LV_OBJ_FLAG_SCROLLABLE);
-            lv_obj_set_style_bg_color(ota_screen, lv_color_black(), 0);
-            lv_obj_set_style_bg_opa(ota_screen, LV_OPA_COVER, 0);
+    // Reset state
+    _is_ota_started = false;
+    _received_len = 0;
+    _total_len = 0;
+    _ble_ota_init_error = ESP_OK;
+    _nimble_started = false;
 
-            label_title = lv_label_create(ota_screen);
-            lv_label_set_text(label_title, "BLE OTA Ready");
-            lv_obj_set_pos(label_title, 4, 2);
+    // Create the semaphore required by the component
+    if (notify_sem == NULL) {
+        notify_sem = xSemaphoreCreateBinary();
+        xSemaphoreGive(notify_sem);
+    }
 
-            label_name = lv_label_create(ota_screen);
-            lv_label_set_text(label_name, "Name: nimble-ble-ota");
-            lv_obj_set_pos(label_name, 4, 14);
+    // Ensure NVS is initialized (required by some BLE/NimBLE features depending on sdkconfig)
+    ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "nvs_flash_init failed (%s)", esp_err_to_name(ret));
+        _ble_ota_init_error = ret;
+        _ble_ota_ready = false;
+        return;
+    }
 
-            label_mac = lv_label_create(ota_screen);
-            lv_label_set_text(label_mac, mac_str);
-            lv_obj_set_pos(label_mac, 4, 26);
-
-            label_status = lv_label_create(ota_screen);
-            lv_obj_set_pos(label_status, 4, 38);
-
-            label_progress = lv_label_create(ota_screen);
-            lv_obj_set_pos(label_progress, 4, 50);
-
-            lv_obj_set_style_text_color(label_title, lv_color_white(), 0);
-            lv_obj_set_style_text_color(label_name, lv_color_white(), 0);
-            lv_obj_set_style_text_color(label_mac, lv_color_white(), 0);
-            lv_obj_set_style_text_color(label_status, lv_color_white(), 0);
-            lv_obj_set_style_text_color(label_progress, lv_color_white(), 0);
-            lv_scr_load(ota_screen);
-        }
-
-        // Enter Blocking Loop for OTA
-        while (true) {
-            if (label_status) {
-                if (_is_ota_started) {
-                    lv_label_set_text(label_status, "Writing Firmware...");
-                    uint32_t total_len = esp_ble_ota_get_fw_length();
-                    if (total_len > 0) {
-                        lv_label_set_text_fmt(label_progress, "%lu/%lu (%lu%%)", _received_len, total_len,
-                                              (_received_len * 100) / total_len);
-                    } else {
-                        lv_label_set_text_fmt(label_progress, "%lu bytes", _received_len);
-                    }
-                } else {
-                    lv_label_set_text(label_status, "Waiting connect...");
-                    lv_label_set_text(label_progress, "");
-                }
-            }
-
-            HAL::LGVL_UPDATE();
-
-            // Feed watchdog
-            FeedTheDog();
-
-            // Delay
-            vTaskDelay(pdMS_TO_TICKS(100));
+    // Release Classic BT memory (save RAM)
+    if (esp_bt_controller_get_status() == ESP_BT_CONTROLLER_STATUS_IDLE) {
+        ret = esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+        if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+            ESP_LOGW(TAG, "esp_bt_controller_mem_release failed (%s)", esp_err_to_name(ret));
         }
     }
+
+    // Ensure default event loop exists (required by some IDF components)
+    ret = esp_event_loop_create_default();
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        ESP_LOGW(TAG, "esp_event_loop_create_default failed (%s)", esp_err_to_name(ret));
+    }
+
+    // Initialize + enable BLE controller for VHCI (required before esp_nimble_hci_init -> esp_vhci_host_register_callback)
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    ret = esp_bt_controller_init(&bt_cfg);
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE(TAG, "esp_bt_controller_init failed (%s)", esp_err_to_name(ret));
+        _ble_ota_init_error = ret;
+        _ble_ota_ready = false;
+        return;
+    }
+
+    ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE(TAG, "esp_bt_controller_enable failed (%s)", esp_err_to_name(ret));
+        _ble_ota_init_error = ret;
+        _ble_ota_ready = false;
+        _ble_ota_controller_cleanup();
+        return;
+    }
+
+    // Initialize BLE OTA Host (starts NimBLE stack + advertising)
+    ret = esp_ble_ota_host_init();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "esp_ble_ota_host_init failed (%s)", esp_err_to_name(ret));
+        _ble_ota_init_error = ret;
+        _ble_ota_ready = false;
+        _ble_ota_controller_cleanup();
+        return;
+    }
+
+    // Register callback
+    ret = esp_ble_ota_recv_fw_data_callback(_ota_recv_fw_cb);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "esp_ble_ota_recv_fw_data_callback failed (%s)", esp_err_to_name(ret));
+        _ble_ota_init_error = ret;
+        _ble_ota_ready = false;
+        _ble_ota_controller_cleanup();
+        return;
+    }
+
+    _ble_ota_ready = true;
+    _nimble_started = true;
+    ESP_LOGI(TAG, "BLE OTA Ready. Waiting for connection...");
+}
+
+bool HAL_PocketFan::stopBleOta()
+{
+    if (_is_ota_started) {
+        ESP_LOGW(TAG, "stopBleOta ignored: OTA write in progress");
+        return false;
+    }
+
+    if (_nimble_started) {
+        esp_err_t ret = nimble_port_stop();
+        if (ret != ESP_OK) {
+            ESP_LOGW(TAG, "nimble_port_stop failed (%s)", esp_err_to_name(ret));
+        }
+
+        ret = esp_nimble_deinit();
+        if (ret != ESP_OK) {
+            ESP_LOGW(TAG, "esp_nimble_deinit failed (%s)", esp_err_to_name(ret));
+        }
+    }
+
+    _ble_ota_controller_cleanup();
+
+    _ble_ota_ready = false;
+    _nimble_started = false;
+    _ble_ota_init_error = ESP_OK;
+    return true;
+}
+
+BLE_OTA::Status HAL_PocketFan::getBleOtaStatus()
+{
+    BLE_OTA::Status status;
+    if (!_ble_ota_ready) {
+        status.state = BLE_OTA::STATE_IDLE;
+        status.init_error = _ble_ota_init_error;
+        return status;
+    }
+
+    status.state = _is_ota_started ? BLE_OTA::STATE_WRITING : BLE_OTA::STATE_READY;
+    status.received_len = _received_len;
+    status.total_len = _total_len;
+    status.init_error = 0;
+    return status;
+}

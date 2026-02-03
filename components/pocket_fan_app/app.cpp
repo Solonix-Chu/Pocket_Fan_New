@@ -19,6 +19,7 @@ namespace APPS {
     int homepage_id = -1;
     int menu_id = -1;
     int settings_id = -1;
+    int about_id = -1;
     int enjoy_id = -1;
     int health_id = -1;
 }
@@ -49,6 +50,7 @@ public:
         APPS::homepage_id = GetMooncake().installApp(std::make_unique<HomepageApp>());
         APPS::menu_id = GetMooncake().installApp(std::make_unique<MenuApp>());
         APPS::settings_id = GetMooncake().installApp(std::make_unique<SettingsApp>());
+        APPS::about_id = GetMooncake().installApp(std::make_unique<AboutApp>());
         APPS::enjoy_id = GetMooncake().installApp(std::make_unique<EnjoyApp>());
         APPS::health_id = GetMooncake().installApp(std::make_unique<HealthApp>());
 

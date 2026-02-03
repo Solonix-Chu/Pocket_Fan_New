@@ -58,6 +58,12 @@ public:
     static void StartBleOta() { Get()->startBleOta(); }
     virtual void startBleOta() {}
 
+    static bool StopBleOta() { return Get()->stopBleOta(); }
+    virtual bool stopBleOta() { return false; }
+
+    static BLE_OTA::Status GetBleOtaStatus() { return Get()->getBleOtaStatus(); }
+    virtual BLE_OTA::Status getBleOtaStatus() { return BLE_OTA::Status{}; }
+
     /* -------------------------------------------------------------------------- */
     /*                                   Display                                  */
     /* -------------------------------------------------------------------------- */
