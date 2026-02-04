@@ -13,17 +13,17 @@ MenuView::MenuView() {
     setConfig().moveInLoop = false;
     
     // Setup transitions (Easing)
-    getSelectorPostion().x.easingOptions().duration = 0.3f;
+    getSelectorPostion().x.easingOptions().duration = 1.0f;
     getSelectorPostion().x.easingOptions().easingFunction = ease::ease_out_quad;
-    getSelectorPostion().y.easingOptions().duration = 0.3f;
+    getSelectorPostion().y.easingOptions().duration = 1.0f;
     getSelectorPostion().y.easingOptions().easingFunction = ease::ease_out_quad;
 
-    getSelectorShape().x.easingOptions().duration = 0.3f;
-    getSelectorShape().y.easingOptions().duration = 0.3f;
+    getSelectorShape().x.easingOptions().duration = 1.0f;
+    getSelectorShape().y.easingOptions().duration = 1.0f;
 
-    getCamera().x.easingOptions().duration = 0.4f;
+    getCamera().x.easingOptions().duration = 1.0f;
     getCamera().x.easingOptions().easingFunction = ease::ease_out_cubic;
-    getCamera().y.easingOptions().duration = 0.4f;
+    getCamera().y.easingOptions().duration = 1.0f;
 
     _entry_offset.setDurationMs(400);
     _entry_offset.setEasing(ease::ease_out_back);
