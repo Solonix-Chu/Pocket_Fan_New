@@ -4,6 +4,7 @@
 * SPDX-License-Identifier: MIT
 */
 #include "../hal_pocketfan.h"
+#include "hal_display.h"
 #include <driver/gpio.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -26,6 +27,15 @@ static void powerOn()
 void HAL_PocketFan::powerOff()
 {
     ESP_LOGI(TAG, "Powering off...");
+
+    esp_lcd_panel_handle_t panel_handle = hal_display_get_panel_handle();
+    if (panel_handle) {
+        (void)esp_lcd_panel_disp_on_off(panel_handle, false);
+    }
+
+    // Give the command a moment to reach the panel before we cut power.
+    vTaskDelay(pdMS_TO_TICKS(10));
+
     // Release power hold
     gpio_set_level(PIN_POWER_HOLD, 0);
     

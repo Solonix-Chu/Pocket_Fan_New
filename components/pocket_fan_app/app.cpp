@@ -79,10 +79,10 @@ public:
         HAL::Get()->LGVL_UPDATE();
         HAL::LvglUnlock();
 
-        // if (HAL::GetButton(BUTTON::BTN_POWER) == APP_BUTTON_STATE_HOLD) {
-        //     ESP_LOGI(TAG, "Power Button Long Press detected. Shutting down.");
-        //     HAL::PowerOff();
-        // }
+        if (HAL::GetButton(BUTTON::BTN_POWER) == APP_BUTTON_STATE_HOLD) {
+            ESP_LOGI(TAG, "Power Button Long Press detected. Shutting down.");
+            HAL::PowerOff();
+        }
 
         HAL::Get()->allButton_refresh(); // 每个周期最后调用，刷新按键状态
 
