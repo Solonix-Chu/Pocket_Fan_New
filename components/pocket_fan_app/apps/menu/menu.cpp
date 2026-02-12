@@ -74,15 +74,17 @@ void MenuApp::_create_view()
     if (_view) return;
 
     _view = new MenuView();
+
+    const auto& tr = AssetPool::GetText();
     
     // Add options
-    _view->addSettingsOption({AssetPool::GetImgSetting(), "General"});
-    _view->addSettingsOption({AssetPool::GetImgDetail(), "Detail"});
-    _view->addSettingsOption({AssetPool::GetImgHealth(), "Health"});
-    _view->addSettingsOption({AssetPool::GetImgEmoji(), "Emoji"});
-    _view->addSettingsOption({AssetPool::GetImgEnjoy(), "Enjoy"});
-    _view->addSettingsOption({AssetPool::GetImgAbout(), "About"});
-    _view->addSettingsOption({AssetPool::GetImgQuit(), "Quit"});
+    _view->addSettingsOption({AssetPool::GetImgSetting(), tr.PocketFan_Menu_General});
+    _view->addSettingsOption({AssetPool::GetImgDetail(), tr.PocketFan_Menu_Detail});
+    _view->addSettingsOption({AssetPool::GetImgHealth(), tr.PocketFan_Menu_Health});
+    _view->addSettingsOption({AssetPool::GetImgEmoji(), tr.PocketFan_Menu_Emoji});
+    _view->addSettingsOption({AssetPool::GetImgEnjoy(), tr.PocketFan_Menu_Enjoy});
+    _view->addSettingsOption({AssetPool::GetImgAbout(), tr.PocketFan_Menu_About});
+    _view->addSettingsOption({AssetPool::GetImgQuit(), tr.PocketFan_Menu_Quit});
 
     // Callback
     _view->setOpenCallback([this](int index) {

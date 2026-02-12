@@ -25,6 +25,8 @@ public:
     void addSettingsItem(const SettingsItemProps& props);
     void updateItemValue(int index, bool checked);
     void playEntryAnimation();
+    void setInitialIndex(int index) { _initial_index = index; }
+    void setSkipEntryAnimation(bool skip) { _skip_entry_anim = skip; }
 
     // Popup management
     void showBrightnessPopup(int initialValue);
@@ -73,6 +75,9 @@ private:
     static constexpr int _item_h = 18;
     static constexpr int _item_gap = 4;
     static constexpr int _selector_pad = 2;
+
+    int _initial_index = 0;
+    bool _skip_entry_anim = false;
 
     // Transition animation values
     pocket_fan::ui::TransitionValue _transition_offset;

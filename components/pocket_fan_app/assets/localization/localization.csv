@@ -1,90 +1,125 @@
-﻿key,en,cn,jp
-AppName_PowerMonitor,PowerMonitor,电源监视,パワーモニター
-AppName_Waveform,Waveform,波形,波形
-AppName_Files,Files,文件,ファイル
-AppName_Settings,Settings,设置,設定
-AppSettings_Option_Display,Display,显示屏,ディスプレイ
-AppSettings_Option_Buzzer,Buzzer,蜂鸣器,ブザー
-AppSettings_Option_Network,Network,网络,ネットワーク
-AppSettings_Option_OTA,OTA Upgrade,OTA升级,OTAアップグレード
-AppSettings_Option_About,About,关于,情報
-AppSettings_Option_Quit,Quit,退出,終了
-AppSettings_Option_Back,Back,返回,戻る
-AppSettings_Option_Brightness,Brightness,亮度,明るさ
-AppSettings_Option_RefreshRate,Refresh Rate,刷新率,リフレッシュ レート
-AppSettings_Option_Orientation,Rotation,方向,オリエンテーション
-AppSettings_Option_Normal,Normal,正常,ノーマル
-AppSettings_Option_High,High,高速,ハイ
-AppSettings_Option_Encoder,Encoder,编码器,エンコーダー
-AppSettings_Option_Forward,Forward,正向,フォワード
-AppSettings_Option_Reverse,Reverse,反向,リバース
-AppSettings_Option_Calibration,Calibration,校准,キャリブレーション
-AppSettings_Option_On,ON,打开,オン
-AppSettings_Option_Off,OFF,关闭,オフ
-AppSettings_Notice_Saving,Save Changes?,是否保存更改?,変更を保存しますか？
-AppSettings_Notice_RunOTA,Run OTA Upgrade?,运行OTA升级?,OTAアップグレードを実行するか?
-AppSettings_Option_Yes,Yes,是,はい
-AppSettings_Option_No,No,否,いいえ
-AppSettings_Option_Language,Language,语言,言語
-AppSettings_Option_English,English,英文,英語
-AppSettings_Option_Chinese,Chinese,中文,中国語
-AppSettings_Option_Japanese,Japanese,日文,日本語
-AppSettings_Option_StartupImage,Startup Image,启动画面,起動ロゴ
-AppSettings_Option_Default,Default,默认,デフォルト
-AppFiles_Option_RecordFiles,Record files,录制文件,レコードファイル
-AppFiles_Option_MscMode,MSC mode,MSC 模式,MSCモード
-AppFiles_Option_Open,Open,打开,開く
-AppFiles_Option_Upload,Upload (EzData),上传 (EzData),アップロード
-AppFiles_Option_Delete,Delete,删除,削除
-AppPowerMonitor_PageSingle_InputVolt,Input Volt.,输入电压,入力電圧
-AppPowerMonitor_PageSingle_InputPower,Input Pow,输入功率,入力パワー
-AppPowerMonitor_PageSingle_OutputCurrent,Output Cur.,输出电流,出力電流
-AppPowerMonitor_PageSingle_ShuntVolt,Shunt Volt.,分流电压,分路電圧
-AppPowerMonitor_PageSimpleDetail_Voltage,Voltage,电压,電圧
-AppPowerMonitor_PageSimpleDetail_Current,Current,电流,電流
-AppPowerMonitor_PageSimpleDetail_Power,Power,功率,パワー
-AppPowerMonitor_PageSimpleDetail_Time,Time,系统时间,時間
-AppPowerMonitor_PageMoreDetail_Avg_PerS,Avg. (1s),平均 (1s),平均 (1s)
-AppPowerMonitor_PageMoreDetail_Avg_HighLight,Avg.,平均,平均
-AppPowerMonitor_PageMoreDetail_Avg_PerMin,Avg. (1min),平均 (1min),平均 (1min)
-AppPowerMonitor_PageMoreDetail_Avg_Total,Avg. (total),平均 (总计),平均 (合計)
-AppPowerMonitor_PageMoreDetail_Cur_HighLight,Curr.,电流,電流
-AppPowerMonitor_PageMoreDetail_Cur_Peak,Curr. (Peak),电流 (峰值),電流 (Peak)
-AppPowerMonitor_PageMoreDetail_Cur_Min,Curr. (Min),电流 (谷值),電流 (Min)
-AppPowerMonitor_PageMoreDetail_Capacity,Capacity,容量,容量
-AppPowerMonitor_PageMoreDetail_Energy,Energy,能量,エネルギー
-AppWaveform_Waitting,WAITING,等待触发,待機中
-AppWaveform_Saving,SAVING,保存中,セーブ中
-AppWaveform_Config_TriggerMode,TriggerMode,触发模式,トリガーモード
-AppWaveform_Config_Threshold,Threshold,阈值,閾値
-AppWaveform_Config_RecTime,Record Time,录制时间,レコードタイム
-AppWaveform_Mode_Manual,Manual,手动,マニュアル
-AppWaveform_Mode_VHL,Vol. High Level,电压高电平,電圧ハイレベル
-AppWaveform_Mode_VLL,Vol. Low Level,电压低电平,電圧ローレベル
-AppWaveform_Mode_CHL,Cur. High Level,电流高电平,電流ハイレベル
-AppWaveform_Mode_CLL,Cur. Low Level,电流低电平,電流ローレベル
-Misc_FirmwareInfo,Firmware Info,固件信息,ファームウェア情報
-Misc_Version,Version,版本,バージョン
-Misc_Type,type,类型,タイプ
-Misc_CompileDate,Compile date,编译时间,コンパイル時間
-Misc_RebootNow,Reboot now?,马上重启?,再起動しますか?
-Misc_Notice,Notice,提示,ヒント
-Misc_Text_ClickToConfig,Click to config,点击配置,クリックして設定
-Misc_Text_ClickToContinue,Click to continue,点击继续,クリックして続行
-Misc_Text_ClickToFinish,Click to finish,点击完成,クリックして終了
-Misc_Text_ClickToQuit,Click to quit,点击退出,クリックして終了
-Misc_Text_ConnectTopUsb,Connect the top USB port to the PC,连接顶部USB到电脑,上部のUSBポートをPCに接続してください
-Misc_Text_OpenNewUsbDrive,Open the newly added USB drive,打开新弹出的U盘,新しく追加されたUSBドライブを開く
-Misc_Text_EditWiFiConfig,Edit your WiFi config,编辑WiFi配置,Wi-Fi 設定を編集してください
-Misc_Text_IsAlreadyLatest,You are already\nOn the latest version,已是最新版本,最新バージョンです
-Misc_Text_LatestVersion,Latest version,最新版本,最新バージョン
-Misc_Text_ClickToUpgrade,Click to upgrade,点击升级,クリックしてアップグレード
-Misc_Text_OnlyConnect,Only connect,只连接,このUSBポートに
-Misc_Text_ThisUsbPort,this USB port,这个USB口,接続してください
-Misc_Text_CalibrationDone,Calibration done,校准完成,校正完了
-Misc_Text_NoRecordFiles,No record files,没有录制文件,記録ファイルがありません
-Misc_Text_UploadDone,Upload done!,上传完成!,アップロード完了!
-Misc_Text_UpgradeDone,Upgrade done!,升级完成!,アップグレード完了!
-Misc_Text_UsbFlashingNotice, > USB flashing is required\n > Please upgrade\n    using [M5Burner]\n > And backup your record\n    files before upgrade, > 该版本需要线刷\n > 请使用 [M5Burner] 进行升级\n > 并在升级前备份好录制文件, > USB フラッシングが必要です\n > [M5Burner] を使用して、\n   アップグレードしてください\n > あなたの記録ファイルを\n   バックアップしてください
-Misc_Text_ConnectAp,Connect AP,连接热点,接続 AP
-Misc_Text_OpenLink,Open the link,打开链接,リンクを開く
+key,en,cn
+AppName_PowerMonitor,PowerMonitor,电源监视
+AppName_Waveform,Waveform,波形
+AppName_Files,Files,文件
+AppName_Settings,Settings,设置
+AppSettings_Option_Display,Display,显示屏
+AppSettings_Option_Buzzer,Buzzer,蜂鸣器
+AppSettings_Option_Network,Network,网络
+AppSettings_Option_OTA,OTA Upgrade,OTA升级
+AppSettings_Option_About,About,关于
+AppSettings_Option_Quit,Quit,退出
+AppSettings_Option_Back,Back,返回
+AppSettings_Option_Brightness,Brightness,亮度
+AppSettings_Option_RefreshRate,Refresh Rate,刷新率
+AppSettings_Option_Orientation,Rotation,方向
+AppSettings_Option_Normal,Normal,正常
+AppSettings_Option_High,High,高速
+AppSettings_Option_Encoder,Encoder,编码器
+AppSettings_Option_Forward,Forward,正向
+AppSettings_Option_Reverse,Reverse,反向
+AppSettings_Option_Calibration,Calibration,校准
+AppSettings_Option_On,ON,打开
+AppSettings_Option_Off,OFF,关闭
+AppSettings_Notice_Saving,Save Changes?,是否保存更改?
+AppSettings_Notice_RunOTA,Run OTA Upgrade?,运行OTA升级?
+AppSettings_Option_Yes,Yes,是
+AppSettings_Option_No,No,否
+AppSettings_Option_Language,Language,语言
+AppSettings_Option_English,English,英文
+AppSettings_Option_Chinese,Chinese,中文
+AppSettings_Option_StartupImage,Startup Image,启动画面
+AppSettings_Option_Default,Default,默认
+AppFiles_Option_RecordFiles,Record files,录制文件
+AppFiles_Option_MscMode,MSC mode,MSC 模式
+AppFiles_Option_Open,Open,打开
+AppFiles_Option_Upload,Upload (EzData),上传 (EzData)
+AppFiles_Option_Delete,Delete,删除
+AppPowerMonitor_PageSingle_InputVolt,Input Volt.,输入电压
+AppPowerMonitor_PageSingle_InputPower,Input Pow,输入功率
+AppPowerMonitor_PageSingle_OutputCurrent,Output Cur.,输出电流
+AppPowerMonitor_PageSingle_ShuntVolt,Shunt Volt.,分流电压
+AppPowerMonitor_PageSimpleDetail_Voltage,Voltage,电压
+AppPowerMonitor_PageSimpleDetail_Current,Current,电流
+AppPowerMonitor_PageSimpleDetail_Power,Power,功率
+AppPowerMonitor_PageSimpleDetail_Time,Time,系统时间
+AppPowerMonitor_PageMoreDetail_Avg_PerS,Avg. (1s),平均 (1s)
+AppPowerMonitor_PageMoreDetail_Avg_HighLight,Avg.,平均
+AppPowerMonitor_PageMoreDetail_Avg_PerMin,Avg. (1min),平均 (1min)
+AppPowerMonitor_PageMoreDetail_Avg_Total,Avg. (total),平均 (总计)
+AppPowerMonitor_PageMoreDetail_Cur_HighLight,Curr.,电流
+AppPowerMonitor_PageMoreDetail_Cur_Peak,Curr. (Peak),电流 (峰值)
+AppPowerMonitor_PageMoreDetail_Cur_Min,Curr. (Min),电流 (谷值)
+AppPowerMonitor_PageMoreDetail_Capacity,Capacity,容量
+AppPowerMonitor_PageMoreDetail_Energy,Energy,能量
+AppWaveform_Waitting,WAITING,等待触发
+AppWaveform_Saving,SAVING,保存中
+AppWaveform_Config_TriggerMode,TriggerMode,触发模式
+AppWaveform_Config_Threshold,Threshold,阈值
+AppWaveform_Config_RecTime,Record Time,录制时间
+AppWaveform_Mode_Manual,Manual,手动
+AppWaveform_Mode_VHL,Vol. High Level,电压高电平
+AppWaveform_Mode_VLL,Vol. Low Level,电压低电平
+AppWaveform_Mode_CHL,Cur. High Level,电流高电平
+AppWaveform_Mode_CLL,Cur. Low Level,电流低电平
+Misc_FirmwareInfo,Firmware Info,固件信息
+Misc_Version,Version,版本
+Misc_Type,type,类型
+Misc_CompileDate,Compile date,编译时间
+Misc_RebootNow,Reboot now?,马上重启?
+Misc_Notice,Notice,提示
+Misc_Text_ClickToConfig,Click to config,点击配置
+Misc_Text_ClickToContinue,Click to continue,点击继续
+Misc_Text_ClickToFinish,Click to finish,点击完成
+Misc_Text_ClickToQuit,Click to quit,点击退出
+Misc_Text_ConnectTopUsb,Connect the top USB port to the PC,连接顶部USB到电脑
+Misc_Text_OpenNewUsbDrive,Open the newly added USB drive,打开新弹出的U盘
+Misc_Text_EditWiFiConfig,Edit your WiFi config,编辑WiFi配置
+Misc_Text_IsAlreadyLatest,You are already\nOn the latest version,已是最新版本
+Misc_Text_LatestVersion,Latest version,最新版本
+Misc_Text_ClickToUpgrade,Click to upgrade,点击升级
+Misc_Text_OnlyConnect,Only connect,只连接
+Misc_Text_ThisUsbPort,this USB port,这个USB口
+Misc_Text_CalibrationDone,Calibration done,校准完成
+Misc_Text_NoRecordFiles,No record files,没有录制文件
+Misc_Text_UploadDone,Upload done!,上传完成!
+Misc_Text_UpgradeDone,Upgrade done!,升级完成!
+Misc_Text_UsbFlashingNotice, > USB flashing is required\n > Please upgrade\n    using [M5Burner]\n > And backup your record\n    files before upgrade, > 该版本需要线刷\n > 请使用 [M5Burner] 进行升级\n > 并在升级前备份好录制文件
+Misc_Text_ConnectAp,Connect AP,连接热点
+Misc_Text_OpenLink,Open the link,打开链接
+PocketFan_Menu_General,General,通用
+PocketFan_Menu_Detail,Detail,详情
+PocketFan_Menu_Health,Health,健康
+PocketFan_Menu_Emoji,Emoji,表情
+PocketFan_Menu_Enjoy,Enjoy,娱乐
+PocketFan_Menu_About,About,关于
+PocketFan_Menu_Quit,Quit,退出
+PocketFan_Settings_OperationGuide,Operation Guide,操作指南
+PocketFan_Settings_SystemMenuDemo,System Settings and Configuration Menu,系统设置与配置菜单
+PocketFan_Settings_DarkTheme,Dark Theme,深色主题
+PocketFan_Settings_InvertDisplay,Invert Display,反色显示
+PocketFan_Settings_LanguageFmt,Language: %s,语言: %s
+PocketFan_Settings_BrightnessFmt,BRI: %d%%,亮度: %d%%
+PocketFan_About_InfoFmt,FW: %s Build: %s MAC: %s,固件: %s 编译: %s MAC: %s
+PocketFan_About_Status_Writing,Status: Writing...,状态: 写入中...
+PocketFan_About_Status_Waiting,Status: Waiting connect...,状态: 等待连接...
+PocketFan_About_Status_Starting,Status: Starting...,状态: 启动中...
+PocketFan_About_Status_BleInitFailedFmt,Status: BLE init failed (%ld),状态: BLE 初始化失败 (%ld)
+PocketFan_About_ProgressFmt,Progress: %lu/%lu (%lu%%),进度: %lu/%lu (%lu%%)
+PocketFan_About_ProgressBytesFmt,Progress: %lu bytes,进度: %lu 字节
+PocketFan_About_MidExit,MID: Exit,中键: 退出
+PocketFan_About_CheckBtPsram,Check BT/PSRAM config,检查 BT/PSRAM 配置
+PocketFan_Health_BatteryCyclesNA,Battery Cycles: --,电池循环: --
+PocketFan_Health_BatteryHealthNA,Battery Health: --,电池健康: --
+PocketFan_Health_MotorHoursNA,Motor Hours: --,电机时长: --
+PocketFan_Health_MotorHealthNA,Motor Health: --,电机健康: --
+PocketFan_Health_DeviceHealthNA,Device Health: --,设备健康: --
+PocketFan_Health_SuggestionNA,Suggestion: --,建议: --
+PocketFan_Health_BatteryCyclesFmt,Battery Cycles: %.0f,电池循环: %.0f
+PocketFan_Health_BatteryHealthFmt,Battery Health: %.0f%%,电池健康: %.0f%%
+PocketFan_Health_MotorHoursFmt,Motor Hours: %.1fh,电机时长: %.1fh
+PocketFan_Health_MotorHoursOver,Motor Hours: >10000h,电机时长: >10000h
+PocketFan_Health_MotorHealthFmt,Motor Health: %.0f%%,电机健康: %.0f%%
+PocketFan_Health_DeviceHealthFmt,Device Health: %.0f%%,设备健康: %.0f%%
+PocketFan_Health_SuggestionBad,Suggestion: Replace device,建议: 更换设备
+PocketFan_Health_SuggestionGood,Suggestion: Good,建议: 良好

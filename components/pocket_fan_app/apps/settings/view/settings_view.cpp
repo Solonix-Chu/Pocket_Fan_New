@@ -33,8 +33,34 @@ void SettingsView::init() {
     lv_scr_load(_screen);
     
     if (!_items_props.empty()) {
-        jumpTo(0);
-        playEntryAnimation();
+        int start_index = _initial_index;
+        if (start_index < 0 || start_index >= static_cast<int>(_items_props.size())) {
+            start_index = 0;
+        }
+
+        jumpTo(start_index);
+
+        if (_skip_entry_anim) {
+            // Teleport selector/camera immediately to avoid a "flash" at (0,0).
+            const auto& kf = getSelectedKeyframe();
+            getSelectorPostion().teleport(kf.x, kf.y);
+            getSelectorShape().teleport(kf.width, kf.height);
+
+            _update_camera_keyframe();
+            getCamera().teleport(getCamera().x.end, getCamera().y.end);
+
+            // No slide-in animation; place items at their final positions.
+            for (size_t i = 0; i < _item_transitions.size(); i++) {
+                const auto& kf = getOptionList()[i].keyframe;
+                _item_transitions[i].setDelayMs(0);
+                _item_transitions[i].jumpTo(kf.x, kf.y);
+            }
+            _transition_offset.setDelayMs(0);
+            _transition_offset.jumpTo(0);
+        } else {
+            playEntryAnimation();
+        }
+
         onRender();
     }
 }
@@ -109,7 +135,7 @@ void SettingsView::_create_lvgl_objects() {
         lv_obj_t* label = lv_label_create(_list_cont);
         lv_label_set_text(label, _items_props[i].name.c_str());
         lv_obj_set_style_text_color(label, lv_color_black(), 0);
-        lv_obj_set_style_text_font(label, AssetPool::GetGullyBold12(), 0);
+        lv_obj_set_style_text_font(label, AssetPool::GetLocaleFontSmall(), 0);
         
         // Measure width for selective marquee
         lv_obj_update_layout(label);
@@ -230,10 +256,10 @@ void SettingsView::showBrightnessPopup(int initialValue) {
 
     // Label
     _popup_label = lv_label_create(_popup_cont);
-    lv_obj_set_style_text_font(_popup_label, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_font(_popup_label, AssetPool::GetLocaleFontSmall(), 0);
     lv_obj_set_style_text_color(_popup_label, lv_color_black(), 0);
     lv_obj_align(_popup_label, LV_ALIGN_TOP_MID, 0, 0);
-    lv_label_set_text_fmt(_popup_label, "BRI: %d%%", initialValue);
+    lv_label_set_text_fmt(_popup_label, AssetPool::GetText().PocketFan_Settings_BrightnessFmt, initialValue);
 
     // Entrance Anim (panel slide style)
     lv_obj_set_style_translate_y(_popup_cont, 80, 0);
@@ -251,7 +277,7 @@ void SettingsView::showBrightnessPopup(int initialValue) {
 void SettingsView::updateBrightnessPopup(int value) {
     if (!_is_popup_active) return;
     if (_popup_bar) lv_bar_set_value(_popup_bar, value, LV_ANIM_OFF);
-    if (_popup_label) lv_label_set_text_fmt(_popup_label, "BRI: %d%%", value);
+    if (_popup_label) lv_label_set_text_fmt(_popup_label, AssetPool::GetText().PocketFan_Settings_BrightnessFmt, value);
 }
 
 void SettingsView::hideBrightnessPopup() {

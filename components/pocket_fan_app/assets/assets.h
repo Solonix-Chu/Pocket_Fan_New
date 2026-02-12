@@ -13,6 +13,13 @@
 // LVGL Fonts
 extern "C" const lv_font_t lv_font_Gully_Bold_16;
 extern "C" const lv_font_t lv_font_Gully_Bold_12;
+extern "C" const lv_font_t lv_font_lcdsolid_vpzb_16;
+extern "C" const lv_font_t lv_font_lcdsolid_vpzb_12;
+extern "C" const lv_font_t lv_font_AaPingPingGuoGuoXiangSuTi_16;
+extern "C" const lv_font_t lv_font_AaPingPingGuoGuoXiangSuTi_12;
+#if LV_FONT_SOURCE_HAN_SANS_SC_14_CJK
+extern "C" const lv_font_t lv_font_source_han_sans_sc_14_cjk;
+#endif
 
 // LVGL Images (Menu App)
 extern "C" const lv_image_dsc_t _About_RGB565A8_34x26;
@@ -83,6 +90,47 @@ public:
     // LVGL Font Access
     static const lv_font_t* GetGullyBold16() { return &lv_font_Gully_Bold_16; }
     static const lv_font_t* GetGullyBold12() { return &lv_font_Gully_Bold_12; }
+
+    // Font families
+    static const lv_font_t* GetLatinFontLarge() { return &lv_font_lcdsolid_vpzb_16; }
+    static const lv_font_t* GetLatinFontSmall() { return &lv_font_lcdsolid_vpzb_12; }
+    static const lv_font_t* GetChineseFontLarge() { return &lv_font_AaPingPingGuoGuoXiangSuTi_16; }
+    static const lv_font_t* GetChineseFontSmall() { return &lv_font_AaPingPingGuoGuoXiangSuTi_12; }
+
+    // Fonts that can render EN + CN in the same label:
+    // - Latin/digits: lcdsolid_vpzb (primary)
+    // - CJK: AaPingPingGuoGuoXiangSuTi (fallback)
+    static const lv_font_t* GetLocaleFontLarge()
+    {
+#if LV_VERSION_CHECK(8, 2, 0) || LVGL_VERSION_MAJOR >= 9
+        static lv_font_t s_font = lv_font_lcdsolid_vpzb_16;
+        static bool s_inited = false;
+        if (!s_inited) {
+            s_font.fallback = &lv_font_AaPingPingGuoGuoXiangSuTi_16;
+            s_inited = true;
+        }
+        return &s_font;
+#else
+        // LVGL without font fallback: choose by locale.
+        return IsLocaleEn() ? GetLatinFontLarge() : GetChineseFontLarge();
+#endif
+    }
+
+    static const lv_font_t* GetLocaleFontSmall()
+    {
+#if LV_VERSION_CHECK(8, 2, 0) || LVGL_VERSION_MAJOR >= 9
+        static lv_font_t s_font = lv_font_lcdsolid_vpzb_12;
+        static bool s_inited = false;
+        if (!s_inited) {
+            s_font.fallback = &lv_font_AaPingPingGuoGuoXiangSuTi_12;
+            s_inited = true;
+        }
+        return &s_font;
+#else
+        // LVGL without font fallback: choose by locale.
+        return IsLocaleEn() ? GetLatinFontSmall() : GetChineseFontSmall();
+#endif
+    }
 
     // LVGL Image Access (Menu App)
     static const lv_image_dsc_t* GetImgAbout() { return &_About_RGB565A8_34x26; }

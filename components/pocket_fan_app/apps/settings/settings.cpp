@@ -4,6 +4,7 @@
 #include "../apps.h"
 #include "../app_startup_anim/app_startup_anim.h"
 #include <esp_log.h>
+#include <cstdio>
 
 static const char* TAG = "SettingsApp";
 
@@ -66,6 +67,15 @@ void SettingsApp::onRunning()
     if (_view) {
         _view->update();
     }
+
+    // Rebuild UI after callbacks (e.g. language switch) to avoid deleting the view
+    // while it's still executing its own event handler.
+    if (_request_rebuild_view) {
+        _request_rebuild_view = false;
+        int idx = _rebuild_selected_index;
+        _destroy_view();
+        _create_view(idx, true);
+    }
 }
 
 void SettingsApp::onClose()
@@ -80,10 +90,12 @@ void SettingsApp::onDestroy()
     _destroy_view();
 }
 
-void SettingsApp::_create_view()
+void SettingsApp::_create_view(int initial_index, bool skip_entry_anim)
 {
     if (_view) return;
     _view = new SettingsView();
+
+    const auto& tr = AssetPool::GetText();
     
     // Get initial values
     _brightness_val = HAL::GetSystemConfig().brightness;
@@ -92,20 +104,20 @@ void SettingsApp::_create_view()
     int item_index = 0;
 
     // 0. Operation Guide (New)
-    _view->addSettingsItem({"Operation Guide", false, false, []() {
+    _view->addSettingsItem({tr.PocketFan_Settings_OperationGuide, false, false, []() {
         ESP_LOGI(TAG, "Open Guide");
         AppStartupAnim::PopUpGuideMap(true);
     }});
     item_index++;
 
     // 1. Long text auto-scroll example
-    _view->addSettingsItem({"System Settings and Configuration Menu", false, false, []() {
+    _view->addSettingsItem({tr.PocketFan_Settings_SystemMenuDemo, false, false, []() {
         ESP_LOGI(TAG, "Clicked long text item");
     }});
     item_index++;
 
     // 2. Brightness
-    _view->addSettingsItem({"Brightness", false, false, [this]() {
+    _view->addSettingsItem({tr.AppSettings_Option_Brightness, false, false, [this]() {
         ESP_LOGI(TAG, "Open Brightness Adjust");
         _is_adjusting_brightness = true;
         _last_scroll_time = 0;
@@ -115,7 +127,7 @@ void SettingsApp::_create_view()
     
     // 3. Theme Toggle with Checkbox
     _theme_item_index = item_index;
-    _view->addSettingsItem({"Dark Theme", true, _is_black_theme, [this]() {
+    _view->addSettingsItem({tr.PocketFan_Settings_DarkTheme, true, _is_black_theme, [this]() {
         _is_black_theme = !_is_black_theme;
         ESP_LOGI(TAG, "Toggle Theme: %s", _is_black_theme ? "Black" : "White");
         _view->updateItemValue(_theme_item_index, _is_black_theme);
@@ -126,7 +138,7 @@ void SettingsApp::_create_view()
 
     // 4. Monochrome invert toggle (SSD1306)
     _invert_item_index = item_index;
-    _view->addSettingsItem({"Invert Display", true, _invert_display, [this]() {
+    _view->addSettingsItem({tr.PocketFan_Settings_InvertDisplay, true, _invert_display, [this]() {
         _invert_display = !_invert_display;
         ESP_LOGI(TAG, "Toggle Invert Display: %s", _invert_display ? "ON" : "OFF");
         HAL::SetDisplayInvert(_invert_display);
@@ -137,26 +149,37 @@ void SettingsApp::_create_view()
     item_index++;
 
     // 4. Language Toggle
-    _view->addSettingsItem({"Language: EN", false, false, [this]() {
-        static bool is_en = true;
-        is_en = !is_en;
-        ESP_LOGI(TAG, "Switch Language: %s", is_en ? "EN" : "CN");
-        LocaleCode_t locale = is_en ? locale_code_en : locale_code_cn;
-        AssetPool::SetLocaleCode(locale);
-        HAL::GetSystemConfig().localeCode = locale;
-        HAL::SaveSystemConfig();
-        // TODO: Update current UI text if possible, or wait for next app open
-    }});
+    _language_item_index = item_index;
+    {
+        char buf[48] = {};
+        const LocaleCode_t cur = HAL::GetSystemConfig().localeCode;
+        const char* cur_name = (cur == locale_code_cn) ? tr.AppSettings_Option_Chinese : tr.AppSettings_Option_English;
+        snprintf(buf, sizeof(buf), tr.PocketFan_Settings_LanguageFmt, cur_name);
+        _view->addSettingsItem({buf, false, false, [this]() {
+            LocaleCode_t cur = HAL::GetSystemConfig().localeCode;
+            LocaleCode_t next = (cur == locale_code_cn) ? locale_code_en : locale_code_cn;
+            ESP_LOGI(TAG, "Switch Language: %s", next == locale_code_cn ? "CN" : "EN");
+            AssetPool::SetLocaleCode(next);
+            HAL::GetSystemConfig().localeCode = next;
+            HAL::SaveSystemConfig();
+
+            // Rebuild the list with the new locale (done in onRunning).
+            _rebuild_selected_index = _view ? _view->getSelectedOptionIndex() : 0;
+            _request_rebuild_view = true;
+        }});
+    }
     item_index++;
 
     // 5. Back
-    _view->addSettingsItem({"Back", false, false, [this]() {
+    _view->addSettingsItem({tr.AppSettings_Option_Back, false, false, [this]() {
         ESP_LOGI(TAG, "Back to Menu");
         mooncake::GetMooncake().openApp(APPS::menu_id);
         close();
     }});
     item_index++;
     
+    _view->setInitialIndex(initial_index);
+    _view->setSkipEntryAnimation(skip_entry_anim);
     _view->init();
 }
 

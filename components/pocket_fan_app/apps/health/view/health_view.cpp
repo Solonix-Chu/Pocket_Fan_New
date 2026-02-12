@@ -74,7 +74,7 @@ void HealthView::_create_lvgl_objects() {
     _item_transitions.clear();
     _item_transitions.resize(_items.size());
 
-    const lv_font_t* font = AssetPool::GetGullyBold12();
+    const lv_font_t* font = AssetPool::GetLocaleFontSmall();
 
     for (size_t i = 0; i < _items.size(); i++) {
         lv_obj_t* label = lv_label_create(_list_cont);

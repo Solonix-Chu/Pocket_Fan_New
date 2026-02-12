@@ -1,5 +1,6 @@
 #include "health.h"
 #include "../../hal/hal.h"
+#include "../../assets/assets.h"
 #include "../apps.h"
 #include <cstdio>
 
@@ -9,14 +10,15 @@ HealthApp::HealthApp() {
 }
 
 void HealthApp::onOpen() {
+    const auto& tr = AssetPool::GetText();
     _view = new HealthView();
     _view->setItems({
-        "Battery Cycles: --",
-        "Battery Health: --",
-        "Motor Hours: --",
-        "Motor Health: --",
-        "Device Health: --",
-        "Suggestion: --"
+        tr.PocketFan_Health_BatteryCyclesNA,
+        tr.PocketFan_Health_BatteryHealthNA,
+        tr.PocketFan_Health_MotorHoursNA,
+        tr.PocketFan_Health_MotorHealthNA,
+        tr.PocketFan_Health_DeviceHealthNA,
+        tr.PocketFan_Health_SuggestionNA,
     });
     _view->init();
     _last_ms = HAL::Millis();
@@ -51,41 +53,42 @@ void HealthApp::_updateStats(float /*dt_hours*/) {
 void HealthApp::_render() {
     if (!_view) return;
 
+    const auto& tr = AssetPool::GetText();
     char buf[48];
 
     // Battery cycles
-    std::snprintf(buf, sizeof(buf), "Battery Cycles: %.0f", HAL::GetBatteryCycles());
+    std::snprintf(buf, sizeof(buf), tr.PocketFan_Health_BatteryCyclesFmt, HAL::GetBatteryCycles());
     _view->updateItem(0, buf);
 
     // Battery health
     float bat_h = _calcBatteryHealth();
-    std::snprintf(buf, sizeof(buf), "Battery Health: %.0f%%", bat_h);
+    std::snprintf(buf, sizeof(buf), tr.PocketFan_Health_BatteryHealthFmt, bat_h);
     _view->updateItem(1, buf);
 
     // Motor hours
     float motor_hours = HAL::GetMotorHours();
     if (motor_hours >= 10000.0f) {
-        _view->updateItem(2, "Motor Hours: >10000h");
+        _view->updateItem(2, tr.PocketFan_Health_MotorHoursOver);
     } else {
-        std::snprintf(buf, sizeof(buf), "Motor Hours: %.1fh", motor_hours);
+        std::snprintf(buf, sizeof(buf), tr.PocketFan_Health_MotorHoursFmt, motor_hours);
         _view->updateItem(2, buf);
     }
 
     // Motor health
     float motor_h = _calcMotorHealth();
-    std::snprintf(buf, sizeof(buf), "Motor Health: %.0f%%", motor_h);
+    std::snprintf(buf, sizeof(buf), tr.PocketFan_Health_MotorHealthFmt, motor_h);
     _view->updateItem(3, buf);
 
     // Device health
     float device_h = (bat_h + motor_h) / 2.0f;
-    std::snprintf(buf, sizeof(buf), "Device Health: %.0f%%", device_h);
+    std::snprintf(buf, sizeof(buf), tr.PocketFan_Health_DeviceHealthFmt, device_h);
     _view->updateItem(4, buf);
 
     // Suggestion
     if (device_h <= 70.0f) {
-        _view->updateItem(5, "Suggestion: Replace device");
+        _view->updateItem(5, tr.PocketFan_Health_SuggestionBad);
     } else {
-        _view->updateItem(5, "Suggestion: Good");
+        _view->updateItem(5, tr.PocketFan_Health_SuggestionGood);
     }
 }
 

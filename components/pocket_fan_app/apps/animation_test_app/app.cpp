@@ -69,7 +69,7 @@ void start_stagger_list(lv_obj_t* parent)
         lv_obj_t* lbl = lv_label_create(g_demo.overlay);
         lv_label_set_text(lbl, labels[i]);
         lv_obj_set_style_text_color(lbl, lv_color_black(), 0);
-        lv_obj_set_style_text_font(lbl, AssetPool::GetGullyBold12(), 0);
+        lv_obj_set_style_text_font(lbl, AssetPool::GetLocaleFontSmall(), 0);
         lv_obj_set_pos(lbl, 4, y);
         lv_obj_set_style_translate_x(lbl, -140, 0);
         g_demo.items.push_back(lbl);

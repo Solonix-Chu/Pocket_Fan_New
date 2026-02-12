@@ -88,7 +88,6 @@ enum LocaleCode_t
 {
     locale_code_en = 0,
     locale_code_cn,
-    locale_code_jp,
 };
 
 /* -------------------------------------------------------------------------- */

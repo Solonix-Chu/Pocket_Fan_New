@@ -69,8 +69,8 @@ void AssetPool::setLocalTextTo(LocaleCode_t code)
         getStaticAsset()->Text.TextEN.getMap(_data.local_text_pool_map);
     else if (code == locale_code_cn)
         getStaticAsset()->Text.TextCN.getMap(_data.local_text_pool_map);
-    else if (code == locale_code_jp)
-        getStaticAsset()->Text.TextJP.getMap(_data.local_text_pool_map);
+    else
+        getStaticAsset()->Text.TextEN.getMap(_data.local_text_pool_map);
 }
 
 void AssetPool::setLocaleCode(LocaleCode_t code)

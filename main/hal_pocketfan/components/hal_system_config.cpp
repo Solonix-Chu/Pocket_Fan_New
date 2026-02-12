@@ -76,7 +76,7 @@ void HAL_PocketFan::loadSystemConfig()
         _config.darkTheme = (u8 != 0);
     }
     if (nvs_get_u8(handle, k_key_locale, &u8) == ESP_OK) {
-        if (u8 <= locale_code_jp) {
+        if (u8 <= locale_code_cn) {
             _config.localeCode = static_cast<LocaleCode_t>(u8);
         }
     }

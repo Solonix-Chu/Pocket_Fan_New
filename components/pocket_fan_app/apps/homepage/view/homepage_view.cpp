@@ -76,7 +76,7 @@ void HomepageView::_create_lvgl_objects() {
     
     _label_v = lv_label_create(_tile1);
     lv_obj_set_style_text_color(_label_v, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_v, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_font(_label_v, AssetPool::GetLocaleFontLarge(), 0);
     lv_obj_set_style_text_align(_label_v, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(_label_v, 67, 15);
     lv_obj_set_pos(_label_v, -9, 15);
@@ -84,7 +84,7 @@ void HomepageView::_create_lvgl_objects() {
 
     _label_a = lv_label_create(_tile1);
     lv_obj_set_style_text_color(_label_a, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_a, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_font(_label_a, AssetPool::GetLocaleFontLarge(), 0);
     lv_obj_set_style_text_align(_label_a, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(_label_a, 67, 18);
     lv_obj_set_pos(_label_a, -9, 30);
@@ -92,7 +92,7 @@ void HomepageView::_create_lvgl_objects() {
 
     _label_w = lv_label_create(_tile1);
     lv_obj_set_style_text_color(_label_w, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_w, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_font(_label_w, AssetPool::GetLocaleFontLarge(), 0);
     lv_obj_set_style_text_align(_label_w, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(_label_w, 67, 18);
     lv_obj_set_pos(_label_w, -9, 45);
@@ -101,7 +101,7 @@ void HomepageView::_create_lvgl_objects() {
     // PWM Label on Page 1 (Right side)
     _label_pwm = lv_label_create(_tile1);
     lv_obj_set_style_text_color(_label_pwm, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_pwm, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_font(_label_pwm, AssetPool::GetLocaleFontLarge(), 0);
     lv_obj_set_style_text_align(_label_pwm, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(_label_pwm, 40, 18);
     lv_obj_set_pos(_label_pwm, 80, 25);
@@ -110,7 +110,7 @@ void HomepageView::_create_lvgl_objects() {
     // Page 2 labels (T, Cap)
     _label_t = lv_label_create(_tile2);
     lv_obj_set_style_text_color(_label_t, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_t, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_font(_label_t, AssetPool::GetLocaleFontLarge(), 0);
     lv_obj_set_style_text_align(_label_t, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(_label_t, 67, 18);
     lv_obj_set_pos(_label_t, 3, 45);
@@ -118,7 +118,7 @@ void HomepageView::_create_lvgl_objects() {
 
     _label_cap = lv_label_create(_tile2);
     lv_obj_set_style_text_color(_label_cap, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_cap, AssetPool::GetGullyBold16(), 0);
+    lv_obj_set_style_text_font(_label_cap, AssetPool::GetLocaleFontLarge(), 0);
     lv_obj_set_style_text_align(_label_cap, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_size(_label_cap, 64, 18);
     lv_obj_set_pos(_label_cap, 58, 23);
@@ -127,7 +127,7 @@ void HomepageView::_create_lvgl_objects() {
     // Page 3 labels (IP2369 telemetry, demo style)
     _label_ip_title = lv_label_create(_tile3);
     lv_obj_set_style_text_color(_label_ip_title, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_ip_title, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_font(_label_ip_title, AssetPool::GetLocaleFontSmall(), 0);
     lv_obj_set_style_text_align(_label_ip_title, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_size(_label_ip_title, 124, 12);
     lv_obj_set_pos(_label_ip_title, 0, 0);
@@ -135,7 +135,7 @@ void HomepageView::_create_lvgl_objects() {
 
     _label_ip_in = lv_label_create(_tile3);
     lv_obj_set_style_text_color(_label_ip_in, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_ip_in, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_font(_label_ip_in, AssetPool::GetLocaleFontSmall(), 0);
     lv_obj_set_style_text_align(_label_ip_in, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_size(_label_ip_in, 124, 12);
     lv_obj_set_pos(_label_ip_in, 0, 12);
@@ -143,7 +143,7 @@ void HomepageView::_create_lvgl_objects() {
 
     _label_ip_out = lv_label_create(_tile3);
     lv_obj_set_style_text_color(_label_ip_out, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_ip_out, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_font(_label_ip_out, AssetPool::GetLocaleFontSmall(), 0);
     lv_obj_set_style_text_align(_label_ip_out, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_size(_label_ip_out, 124, 12);
     lv_obj_set_pos(_label_ip_out, 0, 24);
@@ -151,7 +151,7 @@ void HomepageView::_create_lvgl_objects() {
 
     _label_ip_power = lv_label_create(_tile3);
     lv_obj_set_style_text_color(_label_ip_power, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_ip_power, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_font(_label_ip_power, AssetPool::GetLocaleFontSmall(), 0);
     lv_obj_set_style_text_align(_label_ip_power, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_size(_label_ip_power, 124, 12);
     lv_obj_set_pos(_label_ip_power, 0, 36);
@@ -159,7 +159,7 @@ void HomepageView::_create_lvgl_objects() {
 
     _label_ip_ntc = lv_label_create(_tile3);
     lv_obj_set_style_text_color(_label_ip_ntc, lv_color_black(), 0);
-    lv_obj_set_style_text_font(_label_ip_ntc, AssetPool::GetGullyBold12(), 0);
+    lv_obj_set_style_text_font(_label_ip_ntc, AssetPool::GetLocaleFontSmall(), 0);
     lv_obj_set_style_text_align(_label_ip_ntc, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_size(_label_ip_ntc, 124, 12);
     lv_obj_set_pos(_label_ip_ntc, 0, 48);

@@ -179,8 +179,8 @@ void MenuView::_create_lvgl_objects() {
     _label_obj = lv_label_create(_screen);
     // Black text for white background
     lv_obj_set_style_text_color(_label_obj, lv_color_black(), 0);
-    // Use the custom font from AssetPool
-    lv_obj_set_style_text_font(_label_obj, AssetPool::GetGullyBold16(), 0);
+    // Use a locale-capable font (CN needs CJK font)
+    lv_obj_set_style_text_font(_label_obj, AssetPool::GetLocaleFontLarge(), 0);
     
     lv_obj_align(_label_obj, LV_ALIGN_BOTTOM_MID, 0, -5);
     lv_label_set_text(_label_obj, "");
