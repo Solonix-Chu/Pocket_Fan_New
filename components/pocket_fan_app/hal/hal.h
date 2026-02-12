@@ -183,6 +183,13 @@ public:
     static app_button_state_t GetButton(BUTTON::Button_t button) { return Get()->getButton(button); }
     virtual app_button_state_t getButton(BUTTON::Button_t button) { return APP_BUTTON_STATE_NOCHANGE; }
 
+    /**
+     * @brief Raw power key level (pressed = true). Used to avoid treating the
+     * boot long-press as an in-app power-off long-press.
+     */
+    static bool IsPowerKeyPressed() { return Get()->isPowerKeyPressed(); }
+    virtual bool isPowerKeyPressed() { return false; }
+
     static void AllButtonRefresh() {Get()->allButton_refresh();}
     virtual void allButton_refresh() {}
 

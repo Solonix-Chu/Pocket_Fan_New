@@ -51,6 +51,7 @@ public:
     void setFanState(bool enable) override;
 
     app_button_state_t getButton(BUTTON::Button_t button) override;
+    bool isPowerKeyPressed() override;
 
     void allButton_refresh() override; // Specific to this HAL implementation
 

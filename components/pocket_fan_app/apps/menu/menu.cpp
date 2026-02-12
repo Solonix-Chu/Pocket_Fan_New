@@ -21,6 +21,10 @@ void MenuApp::onOpen()
     _exit_to_app = false;
     _exit_to_home = false;
     _create_view();
+
+    // Trackball LED: green in menu.
+    HAL::SetLedBreath(false);
+    HAL::SetLed(0, 255, 0, 0);
 }
 
 void MenuApp::onRunning()

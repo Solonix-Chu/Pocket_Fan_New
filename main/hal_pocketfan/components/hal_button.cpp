@@ -7,6 +7,7 @@
 #include <mooncake.h>
 #include "app_button.h"
 #include "esp_log.h"
+#include <driver/gpio.h>
 
 static const char *TAG = "hal_button";
 
@@ -14,6 +15,12 @@ void HAL_PocketFan::_button_init()
 {
     ESP_LOGI(TAG,"button init");
     app_button_init();
+}
+
+bool HAL_PocketFan::isPowerKeyPressed()
+{
+    // Active-low key on GPIO46 per schematic / app_button Kconfig mapping.
+    return gpio_get_level(GPIO_NUM_46) == 0;
 }
 
 app_button_state_t HAL_PocketFan::getButton(BUTTON::Button_t button)

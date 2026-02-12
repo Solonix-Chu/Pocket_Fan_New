@@ -4,8 +4,28 @@
 #include "../apps.h"
 #include "app_button.h"
 #include <esp_log.h>
+#include <esp_system.h>
 
 static const char* TAG = "HomepageApp";
+
+static void set_random_trackball_targets()
+{
+    // Random mixed RGBW breathing targets, keep values moderate.
+    auto rand_u8 = [](uint8_t max_val) -> uint8_t {
+        return (uint8_t)(esp_random() % (max_val + 1));
+    };
+
+    uint8_t r = rand_u8(180);
+    uint8_t g = rand_u8(180);
+    uint8_t b = rand_u8(180);
+    uint8_t w = rand_u8(120);
+
+    if ((r | g | b | w) == 0) {
+        g = 120;
+    }
+
+    HAL::SetLed(r, g, b, w);
+}
 
 void HomepageApp::onCreate()
 {
@@ -21,6 +41,11 @@ void HomepageApp::onOpen()
         _view->restartEntry();
         _view->tick(HAL::Millis());
     }
+
+    // Trackball LED: random mixed breathing in homepage.
+    HAL::SetLedBreath(true);
+    set_random_trackball_targets();
+    _led_last_change_time = HAL::Millis();
 }
 
 void HomepageApp::onRunning()
@@ -176,6 +201,13 @@ void HomepageApp::onRunning()
 
     if (_view) {
         _view->tick(HAL::Millis());
+    }
+
+    // Change breathing color periodically for "random mix" effect.
+    uint32_t now = HAL::Millis();
+    if (now - _led_last_change_time >= 3500) {
+        _led_last_change_time = now;
+        set_random_trackball_targets();
     }
 }
 

@@ -17,6 +17,7 @@ public:
 
 private:
     lv_obj_t* _screen = nullptr;
+    lv_obj_t* _progress = nullptr;
     uint32_t _start_time = 0;
 
     static bool _guide_active;

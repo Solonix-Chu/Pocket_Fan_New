@@ -25,14 +25,32 @@ void AppStartupAnim::onOpen()
     ESP_LOGI(TAG, "onOpen");
     // Clear display first to avoid showing uninitialized garbage.
     HAL::SetDisplayBrightness(0);
+    HAL::SetLedBreath(false);
+    HAL::SetLed(0, 0, 0, 0);
 
-    // Simple startup screen
+    static constexpr uint32_t k_duration_ms = 1200;
+
+    // Simple startup screen (startup photo + progress bar)
     _screen = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(_screen, lv_color_white(), 0);
-    
+
+    // Restore previous startup image behavior: centered logo on white background.
     lv_obj_t* img = lv_image_create(_screen);
     lv_image_set_src(img, AssetPool::GetImgStartup());
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
+
+    // Progress bar at bottom for static photo
+    _progress = lv_bar_create(_screen);
+    lv_bar_set_range(_progress, 0, (int32_t)k_duration_ms);
+    lv_bar_set_value(_progress, 0, LV_ANIM_OFF);
+    lv_obj_set_size(_progress, 124, 6);
+    lv_obj_align(_progress, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_set_style_radius(_progress, 2, 0);
+    lv_obj_set_style_border_width(_progress, 1, 0);
+    lv_obj_set_style_border_color(_progress, lv_color_black(), 0);
+    lv_obj_set_style_bg_color(_progress, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(_progress, LV_OPA_COVER, 0);
+    lv_obj_set_style_bg_color(_progress, lv_color_black(), LV_PART_INDICATOR);
     
     lv_scr_load(_screen);
 
@@ -42,14 +60,27 @@ void AppStartupAnim::onOpen()
 void AppStartupAnim::onRunning()
 {
     uint32_t now = HAL::Millis();
+    static constexpr uint32_t k_duration_ms = 1200;
 
     // Turn on backlight after first tick to avoid any visible garbage before the first flush.
     if (now - _start_time >= 20) {
         HAL::SetDisplayBrightness(static_cast<uint8_t>(HAL::GetSystemConfig().brightness));
     }
 
-    // Keep logo for a short time, then enter homepage.
-    if (now - _start_time >= 700) {
+    // Progress -> homepage
+    uint32_t elapsed = now - _start_time;
+    if (_progress) {
+        if (elapsed > k_duration_ms) elapsed = k_duration_ms;
+        lv_bar_set_value(_progress, (int32_t)elapsed, LV_ANIM_OFF);
+    }
+
+    // Trackball LED: white slow fade-in synced with startup duration.
+    uint32_t fade_elapsed = (now - _start_time);
+    if (fade_elapsed > k_duration_ms) fade_elapsed = k_duration_ms;
+    uint8_t w = (uint8_t)((fade_elapsed * 255U) / k_duration_ms);
+    HAL::SetLed(0, 0, 0, w);
+
+    if (elapsed >= k_duration_ms) {
         close();
     }
 }
@@ -60,6 +91,7 @@ void AppStartupAnim::onClose()
     if (_screen) {
         lv_obj_del(_screen);
         _screen = nullptr;
+        _progress = nullptr;
     }
 }
 

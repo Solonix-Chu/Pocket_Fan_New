@@ -67,25 +67,39 @@ void HAL_PocketFan::_power_init()
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE; 
     gpio_config(&io_conf);
 
-    if (gpio_get_level(PIN_POWER_BTN) == 1) {
-        ESP_LOGI(TAG, "Power button not pressed at startup. Checking if we should stay on (e.g. charging?) - For now enforcing button rule.");
+    // Power-on gate:
+    // Require a continuous long-press (>2s) on the OK/Power key (GPIO46) to boot.
+    // During this period the display is not initialized yet, so it stays black as requested.
+    static constexpr int64_t k_boot_press_us = 100; // 2s 由于启动耗时（bootloader + 初始化）已经接近2s，这里改为0.1s以免用户等待过久，体感接近2s
+    auto is_pressed = []() -> bool {
+        // Active-low
+        return gpio_get_level(PIN_POWER_BTN) == 0;
+    };
+
+    ESP_LOGI(TAG, "Hold OK/Power key >= 2s to boot (GPIO%d).", (int)PIN_POWER_BTN);
+    while (true) {
+        // Wait for press
+        while (!is_pressed()) {
+            vTaskDelay(pdMS_TO_TICKS(20));
+        }
+
+        // Measure continuous hold
+        const int64_t start_us = esp_timer_get_time();
+        while (is_pressed()) {
+            if ((esp_timer_get_time() - start_us) >= k_boot_press_us) {
+                goto boot_confirmed;
+            }
+            vTaskDelay(pdMS_TO_TICKS(10));
+        }
+
+        // Released early: ignore and continue waiting (on battery the board will likely cut power).
+        ESP_LOGI(TAG, "Power key released before 2s; waiting again...");
     }
 
-    // ESP_LOGI(TAG, "Checking power on long press...");
-    // int64_t start_time = esp_timer_get_time();
-    // while ((esp_timer_get_time() - start_time) < 3000000) {  // 3s
-    //     if (gpio_get_level(PIN_POWER_BTN) == 1) {
-    //          ESP_LOGI(TAG, "Power button released early (%lld ms).", (esp_timer_get_time() - start_time) / 1000);
-    //          powerOff();
-    //          // If powerOff returns (e.g. on USB), we should probably stop init.
-    //          while(1) vTaskDelay(pdMS_TO_TICKS(100)); 
-    //     }
-    //     vTaskDelay(pdMS_TO_TICKS(10));
-    // }
-
+boot_confirmed:
     ESP_LOGI(TAG, "Power on confirmed. Holding power.");
     powerOn();
-    
-    // Release the button pin so app_button (iot_button) can take over
-    gpio_reset_pin(PIN_POWER_BTN);
+    // Note: Do not block waiting for release here. After the 2s gate, we proceed
+    // with boot and show the startup screen even if the user is still holding.
+    // Power-off long-press is armed only after the first release in app layer.
 }

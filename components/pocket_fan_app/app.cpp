@@ -30,6 +30,7 @@ class SystemApp {
 private:
     bool _is_startup_anim_done = false;
     int _startup_anim_id = -1;
+    bool _poweroff_armed = false;
 
 public:
     void init(lv_display_t* disp) {
@@ -79,7 +80,13 @@ public:
         HAL::Get()->LGVL_UPDATE();
         HAL::LvglUnlock();
 
-        if (HAL::GetButton(BUTTON::BTN_POWER) == APP_BUTTON_STATE_HOLD) {
+        // Arm in-app power-off only after the first release, so the boot long-press
+        // (>=2s) won't accidentally trigger a shutdown if the user keeps holding.
+        if (!_poweroff_armed) {
+            if (!HAL::IsPowerKeyPressed()) {
+                _poweroff_armed = true;
+            }
+        } else if (HAL::GetButton(BUTTON::BTN_POWER) == APP_BUTTON_STATE_HOLD) {
             ESP_LOGI(TAG, "Power Button Long Press detected. Shutting down.");
             HAL::PowerOff();
         }
