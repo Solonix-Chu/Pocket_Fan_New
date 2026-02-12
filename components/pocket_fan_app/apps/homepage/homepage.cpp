@@ -182,12 +182,16 @@ void HomepageApp::onRunning()
 void HomepageApp::onClose()
 {
     ESP_LOGI(TAG, "onClose");
+    HAL::SetFanSpeed(0.0f);
+    HAL::SetFanState(false);
     _destroy_view();
 }
 
 void HomepageApp::onDestroy()
 {
     ESP_LOGI(TAG, "onDestroy");
+    HAL::SetFanSpeed(0.0f);
+    HAL::SetFanState(false);
     _destroy_view();
 }
 
