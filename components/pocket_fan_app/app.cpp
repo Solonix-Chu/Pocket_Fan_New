@@ -17,6 +17,7 @@ static const char *TAG = "PocketFan_App";
 
 namespace APPS {
     int homepage_id = -1;
+    int screensaver_id = -1;
     int menu_id = -1;
     int settings_id = -1;
     int about_id = -1;
@@ -49,6 +50,7 @@ public:
         // Install and Open Startup Anim
         _startup_anim_id = GetMooncake().installApp(std::make_unique<AppStartupAnim>());
         APPS::homepage_id = GetMooncake().installApp(std::make_unique<HomepageApp>());
+        APPS::screensaver_id = GetMooncake().installApp(std::make_unique<ScreenSaverApp>());
         APPS::menu_id = GetMooncake().installApp(std::make_unique<MenuApp>());
         APPS::settings_id = GetMooncake().installApp(std::make_unique<SettingsApp>());
         APPS::about_id = GetMooncake().installApp(std::make_unique<AboutApp>());

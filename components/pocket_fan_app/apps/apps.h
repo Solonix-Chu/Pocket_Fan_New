@@ -7,6 +7,7 @@
 // #include "app_base_test/app_base_test.h"
 #include "launcher/launcher.h"
 #include "homepage/homepage.h"
+#include "screensaver/screensaver.h"
 #include "settings/settings.h"
 #include "about/about.h"
 // #include "app_power_monitor/app_power_monitor.h"
@@ -24,6 +25,7 @@
 
 namespace APPS {
     extern int homepage_id;
+    extern int screensaver_id;
     extern int menu_id;
     extern int settings_id;
     extern int about_id;

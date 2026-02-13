@@ -22,6 +22,8 @@ private:
     int _fan_speed = 0;
     uint32_t _last_scroll_time = 0;
     uint32_t _led_last_change_time = 0;
+    uint32_t _last_input_time = 0;
+    bool _closing_to_screensaver = false;
 
     void _create_view();
     void _destroy_view();

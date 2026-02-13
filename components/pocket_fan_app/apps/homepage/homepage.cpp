@@ -35,9 +35,12 @@ void HomepageApp::onCreate()
 void HomepageApp::onOpen()
 {
     ESP_LOGI(TAG, "onOpen");
+    _last_input_time = HAL::Millis();
+    _closing_to_screensaver = false;
     _create_view();
     if (_view) {
         _view->updatePwm(_fan_speed);
+        _view->setPage(_current_page);
         _view->restartEntry();
         _view->tick(HAL::Millis());
     }
@@ -50,9 +53,36 @@ void HomepageApp::onOpen()
 
 void HomepageApp::onRunning()
 {
+    const uint32_t now = HAL::Millis();
+
+    // Inactivity timer (Homepage -> ScreenSaver after 5s without input)
+    auto btn_mid = HAL::GetButton(BUTTON::BTN_MID);
+    auto btn_left = HAL::GetButton(BUTTON::BTN_LEFT);
+    auto btn_right = HAL::GetButton(BUTTON::BTN_RIGHT);
+    auto btn_up = HAL::GetButton(BUTTON::BTN_UP);
+    auto btn_down = HAL::GetButton(BUTTON::BTN_DOWN);
+    auto btn_power = HAL::GetButton(BUTTON::BTN_POWER);
+
+    if (btn_mid != APP_BUTTON_STATE_NOCHANGE ||
+        btn_left != APP_BUTTON_STATE_NOCHANGE ||
+        btn_right != APP_BUTTON_STATE_NOCHANGE ||
+        btn_up != APP_BUTTON_STATE_NOCHANGE ||
+        btn_down != APP_BUTTON_STATE_NOCHANGE ||
+        btn_power != APP_BUTTON_STATE_NOCHANGE) {
+        _last_input_time = now;
+    }
+
+    if (now - _last_input_time > 5000) {
+        ESP_LOGI(TAG, "Inactivity timeout, opening ScreenSaver");
+        _closing_to_screensaver = true;
+        mooncake::GetMooncake().openApp(APPS::screensaver_id);
+        close();
+        return;
+    }
+
     // Update telemetry labels every 200ms
-    if (HAL::Millis() - _last_update_time > 200) {
-        _last_update_time = HAL::Millis();
+    if (now - _last_update_time > 200) {
+        _last_update_time = now;
 
         HAL::UpdatePowerMonitor();
         auto pm_data = HAL::GetPowerMonitorData();
@@ -142,13 +172,13 @@ void HomepageApp::onRunning()
 
     // Switch between pages using wheel
     const int k_last_page = 2;
-    if (HAL::GetButton(BUTTON::BTN_RIGHT) == APP_BUTTON_STATE_CLICKED) {
+    if (btn_right == APP_BUTTON_STATE_CLICKED) {
         if (BtnRight) BtnRight->currentState = APP_BUTTON_STATE_NOCHANGE;
         if (_current_page < k_last_page) {
             _current_page++;
             if (_view) _view->setPage(_current_page);
         }
-    } else if (HAL::GetButton(BUTTON::BTN_LEFT) == APP_BUTTON_STATE_CLICKED) {
+    } else if (btn_left == APP_BUTTON_STATE_CLICKED) {
         if (BtnLeft) BtnLeft->currentState = APP_BUTTON_STATE_NOCHANGE;
         if (_current_page > 0) {
             _current_page--;
@@ -157,19 +187,17 @@ void HomepageApp::onRunning()
     }
 
     // Transition to Menu on OK button press
-    if (HAL::GetButton(BUTTON::BTN_MID) == APP_BUTTON_STATE_CLICKED) {
+    if (btn_mid == APP_BUTTON_STATE_CLICKED) {
         if (BtnOk) BtnOk->currentState = APP_BUTTON_STATE_NOCHANGE;
         ESP_LOGI(TAG, "OK button pressed, opening MenuApp");
         mooncake::GetMooncake().openApp(APPS::menu_id);
         close();
+        return;
     }
 
     // PWM Control using UP/DOWN
-    auto btn_up = HAL::GetButton(BUTTON::BTN_UP);
-    auto btn_down = HAL::GetButton(BUTTON::BTN_DOWN);
     if (btn_up == APP_BUTTON_STATE_CLICKED || btn_down == APP_BUTTON_STATE_CLICKED) {
         // Calculate step based on scroll speed (time delta)
-        uint32_t now = HAL::Millis();
         uint32_t delta = now - _last_scroll_time;
         _last_scroll_time = now;
 
@@ -200,11 +228,10 @@ void HomepageApp::onRunning()
     }
 
     if (_view) {
-        _view->tick(HAL::Millis());
+        _view->tick(now);
     }
 
     // Change breathing color periodically for "random mix" effect.
-    uint32_t now = HAL::Millis();
     if (now - _led_last_change_time >= 3500) {
         _led_last_change_time = now;
         set_random_trackball_targets();
@@ -214,8 +241,11 @@ void HomepageApp::onRunning()
 void HomepageApp::onClose()
 {
     ESP_LOGI(TAG, "onClose");
-    HAL::SetFanSpeed(0.0f);
-    HAL::SetFanState(false);
+    if (!_closing_to_screensaver) {
+        HAL::SetFanSpeed(0.0f);
+        HAL::SetFanState(false);
+    }
+    _closing_to_screensaver = false;
     _destroy_view();
 }
 
