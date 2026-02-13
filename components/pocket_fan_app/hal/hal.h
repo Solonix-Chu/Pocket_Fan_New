@@ -258,6 +258,20 @@ public:
     static void SetFanState(bool enable) { Get()->setFanState(enable); }
     virtual void setFanState(bool enable) {}
 
+    /**
+     * @brief Start ESC calibration (if supported).
+     *
+     * @return true if calibration started
+     */
+    static bool StartEscCalibration() { return Get()->startEscCalibration(); }
+    virtual bool startEscCalibration() { return false; }
+
+    /**
+     * @brief Check whether ESC calibration is running.
+     */
+    static bool IsEscCalibrationRunning() { return Get()->isEscCalibrationRunning(); }
+    virtual bool isEscCalibrationRunning() { return false; }
+
     /* -------------------------------------------------------------------------- */
     /*                                     NTC                                    */
     /* -------------------------------------------------------------------------- */

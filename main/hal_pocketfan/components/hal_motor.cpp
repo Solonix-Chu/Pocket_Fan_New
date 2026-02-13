@@ -34,6 +34,8 @@ static bool _motor_enabled = false;
 static float _current_speed = 0.0f;
 static bool _esc_armed = false;
 static esp_timer_handle_t _esc_arm_timer = nullptr;
+static bool _esc_calibrating = false;
+static TaskHandle_t _esc_cal_task = nullptr;
 
 static uint32_t _esc_pulse_to_duty(uint32_t pulse_us)
 {
@@ -190,4 +192,68 @@ void HAL_PocketFan::setFanSpeed(float speed)
             ESP_LOGI(TAG, "Set Fan Speed: %.2f (pending ESC arm)", speed);
         }
     }
+}
+
+static void _esc_calibration_task(void* arg)
+{
+    (void)arg;
+
+    ESP_LOGI(TAG, "ESC calibration start");
+
+    // Ensure motor is off and arming timer is stopped.
+    HAL::Get()->setFanState(false);
+
+    // 1) Set max throttle pulse BEFORE powering the ESC.
+    _esc_apply_duty(_esc_pulse_to_duty(ESC_PULSE_MAX_US));
+
+    // 2) Power on ESC (MOS switch).
+    (void)gpio_set_level(MOTOR_MOS_EN_PIN, 1);
+
+    // Wait for ESC to detect max-throttle signal.
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    // 3) Set min throttle pulse.
+    _esc_apply_duty(_esc_pulse_to_duty(ESC_PULSE_MIN_US));
+
+    // Wait for ESC to confirm calibration.
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    // 4) Stop PWM and cut power.
+    _esc_apply_duty(0);
+    (void)gpio_set_level(MOTOR_MOS_EN_PIN, 0);
+
+    ESP_LOGI(TAG, "ESC calibration done");
+
+    _esc_calibrating = false;
+    _esc_cal_task = nullptr;
+    vTaskDelete(nullptr);
+}
+
+bool HAL_PocketFan::startEscCalibration()
+{
+    if (_esc_calibrating) {
+        ESP_LOGW(TAG, "ESC calibration already running");
+        return false;
+    }
+
+    _esc_calibrating = true;
+    BaseType_t ret = xTaskCreate(&_esc_calibration_task,
+                                 "esc_cal",
+                                 2048,
+                                 nullptr,
+                                 tskIDLE_PRIORITY + 1,
+                                 &_esc_cal_task);
+    if (ret != pdPASS) {
+        ESP_LOGE(TAG, "xTaskCreate(esc_cal) failed");
+        _esc_calibrating = false;
+        _esc_cal_task = nullptr;
+        return false;
+    }
+
+    return true;
+}
+
+bool HAL_PocketFan::isEscCalibrationRunning()
+{
+    return _esc_calibrating;
 }

@@ -20,9 +20,11 @@ namespace APPS {
     int screensaver_id = -1;
     int menu_id = -1;
     int settings_id = -1;
+    int emoji_id = -1;
     int about_id = -1;
     int enjoy_id = -1;
     int health_id = -1;
+    int detail_id = -1;
 }
 
 using namespace mooncake;
@@ -44,7 +46,39 @@ public:
 
         // Setup HAL for smooth_ui_toolkit
         smooth_ui_toolkit::ui_hal::on_get_tick([]() {
-            return (uint32_t)(esp_timer_get_time() / 1000);
+            static bool initialized = false;
+            static uint64_t last_real_ms = 0;
+            static uint64_t scaled_ms = 0;
+            static double scaled_frac = 0.0;
+
+            const uint64_t now_real_ms = static_cast<uint64_t>(esp_timer_get_time() / 1000);
+            if (!initialized) {
+                initialized = true;
+                last_real_ms = now_real_ms;
+                return static_cast<uint32_t>(0);
+            }
+
+            uint64_t dt_real_ms = 0;
+            if (now_real_ms >= last_real_ms) {
+                dt_real_ms = now_real_ms - last_real_ms;
+            }
+            last_real_ms = now_real_ms;
+
+            int pct = 100;
+            if (HAL::Check()) {
+                pct = HAL::GetSystemConfig().uiAnimSpeedPct;
+            }
+            if (pct < 50) pct = 50;
+            if (pct > 200) pct = 200;
+
+            const double scale = static_cast<double>(pct) / 100.0;
+            const double scaled_delta = static_cast<double>(dt_real_ms) * scale + scaled_frac;
+            const uint64_t scaled_delta_i = static_cast<uint64_t>(scaled_delta);
+            scaled_frac = scaled_delta - static_cast<double>(scaled_delta_i);
+            scaled_ms += scaled_delta_i;
+
+            // ui_hal tick is uint32_t by design.
+            return static_cast<uint32_t>(scaled_ms);
         });
 
         // Install and Open Startup Anim
@@ -53,9 +87,11 @@ public:
         APPS::screensaver_id = GetMooncake().installApp(std::make_unique<ScreenSaverApp>());
         APPS::menu_id = GetMooncake().installApp(std::make_unique<MenuApp>());
         APPS::settings_id = GetMooncake().installApp(std::make_unique<SettingsApp>());
+        APPS::emoji_id = GetMooncake().installApp(std::make_unique<EmojiApp>());
         APPS::about_id = GetMooncake().installApp(std::make_unique<AboutApp>());
         APPS::enjoy_id = GetMooncake().installApp(std::make_unique<EnjoyApp>());
         APPS::health_id = GetMooncake().installApp(std::make_unique<HealthApp>());
+        APPS::detail_id = GetMooncake().installApp(std::make_unique<DetailApp>());
 
         GetMooncake().openApp(_startup_anim_id);
         HAL::LvglUnlock();

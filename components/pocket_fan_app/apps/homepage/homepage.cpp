@@ -45,9 +45,16 @@ void HomepageApp::onOpen()
         _view->tick(HAL::Millis());
     }
 
-    // Trackball LED: random mixed breathing in homepage.
-    HAL::SetLedBreath(true);
-    set_random_trackball_targets();
+    // Trackball LED behavior in homepage idle.
+    const auto& cfg = HAL::GetSystemConfig();
+    if (cfg.trackballLedMode == CONFIG::TRACKBALL_LED_CUSTOM_STATIC) {
+        HAL::SetLedBreath(false);
+        HAL::SetLed(cfg.trackballR, cfg.trackballG, cfg.trackballB, cfg.trackballW);
+    } else {
+        // Default: random mixed breathing.
+        HAL::SetLedBreath(true);
+        set_random_trackball_targets();
+    }
     _led_last_change_time = HAL::Millis();
 }
 
@@ -55,7 +62,7 @@ void HomepageApp::onRunning()
 {
     const uint32_t now = HAL::Millis();
 
-    // Inactivity timer (Homepage -> ScreenSaver after 5s without input)
+    // Inactivity timer (Homepage -> ScreenSaver, timeout from system config)
     auto btn_mid = HAL::GetButton(BUTTON::BTN_MID);
     auto btn_left = HAL::GetButton(BUTTON::BTN_LEFT);
     auto btn_right = HAL::GetButton(BUTTON::BTN_RIGHT);
@@ -72,12 +79,16 @@ void HomepageApp::onRunning()
         _last_input_time = now;
     }
 
-    if (now - _last_input_time > 5000) {
-        ESP_LOGI(TAG, "Inactivity timeout, opening ScreenSaver");
-        _closing_to_screensaver = true;
-        mooncake::GetMooncake().openApp(APPS::screensaver_id);
-        close();
-        return;
+    const int screensaver_timeout_sec = HAL::GetSystemConfig().screensaverTimeoutSec;
+    if (screensaver_timeout_sec > 0) {
+        const uint32_t timeout_ms = static_cast<uint32_t>(screensaver_timeout_sec) * 1000U;
+        if (now - _last_input_time > timeout_ms) {
+            ESP_LOGI(TAG, "Inactivity timeout (%d sec), opening ScreenSaver", screensaver_timeout_sec);
+            _closing_to_screensaver = true;
+            mooncake::GetMooncake().openApp(APPS::screensaver_id);
+            close();
+            return;
+        }
     }
 
     // Update telemetry labels every 200ms
@@ -232,9 +243,11 @@ void HomepageApp::onRunning()
     }
 
     // Change breathing color periodically for "random mix" effect.
-    if (now - _led_last_change_time >= 3500) {
-        _led_last_change_time = now;
-        set_random_trackball_targets();
+    if (HAL::GetSystemConfig().trackballLedMode != CONFIG::TRACKBALL_LED_CUSTOM_STATIC) {
+        if (now - _led_last_change_time >= 3500) {
+            _led_last_change_time = now;
+            set_random_trackball_targets();
+        }
     }
 }
 

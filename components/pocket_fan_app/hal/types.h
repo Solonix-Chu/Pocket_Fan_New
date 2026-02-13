@@ -95,16 +95,30 @@ enum LocaleCode_t
 /* -------------------------------------------------------------------------- */
 namespace CONFIG
 {
+    enum TrackballLedMode_t : uint8_t
+    {
+        TRACKBALL_LED_RANDOM_BREATH = 0,
+        TRACKBALL_LED_CUSTOM_STATIC = 1,
+    };
+
     // Default config
     struct SystemConfig_t
     {
         int brightness = 255;
+        int screensaverTimeoutSec = 5;
+        int uiAnimSpeedPct = 100; // 50~200 (%), higher = faster animations
         int orientation = 0;
         bool beepOn = true;
         bool highRefreshRate = true;
         bool reverseEncoder = false;
-        bool invertDisplay = true;
+        bool invertDisplay = false;
         bool darkTheme = false;
+        bool bluetoothEnabled = false;
+        TrackballLedMode_t trackballLedMode = TRACKBALL_LED_RANDOM_BREATH;
+        uint8_t trackballR = 0;
+        uint8_t trackballG = 0;
+        uint8_t trackballB = 0;
+        uint8_t trackballW = 80;
         LocaleCode_t localeCode = locale_code_en;
         float currentOffset = 0.0f;
         std::string wifiSsid;

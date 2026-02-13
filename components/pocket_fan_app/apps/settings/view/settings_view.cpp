@@ -4,6 +4,7 @@
 #include "../../../assets/assets.h"
 #include "../../../ui/checkbox.h"
 #include <esp_log.h>
+#include <cstdio>
 
 static const char* TAG = "SettingsView";
 
@@ -87,6 +88,23 @@ void SettingsView::updateItemValue(int index, bool checked) {
     }
 }
 
+void SettingsView::updateItemText(int index, const std::string& text) {
+    if (index < 0 || index >= static_cast<int>(_items_props.size())) {
+        return;
+    }
+
+    if (_items_props[index].name == text) {
+        return;
+    }
+
+    _items_props[index].name = text;
+    if (index >= 0 && index < static_cast<int>(_item_objs.size()) && _item_objs[index]) {
+        lv_label_set_text(_item_objs[index], text.c_str());
+        _refresh_item_text_layout(index);
+        _data.is_changed = true;
+    }
+}
+
 void SettingsView::playEntryAnimation() {
     // Staggered Entrance Anim (slide in from left)
     for (size_t i = 0; i < _item_transitions.size(); i++) {
@@ -137,22 +155,9 @@ void SettingsView::_create_lvgl_objects() {
         lv_obj_set_style_text_color(label, lv_color_black(), 0);
         lv_obj_set_style_text_font(label, AssetPool::GetLocaleFontSmall(), 0);
         
-        // Measure width for selective marquee
-        lv_obj_update_layout(label);
-        int text_w = lv_obj_get_self_width(label);
-        
-        // Update keyframe width for selector (text width + padding)
-        _data.option_list[i].keyframe.width = text_w + 12;
-
-        if (text_w > 110) {
-            lv_obj_set_width(label, 110);
-            lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-        } else {
-            lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
-        }
-        
         lv_obj_set_pos(label, (int32_t)kf.x + 4, (int32_t)kf.y + 2); // Adjusted Y for smaller font
         _item_objs.push_back(label);
+        _refresh_item_text_layout(static_cast<int>(i));
 
         // Checkbox
         if (_items_props[i].has_checkbox) {
@@ -169,6 +174,40 @@ void SettingsView::_create_lvgl_objects() {
             _checkbox_objs.push_back({});
         }
     }
+}
+
+void SettingsView::_refresh_item_text_layout(int index)
+{
+    if (index < 0 || index >= static_cast<int>(_item_objs.size())) {
+        return;
+    }
+    if (index >= static_cast<int>(_data.option_list.size())) {
+        return;
+    }
+
+    lv_obj_t* label = _item_objs[index];
+    if (!label) {
+        return;
+    }
+
+    // Re-measure text width from content width, then decide whether to marquee.
+    lv_obj_set_width(label, LV_SIZE_CONTENT);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
+    lv_obj_update_layout(label);
+    int text_w = lv_obj_get_self_width(label);
+
+    constexpr int k_label_clip_width = 110;
+    int visible_w = text_w;
+    if (text_w > k_label_clip_width) {
+        visible_w = k_label_clip_width;
+        lv_obj_set_width(label, k_label_clip_width);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    } else {
+        lv_obj_set_width(label, LV_SIZE_CONTENT);
+        lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
+    }
+
+    _data.option_list[index].keyframe.width = visible_w + 12;
 }
 
 void SettingsView::onRender() {
@@ -231,14 +270,14 @@ void SettingsView::onUpdate(const uint32_t& currentTime) {
     }
 }
 
-void SettingsView::showBrightnessPopup(int initialValue) {
+void SettingsView::showValuePopup(const std::string& labelText, int initialValue, int minValue, int maxValue)
+{
     if (_is_popup_active) return;
     _is_popup_active = true;
     _popup_closing = false;
 
-    // Create popup container
     _popup_cont = lv_obj_create(_screen);
-    lv_obj_set_size(_popup_cont, 100, 40);
+    lv_obj_set_size(_popup_cont, 110, 44);
     lv_obj_align(_popup_cont, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_style_bg_color(_popup_cont, lv_color_white(), 0);
     lv_obj_set_style_border_color(_popup_cont, lv_color_black(), 0);
@@ -246,41 +285,106 @@ void SettingsView::showBrightnessPopup(int initialValue) {
     lv_obj_set_style_radius(_popup_cont, 8, 0);
     lv_obj_clear_flag(_popup_cont, LV_OBJ_FLAG_SCROLLABLE);
 
-    // Progress bar
     _popup_bar = lv_bar_create(_popup_cont);
-    lv_obj_set_size(_popup_bar, 80, 10);
-    lv_obj_align(_popup_bar, LV_ALIGN_CENTER, 0, 5);
-    lv_bar_set_range(_popup_bar, 0, 100);
+    lv_obj_set_size(_popup_bar, 86, 10);
+    lv_obj_align(_popup_bar, LV_ALIGN_CENTER, 0, 8);
+    lv_bar_set_range(_popup_bar, minValue, maxValue);
     lv_bar_set_value(_popup_bar, initialValue, LV_ANIM_OFF);
     lv_obj_set_style_bg_color(_popup_bar, lv_color_black(), LV_PART_INDICATOR);
 
-    // Label
     _popup_label = lv_label_create(_popup_cont);
     lv_obj_set_style_text_font(_popup_label, AssetPool::GetLocaleFontSmall(), 0);
     lv_obj_set_style_text_color(_popup_label, lv_color_black(), 0);
+    lv_obj_set_width(_popup_label, 104);
+    lv_label_set_long_mode(_popup_label, LV_LABEL_LONG_CLIP);
     lv_obj_align(_popup_label, LV_ALIGN_TOP_MID, 0, 0);
-    lv_label_set_text_fmt(_popup_label, AssetPool::GetText().PocketFan_Settings_BrightnessFmt, initialValue);
+    lv_label_set_text(_popup_label, labelText.c_str());
 
     // Entrance Anim (panel slide style)
     lv_obj_set_style_translate_y(_popup_cont, 80, 0);
     _popup_transition.setDurationMs(420);
     _popup_transition.setDelayMs(0);
     _popup_transition.setEasing(smooth_ui_toolkit::ease::ease_out_back);
-    _popup_transition.setCompleteCallback(nullptr); // ensure no stale hide callback fires on entry
+    _popup_transition.setCompleteCallback(nullptr);
     _popup_transition.jumpTo(80);
     _popup_transition.moveTo(0);
-    // Apply first frame immediately so it shows without waiting for the next tick
     _popup_transition.updateMs(HAL::Millis());
     lv_obj_set_style_translate_y(_popup_cont, (int32_t)_popup_transition.value(), 0);
 }
 
-void SettingsView::updateBrightnessPopup(int value) {
+void SettingsView::updateValuePopup(const std::string& labelText, int value)
+{
     if (!_is_popup_active) return;
     if (_popup_bar) lv_bar_set_value(_popup_bar, value, LV_ANIM_OFF);
-    if (_popup_label) lv_label_set_text_fmt(_popup_label, AssetPool::GetText().PocketFan_Settings_BrightnessFmt, value);
+    if (_popup_label) lv_label_set_text(_popup_label, labelText.c_str());
 }
 
-void SettingsView::hideBrightnessPopup() {
+void SettingsView::showMessagePopup(const std::string& message)
+{
+    if (_is_popup_active) return;
+    _is_popup_active = true;
+    _popup_closing = false;
+
+    _popup_cont = lv_obj_create(_screen);
+    lv_obj_set_size(_popup_cont, 120, 40);
+    lv_obj_align(_popup_cont, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_color(_popup_cont, lv_color_white(), 0);
+    lv_obj_set_style_border_color(_popup_cont, lv_color_black(), 0);
+    lv_obj_set_style_border_width(_popup_cont, 2, 0);
+    lv_obj_set_style_radius(_popup_cont, 8, 0);
+    lv_obj_set_style_pad_all(_popup_cont, 4, 0);
+    lv_obj_clear_flag(_popup_cont, LV_OBJ_FLAG_SCROLLABLE);
+
+    _popup_bar = nullptr;
+
+    _popup_label = lv_label_create(_popup_cont);
+    lv_obj_set_style_text_font(_popup_label, AssetPool::GetLocaleFontSmall(), 0);
+    lv_obj_set_style_text_color(_popup_label, lv_color_black(), 0);
+    lv_obj_set_style_text_align(_popup_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(_popup_label, 108);
+    lv_label_set_long_mode(_popup_label, LV_LABEL_LONG_WRAP);
+    lv_obj_align(_popup_label, LV_ALIGN_CENTER, 0, 0);
+    lv_label_set_text(_popup_label, message.c_str());
+
+    // Fit popup height to wrapped text to avoid clipping.
+    lv_obj_update_layout(_popup_label);
+    int32_t label_h = lv_obj_get_height(_popup_label);
+    int32_t popup_h = label_h + 12;
+    if (popup_h < 30) popup_h = 30;
+    if (popup_h > 58) popup_h = 58;
+    lv_obj_set_size(_popup_cont, 120, popup_h);
+    lv_obj_align(_popup_label, LV_ALIGN_CENTER, 0, 0);
+
+    lv_obj_set_style_translate_y(_popup_cont, 80, 0);
+    _popup_transition.setDurationMs(420);
+    _popup_transition.setDelayMs(0);
+    _popup_transition.setEasing(smooth_ui_toolkit::ease::ease_out_back);
+    _popup_transition.setCompleteCallback(nullptr);
+    _popup_transition.jumpTo(80);
+    _popup_transition.moveTo(0);
+    _popup_transition.updateMs(HAL::Millis());
+    lv_obj_set_style_translate_y(_popup_cont, (int32_t)_popup_transition.value(), 0);
+}
+
+void SettingsView::updateMessagePopup(const std::string& message)
+{
+    if (!_is_popup_active) return;
+    if (_popup_label) {
+        lv_label_set_text(_popup_label, message.c_str());
+        lv_obj_update_layout(_popup_label);
+        int32_t label_h = lv_obj_get_height(_popup_label);
+        int32_t popup_h = label_h + 12;
+        if (popup_h < 30) popup_h = 30;
+        if (popup_h > 58) popup_h = 58;
+        if (_popup_cont) {
+            lv_obj_set_size(_popup_cont, 120, popup_h);
+        }
+        lv_obj_align(_popup_label, LV_ALIGN_CENTER, 0, 0);
+    }
+}
+
+void SettingsView::hidePopup()
+{
     if (!_is_popup_active || !_popup_cont) return;
     _popup_closing = true;
     _popup_transition.setDurationMs(260);
@@ -295,9 +399,28 @@ void SettingsView::hideBrightnessPopup() {
         _popup_label = nullptr;
         _is_popup_active = false;
         _popup_closing = false;
-        _popup_transition.setCompleteCallback(nullptr); // clear handler after use
+        _popup_transition.setCompleteCallback(nullptr);
     });
     _popup_transition.moveTo(80);
+}
+
+void SettingsView::showBrightnessPopup(int initialValue)
+{
+    char buf[48] = {};
+    snprintf(buf, sizeof(buf), AssetPool::GetText().PocketFan_Settings_BrightnessFmt, initialValue);
+    showValuePopup(buf, initialValue, 0, 100);
+}
+
+void SettingsView::updateBrightnessPopup(int value)
+{
+    char buf[48] = {};
+    snprintf(buf, sizeof(buf), AssetPool::GetText().PocketFan_Settings_BrightnessFmt, value);
+    updateValuePopup(buf, value);
+}
+
+void SettingsView::hideBrightnessPopup()
+{
+    hidePopup();
 }
 
 void SettingsView::onReadInput() {

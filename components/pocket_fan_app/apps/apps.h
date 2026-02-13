@@ -9,6 +9,7 @@
 #include "homepage/homepage.h"
 #include "screensaver/screensaver.h"
 #include "settings/settings.h"
+#include "emoji/emoji.h"
 #include "about/about.h"
 // #include "app_power_monitor/app_power_monitor.h"
 // #include "app_template/app_template.h"
@@ -21,6 +22,7 @@
 #include "hardware_test/hardware_test.h"
 #include "enjoy/enjoy.h"
 #include "health/health.h"
+#include "detail/detail.h"
 /* Header files locator (Don't remove) */
 
 namespace APPS {
@@ -28,9 +30,11 @@ namespace APPS {
     extern int screensaver_id;
     extern int menu_id;
     extern int settings_id;
+    extern int emoji_id;
     extern int about_id;
     extern int enjoy_id;
     extern int health_id;
+    extern int detail_id;
 }
 
 /**

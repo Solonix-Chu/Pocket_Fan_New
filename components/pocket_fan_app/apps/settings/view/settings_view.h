@@ -24,6 +24,7 @@ public:
     void init();
     void addSettingsItem(const SettingsItemProps& props);
     void updateItemValue(int index, bool checked);
+    void updateItemText(int index, const std::string& text);
     void playEntryAnimation();
     void setInitialIndex(int index) { _initial_index = index; }
     void setSkipEntryAnimation(bool skip) { _skip_entry_anim = skip; }
@@ -33,6 +34,13 @@ public:
     void updateBrightnessPopup(int value);
     void hideBrightnessPopup();
     bool isPopupActive() const { return _is_popup_active; }
+
+    // Generic popup helpers
+    void showValuePopup(const std::string& labelText, int initialValue, int minValue, int maxValue);
+    void updateValuePopup(const std::string& labelText, int value);
+    void showMessagePopup(const std::string& message);
+    void updateMessagePopup(const std::string& message);
+    void hidePopup();
 
     // Overrides
     void onRender() override;
@@ -70,6 +78,7 @@ private:
     bool _is_popup_active = false;
     
     void _create_lvgl_objects();
+    void _refresh_item_text_layout(int index);
     
     // Constants
     static constexpr int _item_h = 18;

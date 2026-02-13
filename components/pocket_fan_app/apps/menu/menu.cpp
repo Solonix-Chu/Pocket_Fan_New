@@ -3,11 +3,42 @@
 #include "../../assets/assets.h"
 #include "../apps.h"
 #include <esp_log.h>
+#include <esp_system.h>
 
 static const char* TAG = "MenuApp";
 static int s_menu_last_index = 0;
 static bool s_menu_skip_entry = false;
 static int s_menu_deferred_open_app = -1;
+
+namespace {
+void set_random_trackball_targets()
+{
+    auto rand_u8 = [](uint8_t max_val) -> uint8_t {
+        return static_cast<uint8_t>(esp_random() % (max_val + 1));
+    };
+
+    uint8_t r = rand_u8(180);
+    uint8_t g = rand_u8(180);
+    uint8_t b = rand_u8(180);
+    uint8_t w = rand_u8(120);
+    if ((r | g | b | w) == 0) {
+        g = 120;
+    }
+    HAL::SetLed(r, g, b, w);
+}
+
+void apply_trackball_effect_from_config()
+{
+    const auto& cfg = HAL::GetSystemConfig();
+    if (cfg.trackballLedMode == CONFIG::TRACKBALL_LED_CUSTOM_STATIC) {
+        HAL::SetLedBreath(false);
+        HAL::SetLed(cfg.trackballR, cfg.trackballG, cfg.trackballB, cfg.trackballW);
+    } else {
+        HAL::SetLedBreath(true);
+        set_random_trackball_targets();
+    }
+}
+} // namespace
 
 void MenuApp::onCreate()
 {
@@ -59,6 +90,8 @@ void MenuApp::onRunning()
 void MenuApp::onClose()
 {
     ESP_LOGI(TAG, "onClose");
+    // Keep menu-only constant green; restore normal trackball effect when leaving.
+    apply_trackball_effect_from_config();
     _destroy_view();
 
     if (s_menu_deferred_open_app >= 0) {
@@ -98,6 +131,11 @@ void MenuApp::_create_view()
             _exit_to_home = false;
             mooncake::GetMooncake().openApp(APPS::settings_id);
             close();
+        } else if (index == 1) { // Detail
+            _exit_to_app = true;
+            _exit_to_home = false;
+            mooncake::GetMooncake().openApp(APPS::detail_id);
+            close();
         } else if (index == 6) { // Quit
             _exit_to_home = true;
             _exit_to_app = false;
@@ -112,6 +150,11 @@ void MenuApp::_create_view()
             _exit_to_app = true;
             _exit_to_home = false;
             mooncake::GetMooncake().openApp(APPS::health_id);
+            close();
+        } else if (index == 3) { // Emoji
+            _exit_to_app = true;
+            _exit_to_home = false;
+            mooncake::GetMooncake().openApp(APPS::emoji_id);
             close();
         } else if (index == 5) { // About (BLE OTA)
             _exit_to_app = true;

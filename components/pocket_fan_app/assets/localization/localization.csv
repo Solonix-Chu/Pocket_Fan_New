@@ -26,8 +26,8 @@ AppSettings_Notice_RunOTA,Run OTA Upgrade?,运行OTA升级?
 AppSettings_Option_Yes,Yes,是
 AppSettings_Option_No,No,否
 AppSettings_Option_Language,Language,语言
-AppSettings_Option_English,English,英文
-AppSettings_Option_Chinese,Chinese,中文
+AppSettings_Option_English,EN,英文
+AppSettings_Option_Chinese,CN,中文
 AppSettings_Option_StartupImage,Startup Image,启动画面
 AppSettings_Option_Default,Default,默认
 AppFiles_Option_RecordFiles,Record files,录制文件
@@ -98,8 +98,26 @@ PocketFan_Settings_OperationGuide,Operation Guide,操作指南
 PocketFan_Settings_SystemMenuDemo,System Settings and Configuration Menu,系统设置与配置菜单
 PocketFan_Settings_DarkTheme,Dark Theme,深色主题
 PocketFan_Settings_InvertDisplay,Invert Display,反色显示
+PocketFan_Settings_Theme,Theme,主题
+PocketFan_Settings_Bluetooth,Bluetooth,蓝牙
+PocketFan_Settings_BluetoothPairing,Bluetooth Pairing,蓝牙配对
+PocketFan_Settings_EscCalibration,ESC Calibration,电调校准
+PocketFan_Settings_Trackball,Trackball Color,轨迹球颜色
+PocketFan_Settings_AnimSpeed,Anim Speed,动画灵敏度
+PocketFan_Settings_FactoryReset,Factory Reset,恢复出厂设置
 PocketFan_Settings_LanguageFmt,Language: %s,语言: %s
 PocketFan_Settings_BrightnessFmt,BRI: %d%%,亮度: %d%%
+PocketFan_Settings_AnimSpeedFmt,ANIM: %d%%,动画: %d%%
+PocketFan_Settings_ScreenSaverTimeoutFmt,ScreenSaver: %s,屏保: %s
+PocketFan_Settings_TrackballModeFmt,Mode: %s,模式: %s
+PocketFan_Settings_TrackballMode_Random,Random Breath,随机彩色呼吸
+PocketFan_Settings_TrackballMode_Custom,Custom,自定义
+PocketFan_Settings_TrackballRFmt,R: %d,R: %d
+PocketFan_Settings_TrackballGFmt,G: %d,G: %d
+PocketFan_Settings_TrackballBFmt,B: %d,B: %d
+PocketFan_Settings_TrackballWFmt,W: %d,W: %d
+PocketFan_Settings_FactoryResetConfirm,MID confirm / any key exit,中键确认，其他键退出
+PocketFan_Settings_EscCalibrating,ESC calibrating,电调校准中
 PocketFan_About_InfoFmt,FW: %s Build: %s MAC: %s,固件: %s 编译: %s MAC: %s
 PocketFan_About_Status_Writing,Status: Writing...,状态: 写入中...
 PocketFan_About_Status_Waiting,Status: Waiting connect...,状态: 等待连接...

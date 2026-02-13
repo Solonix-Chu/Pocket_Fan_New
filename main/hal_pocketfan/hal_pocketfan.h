@@ -49,6 +49,8 @@ public:
 
     void setFanSpeed(float speed) override;
     void setFanState(bool enable) override;
+    bool startEscCalibration() override;
+    bool isEscCalibrationRunning() override;
 
     app_button_state_t getButton(BUTTON::Button_t button) override;
     bool isPowerKeyPressed() override;
@@ -93,7 +95,7 @@ public:
     void applySystemConfig() override;
     // void startMscMode() override;
     // void stopMscMode() override;
-    // void factoryReset(OnLogPageRenderCallback_t onLogPageRender) override;
+    void factoryReset(OnLogPageRenderCallback_t onLogPageRender) override;
 
     // bool creatVaRecorder(VA_RECORDER::TriggerBase* trigger) override;
     // bool isVaRecorderExist() override;
