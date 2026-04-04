@@ -28,8 +28,8 @@ public:
     {
         loadSystemConfig();
         _power_init();
-        _power_monitor_init();
-        _ntc_init();
+        // _power_monitor_init();
+        // _ntc_init();
         _motor_init();
         _led_init();
         _watch_dog_init();
